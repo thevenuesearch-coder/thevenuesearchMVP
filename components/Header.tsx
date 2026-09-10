@@ -1,0 +1,4 @@
+'use client';
+import Link from 'next/link';
+import {useEffect,useState} from 'react';
+export function Header(){const [scrolled,setScrolled]=useState(false);useEffect(()=>{const f=()=>setScrolled(scrollY>20);addEventListener('scroll',f);return()=>removeEventListener('scroll',f)},[]);return <header className={scrolled?'nav scrolled':'nav'}><Link href="/" className="brand"><img src="/logo.png"/><span>The Venue<br/><b>Search.</b></span></Link><nav><Link href="/explore">Explore</Link><Link href="/collections">Collections</Link><Link href="/how-it-works">How it works</Link><Link href="/for-venues">For venues</Link></nav><div className="navActions"><Link className="textBtn" href="/wishlist">♡</Link><Link data-cursor="view" className="outlineBtn" href="/login">Sign in</Link><Link data-cursor="open" className="primaryBtn" href="/explore">Find your venue</Link></div></header>}
