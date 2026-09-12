@@ -462,3 +462,407 @@
     right: -80px;
   }
 }
+
+/* ============================================================
+   PROFILE SHORTLIST — VENUE CARDS
+   ============================================================ */
+
+.profileShortlistSection {
+  width: 100%;
+  margin-top: 80px;
+  scroll-margin-top: 120px;
+}
+
+.profileSectionHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 32px;
+}
+
+.profileSectionHeader h2 {
+  margin: 8px 0 10px;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.05;
+  font-weight: 500;
+  letter-spacing: -1.5px;
+}
+
+.profileSectionHeader p {
+  margin: 0;
+  color: #777;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.profileShortlistCount {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border: 1px solid #ddd7ce;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #222;
+  background: #fff;
+}
+
+
+/* ============================================================
+   GRID
+   ============================================================ */
+
+.profileShortlistGrid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  align-items: stretch;
+}
+
+
+/* ============================================================
+   CARD
+   ============================================================ */
+
+.profileVenueCard {
+  min-width: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e6e0d7;
+  border-radius: 18px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.profileVenueCard:hover {
+  transform: translateY(-4px);
+  border-color: #d9d1c6;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
+}
+
+
+/* ============================================================
+   IMAGE
+   ============================================================ */
+
+.profileVenueImage {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  overflow: hidden;
+  background: #eeeae3;
+}
+
+.profileVenueImage img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.profileVenueCard:hover .profileVenueImage img {
+  transform: scale(1.035);
+}
+
+.profileVenueImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eeeae3;
+  color: #777;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+
+/* ============================================================
+   REMOVE / HEART BUTTON
+   ============================================================ */
+
+.profileVenueRemove {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+
+  width: 42px;
+  height: 42px;
+
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255, 255, 255, 0.94);
+  color: #171717;
+
+  font-size: 20px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.profileVenueRemove:hover {
+  transform: scale(1.08);
+  background: #fff;
+}
+
+.profileVenueRemove:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+
+/* ============================================================
+   CARD CONTENT
+   ============================================================ */
+
+.profileVenueContent {
+  padding: 24px 24px 26px;
+}
+
+.profileVenueLocation {
+  display: block;
+  margin-bottom: 8px;
+
+  color: #888;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.profileVenueContent h3 {
+  margin: 0 0 10px;
+
+  color: #171717;
+
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 500;
+
+  letter-spacing: -0.7px;
+}
+
+.profileVenueContent p {
+  margin: 0 0 18px;
+
+  color: #666;
+
+  font-size: 14px;
+  line-height: 1.65;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+
+/* ============================================================
+   META
+   ============================================================ */
+
+.profileVenueMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+
+  padding-top: 15px;
+  margin-top: 15px;
+
+  border-top: 1px solid #eee9e2;
+
+  color: #555;
+
+  font-size: 13px;
+}
+
+.profileVenueMeta span {
+  display: inline-flex;
+  align-items: center;
+}
+
+
+/* ============================================================
+   TYPE TAG
+   ============================================================ */
+
+.profileVenueTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+
+  margin-top: 16px;
+  margin-bottom: 20px;
+}
+
+.profileVenueTags span {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 7px 11px;
+
+  border: 1px solid #e5dfd6;
+  border-radius: 999px;
+
+  background: #faf8f4;
+
+  color: #666;
+
+  font-size: 11px;
+  letter-spacing: 0.2px;
+}
+
+
+/* ============================================================
+   VIEW VENUE BUTTON
+   ============================================================ */
+
+.profileVenueContent .smallBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 42px;
+  padding: 10px 18px;
+
+  border-radius: 999px;
+
+  text-decoration: none;
+
+  background: #171717;
+  color: #fff;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.profileVenueContent .smallBtn:hover {
+  transform: translateY(-1px);
+  background: #2a2a2a;
+}
+
+
+/* ============================================================
+   EMPTY SHORTLIST
+   ============================================================ */
+
+.profileShortlistEmpty {
+  width: 100%;
+  min-height: 300px;
+
+  padding: 60px 30px;
+
+  border: 1px dashed #dcd5cb;
+  border-radius: 18px;
+
+  background: #faf9f6;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+.profileEmptyIcon {
+  width: 56px;
+  height: 56px;
+
+  margin-bottom: 18px;
+
+  border: 1px solid #ded8cf;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 25px;
+  color: #555;
+}
+
+.profileShortlistEmpty h3 {
+  margin: 0 0 8px;
+
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.profileShortlistEmpty p {
+  max-width: 420px;
+  margin: 0 0 24px;
+
+  color: #777;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1100px) {
+  .profileShortlistGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profileVenueImage {
+    height: 240px;
+  }
+}
+
+@media (max-width: 700px) {
+  .profileShortlistSection {
+    margin-top: 55px;
+  }
+
+  .profileSectionHeader {
+    align-items: flex-start;
+  }
+
+  .profileShortlistGrid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .profileVenueImage {
+    height: 240px;
+  }
+
+  .profileVenueContent {
+    padding: 20px;
+  }
+
+  .profileVenueContent h3 {
+    font-size: 22px;
+  }
+}

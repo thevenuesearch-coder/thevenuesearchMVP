@@ -219,7 +219,7 @@ export function Header() {
         {/* Shortlist */}
         <Link
           className="textBtn"
-          href="/wishlist"
+          href="/profile#shortlist"
           aria-label="Shortlist"
           title="Shortlist"
         >
@@ -337,7 +337,7 @@ export function Header() {
 
                 {/* My Shortlist */}
                 <Link
-                  href="/wishlist"
+                  href="/profile#shortlist"
                   className="profileMenuItem"
                   onClick={() =>
                     setProfileOpen(false)
