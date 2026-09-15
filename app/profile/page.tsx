@@ -65,30 +65,18 @@ export default function ProfilePage() {
   useEffect(() => {
     let mounted = true;
 
-    async function loadProfile() {
+    const supabase = createClient();
+
+    /*
+     * ========================================================
+     * LOAD PROFILE + WISHLIST
+     * ========================================================
+     */
+
+    async function loadProfile(currentUser: any) {
+      if (!currentUser || !mounted) return;
+
       try {
-        const supabase = createClient();
-
-        /*
-         * ====================================================
-         * GET CURRENT USER
-         * ====================================================
-         */
-
-        const {
-          data: { user: currentUser },
-          error: userError,
-        } = await supabase.auth.getUser();
-
-        if (userError || !currentUser) {
-          if (mounted) {
-            router.replace('/login');
-          }
-          return;
-        }
-
-        if (!mounted) return;
-
         setUser(currentUser);
 
         /*
@@ -120,9 +108,9 @@ export default function ProfilePage() {
           );
         }
 
-        if (mounted) {
-          setProfile(profileData || null);
-        }
+        if (!mounted) return;
+
+        setProfile(profileData || null);
 
         /*
          * ====================================================
@@ -165,7 +153,7 @@ export default function ProfilePage() {
 
         /*
          * ====================================================
-         * GET WISHLIST VENUE IDS
+         * GET VENUE IDS
          * ====================================================
          */
 
@@ -174,7 +162,7 @@ export default function ProfilePage() {
           .filter(Boolean);
 
         /*
-         * If there are no saved venues
+         * No shortlisted venues
          */
 
         if (venueIds.length === 0) {
@@ -189,12 +177,8 @@ export default function ProfilePage() {
 
         /*
          * ====================================================
-         * LOAD VENUES FROM SUPABASE
+         * LOAD VENUES
          * ====================================================
-         *
-         * IMPORTANT:
-         * Only request columns that actually exist in the
-         * current public.venues table.
          */
 
         const {
@@ -204,15 +188,15 @@ export default function ProfilePage() {
           .from('venues')
           .select(
             `
-            id,
-            name,
-            slug,
-            city,
-            type,
-            description,
-            capacity_min,
-            capacity_max,
-            status
+              id,
+              name,
+              slug,
+              city,
+              type,
+              description,
+              capacity_min,
+              capacity_max,
+              status
             `
           )
           .in('id', venueIds);
@@ -227,11 +211,6 @@ export default function ProfilePage() {
               code: venueError.code,
             }
           );
-
-          /*
-           * Even if the Supabase venue query fails,
-           * don't hide the wishlist count.
-           */
 
           if (mounted) {
             setWishlist(
@@ -252,7 +231,7 @@ export default function ProfilePage() {
 
         /*
          * ====================================================
-         * BUILD VENUE MAP
+         * VENUE MAP
          * ====================================================
          */
 
@@ -264,14 +243,8 @@ export default function ProfilePage() {
 
         /*
          * ====================================================
-         * COMBINE SUPABASE VENUES WITH LOCAL VENUE DATA
+         * COMBINE DATABASE + LOCAL VENUE DATA
          * ====================================================
-         *
-         * The website's local data contains presentation
-         * information such as images and ratings.
-         *
-         * Supabase contains the wishlist relationship and
-         * database venue information.
          */
 
         const combinedWishlist: WishlistItem[] =
@@ -287,14 +260,9 @@ export default function ProfilePage() {
               };
             }
 
-            /*
-             * Match local venue using:
-             * 1. slug
-             * 2. local id
-             * 3. name
-             */
-
-            const localVenue = (localVenues as LocalVenue[]).find(
+            const localVenue = (
+              localVenues as LocalVenue[]
+            ).find(
               (local) =>
                 local.id === dbVenue.slug ||
                 local.id === dbVenue.id ||
@@ -302,52 +270,24 @@ export default function ProfilePage() {
                   dbVenue.name.toLowerCase()
             );
 
-            /*
-             * Normalize type because Supabase currently
-             * stores venue.type as TEXT, not TEXT[].
-             */
-
             const type =
               dbVenue.type ||
               localVenue?.type ||
               localVenue?.tags?.[0] ||
               'Venue';
 
-            /*
-             * Use database description first,
-             * then local description.
-             */
-
             const description =
               dbVenue.description ||
               localVenue?.desc ||
               '';
 
-            /*
-             * Use the local venue image because the current
-             * Supabase venues table doesn't have an images
-             * column.
-             */
-
             const image =
               localVenue?.image ||
               null;
 
-            /*
-             * Use local rating because the current database
-             * doesn't have a rating column.
-             */
-
             const rating =
               localVenue?.rating ||
               null;
-
-            /*
-             * Capacity fallback:
-             *
-             * Supabase has min/max.
-             * Local data has capacity.
-             */
 
             let capacityMin =
               dbVenue.capacity_min;
@@ -384,12 +324,6 @@ export default function ProfilePage() {
               },
             };
           });
-
-        /*
-         * ====================================================
-         * SAVE DATA
-         * ====================================================
-         */
 
         if (mounted) {
           setWishlist(combinedWishlist);
@@ -429,10 +363,118 @@ export default function ProfilePage() {
       }
     }
 
-    loadProfile();
+    /*
+     * ========================================================
+     * AUTHENTICATION
+     * ========================================================
+     *
+     * IMPORTANT:
+     * Use getSession() first instead of immediately
+     * redirecting based on getUser().
+     */
+
+    async function initializeAuth() {
+      try {
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (!mounted) return;
+
+        if (sessionError) {
+          console.warn(
+            'Session loading warning:',
+            sessionError.message
+          );
+        }
+
+        /*
+         * If session exists, load the profile.
+         */
+
+        if (session?.user) {
+          await loadProfile(session.user);
+          return;
+        }
+
+        /*
+         * Give Supabase a moment to restore the browser
+         * session before redirecting.
+         */
+
+        setTimeout(async () => {
+          if (!mounted) return;
+
+          const {
+            data: {
+              session: restoredSession,
+            },
+          } = await supabase.auth.getSession();
+
+          if (!mounted) return;
+
+          if (restoredSession?.user) {
+            await loadProfile(
+              restoredSession.user
+            );
+          } else {
+            router.replace('/login');
+          }
+        }, 500);
+      } catch (error) {
+        console.error(
+          'Authentication initialization error:',
+          error
+        );
+
+        if (mounted) {
+          setLoading(false);
+          setWishlistLoading(false);
+        }
+      }
+    }
+
+    /*
+     * ========================================================
+     * AUTH STATE LISTENER
+     * ========================================================
+     */
+
+    const {
+      data: {
+        subscription,
+      },
+    } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+
+        if (
+          session?.user &&
+          (
+            event === 'SIGNED_IN' ||
+            event === 'INITIAL_SESSION' ||
+            event === 'TOKEN_REFRESHED'
+          )
+        ) {
+          await loadProfile(
+            session.user
+          );
+        }
+
+        if (
+          event === 'SIGNED_OUT'
+        ) {
+          router.replace('/login');
+        }
+      }
+    );
+
+    initializeAuth();
 
     return () => {
       mounted = false;
+      subscription.unsubscribe();
     };
   }, [router]);
 
@@ -585,7 +627,6 @@ export default function ProfilePage() {
 
               </div>
 
-
               <div className="profilePageAvatar">
 
                 <svg
@@ -599,7 +640,6 @@ export default function ProfilePage() {
                   strokeLinejoin="round"
                   aria-hidden="true"
                 >
-
                   <circle
                     cx="12"
                     cy="8"
@@ -609,7 +649,6 @@ export default function ProfilePage() {
                   <path
                     d="M5 20c.8-3.8 3.2-5.8 7-5.8s6.2 2 7 5.8"
                   />
-
                 </svg>
 
               </div>
@@ -751,10 +790,6 @@ export default function ProfilePage() {
           </div>
 
 
-          {/* ==================================================
-              LOADING
-          ================================================== */}
-
           {wishlistLoading ? (
 
             <div className="profileShortlistEmpty">
@@ -766,10 +801,6 @@ export default function ProfilePage() {
             </div>
 
           ) : wishlist.length === 0 ? (
-
-            /* ==================================================
-               EMPTY
-            ================================================== */
 
             <div className="profileShortlistEmpty">
 
@@ -797,22 +828,11 @@ export default function ProfilePage() {
 
           ) : (
 
-            /* ==================================================
-               VENUE GRID
-            ================================================== */
-
             <div className="profileShortlistGrid">
 
               {wishlist.map((item) => {
 
-                const venue =
-                  item.venue;
-
-                /*
-                 * If the wishlist exists but the venue
-                 * cannot be found, show a useful message
-                 * instead of silently returning null.
-                 */
+                const venue = item.venue;
 
                 if (!venue) {
                   return (
@@ -860,15 +880,10 @@ export default function ProfilePage() {
                 }
 
                 return (
-
                   <article
                     key={item.id}
                     className="profileVenueCard"
                   >
-
-                    {/* ==================================================
-                        IMAGE
-                    ================================================== */}
 
                     <div className="profileVenueImage">
 
@@ -888,9 +903,6 @@ export default function ProfilePage() {
 
                       )}
 
-
-                      {/* Remove button */}
-
                       <button
                         type="button"
                         className="profileVenueRemove"
@@ -904,43 +916,29 @@ export default function ProfilePage() {
                         }
                         aria-label={`Remove ${venue.name} from shortlist`}
                       >
-
                         {removingId === item.id
                           ? '…'
                           : '♥'}
-
                       </button>
 
                     </div>
 
 
-                    {/* ==================================================
-                        VENUE CONTENT
-                    ================================================== */}
-
                     <div className="profileVenueContent">
 
                       <span className="profileVenueLocation">
-
-                        {venue.city ||
-                          'India'}
-
+                        {venue.city || 'India'}
                       </span>
-
 
                       <h3>
                         {venue.name}
                       </h3>
 
-
                       {venue.description && (
-
                         <p>
                           {venue.description}
                         </p>
-
                       )}
-
 
                       <div className="profileVenueMeta">
 
@@ -967,20 +965,17 @@ export default function ProfilePage() {
 
                         )}
 
-
                         {venue.rating &&
                           venue.rating > 0 && (
 
-                            <span>
-                              ★ {venue.rating}
-                            </span>
+                          <span>
+                            ★ {venue.rating}
+                          </span>
 
-                          )}
+                        )}
 
                       </div>
 
-
-                      {/* Venue type */}
 
                       {venue.type && (
 
@@ -995,8 +990,6 @@ export default function ProfilePage() {
                       )}
 
 
-                      {/* View venue */}
-
                       <Link
                         href={`/venues/${venue.id}`}
                         className="smallBtn"
@@ -1008,13 +1001,10 @@ export default function ProfilePage() {
                     </div>
 
                   </article>
-
                 );
-
               })}
 
             </div>
-
           )}
 
         </section>
