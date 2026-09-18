@@ -1,8 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import {
+  useRouter,
+  useSearchParams,
+} from 'next/navigation';
+
+import {
+  FormEvent,
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
 import { createClient } from '../../lib/supabase-browser';
 import { venues } from '../../lib/data';
 
@@ -30,35 +41,88 @@ const initialForm: BookingForm = {
 
 const TEMP_BOOKING_FEE = 25000;
 
-export default function BookPage() {
+/*
+ * ============================================================
+ * BOOKING PAGE CONTENT
+ * ============================================================
+ */
+
+function BookPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const venueId = searchParams.get('venue') || '';
-  const mode = searchParams.get('mode');
+  /*
+   * ==========================================================
+   * URL PARAMETERS
+   * ==========================================================
+   */
+
+  const venueId =
+    searchParams.get('venue') || '';
+
+  const mode =
+    searchParams.get('mode');
+
+  /*
+   * ==========================================================
+   * FIND VENUE
+   * ==========================================================
+   */
 
   const venue = useMemo(
-    () => venues.find((v) => v.id === venueId),
+    () =>
+      venues.find(
+        (v) => v.id === venueId
+      ),
     [venueId]
   );
 
-  const [form, setForm] =
-    useState<BookingForm>(initialForm);
+  /*
+   * ==========================================================
+   * STATE
+   * ==========================================================
+   */
 
-  const [step, setStep] = useState<1 | 2>(1);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const [form, setForm] =
+    useState<BookingForm>(
+      initialForm
+    );
+
+  const [step, setStep] =
+    useState<1 | 2>(1);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [submitting, setSubmitting] =
+    useState(false);
+
+  const [userId, setUserId] =
+    useState<string | null>(null);
+
+  const [error, setError] =
+    useState('');
+
+  /*
+   * ==========================================================
+   * LOAD AUTHENTICATED USER
+   * ==========================================================
+   */
 
   useEffect(() => {
     async function loadUser() {
       try {
-        const supabase = createClient();
+        const supabase =
+          createClient();
 
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } =
+          await supabase.auth.getSession();
+
+        /*
+         * User is not logged in
+         */
 
         if (!session?.user) {
           router.replace(
@@ -66,17 +130,33 @@ export default function BookPage() {
               `/book?venue=${venueId}`
             )}`
           );
+
           return;
         }
 
-        setUserId(session.user.id);
+        /*
+         * Save user ID
+         */
+
+        setUserId(
+          session.user.id
+        );
+
+        /*
+         * Pre-fill email
+         */
 
         setForm((current) => ({
           ...current,
-          email: session.user.email || '',
+          email:
+            session.user.email || '',
         }));
       } catch (err) {
-        console.error('Booking auth error:', err);
+        console.error(
+          'Booking auth error:',
+          err
+        );
+
         setError(
           'Unable to load your account. Please try again.'
         );
@@ -88,6 +168,12 @@ export default function BookPage() {
     loadUser();
   }, [router, venueId]);
 
+  /*
+   * ==========================================================
+   * UPDATE FORM FIELD
+   * ==========================================================
+   */
+
   function updateField(
     field: keyof BookingForm,
     value: string
@@ -96,66 +182,235 @@ export default function BookPage() {
       ...current,
       [field]: value,
     }));
+
+    setError('');
   }
 
-  function handleContinue(event: FormEvent) {
+  /*
+   * ==========================================================
+   * CONTINUE TO REVIEW
+   * ==========================================================
+   */
+
+  function handleContinue(
+    event: FormEvent
+  ) {
     event.preventDefault();
+
     setError('');
+
+    /*
+     * Venue validation
+     */
 
     if (!venue) {
       setError(
         'The selected venue could not be found.'
       );
+
       return;
     }
+
+    /*
+     * Full name
+     */
 
     if (!form.fullName.trim()) {
-      setError('Please enter your full name.');
+      setError(
+        'Please enter your full name.'
+      );
+
       return;
     }
+
+    /*
+     * Email
+     */
 
     if (!form.email.trim()) {
-      setError('Please enter your email address.');
+      setError(
+        'Please enter your email address.'
+      );
+
       return;
     }
+
+    /*
+     * Mobile
+     */
 
     if (!form.mobile.trim()) {
-      setError('Please enter your mobile number.');
+      setError(
+        'Please enter your mobile number.'
+      );
+
       return;
     }
+
+    /*
+     * Event date
+     */
 
     if (!form.eventDate) {
-      setError('Please select your event date.');
+      setError(
+        'Please select your event date.'
+      );
+
       return;
     }
+
+    /*
+     * Event type
+     */
 
     if (!form.eventType) {
-      setError('Please select your event type.');
+      setError(
+        'Please select your event type.'
+      );
+
       return;
     }
+
+    /*
+     * Guest count
+     */
 
     if (!form.guestCount) {
-      setError('Please select your guest count.');
+      setError(
+        'Please select your guest count.'
+      );
+
       return;
     }
+
+    /*
+     * Budget
+     */
 
     if (!form.budget) {
-      setError('Please select your budget.');
+      setError(
+        'Please select your budget.'
+      );
+
       return;
     }
 
+    /*
+     * Everything is valid
+     */
+
     setStep(2);
+
     window.scrollTo({
       top: 0,
       behavior: 'smooth',
     });
   }
 
+  /*
+   * ==========================================================
+   * SEND BOOKING EMAIL
+   * ==========================================================
+   *
+   * Sends booking information to:
+   *
+   * thevenuesearch@gmail.com
+   *
+   * through:
+   *
+   * /api/booking-payment
+   * ==========================================================
+   */
+
+  async function sendBookingEmail(
+    stage: 'review' | 'payment'
+  ) {
+    /*
+     * TypeScript fix:
+     * Make sure venue exists before accessing venue.name.
+     */
+
+    if (!venue) {
+      throw new Error(
+        'The selected venue could not be found.'
+      );
+    }
+
+    const response = await fetch(
+      '/api/booking-payment',
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type':
+            'application/json',
+        },
+
+        body: JSON.stringify({
+          venueName:
+            venue.name,
+
+          venueId,
+
+          mode,
+
+          fullName:
+            form.fullName,
+
+          email:
+            form.email,
+
+          mobile:
+            form.mobile,
+
+          eventDate:
+            form.eventDate,
+
+          eventType:
+            form.eventType,
+
+          guestCount:
+            form.guestCount,
+
+          budget:
+            form.budget,
+
+          notes:
+            form.notes,
+
+          bookingFee:
+            TEMP_BOOKING_FEE,
+
+          stage,
+        }),
+      }
+    );
+
+    const result =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+          'Unable to send booking details.'
+      );
+    }
+
+    return result;
+  }
+
+  /*
+   * ==========================================================
+   * PROCEED TO PAYMENT
+   * ==========================================================
+   */
+
   async function handlePayment() {
     if (!userId || !venue) {
       setError(
         'Your session or venue information is unavailable.'
       );
+
       return;
     }
 
@@ -164,35 +419,50 @@ export default function BookPage() {
 
     try {
       /*
-       * PAYMENT INTEGRATION PLACEHOLDER
-       *
-       * Razorpay will be connected here later.
-       *
-       * The final flow will be:
-       *
-       * 1. Create booking/order on the server
-       * 2. Create Razorpay order
-       * 3. Open Razorpay Checkout
-       * 4. Verify payment
-       * 5. Confirm booking
+       * Send booking details to admin
+       * before proceeding to payment.
        */
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, 700)
+      const result =
+        await sendBookingEmail(
+          'payment'
+        );
+
+      console.log(
+        'Booking email sent:',
+        result
       );
 
+      /*
+       * ======================================================
+       * RAZORPAY WILL BE CONNECTED HERE
+       * ======================================================
+       */
+
       alert(
-        'Payment gateway is not connected yet. Your booking flow is ready for Razorpay integration.'
+        'Booking details sent successfully. Razorpay payment will open here.'
       );
     } catch (err) {
-      console.error('Payment error:', err);
+      console.error(
+        'Payment error:',
+        err
+      );
+
       setError(
-        'Something went wrong. Please try again.'
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong. Please try again.'
       );
     } finally {
       setSubmitting(false);
     }
   }
+
+  /*
+   * ==========================================================
+   * LOADING STATE
+   * ==========================================================
+   */
 
   if (loading) {
     return (
@@ -205,11 +475,19 @@ export default function BookPage() {
             placeItems: 'center',
           }}
         >
-          <p>Loading booking...</p>
+          <p>
+            Loading booking...
+          </p>
         </section>
       </main>
     );
   }
+
+  /*
+   * ==========================================================
+   * VENUE NOT FOUND
+   * ==========================================================
+   */
 
   if (!venue) {
     return (
@@ -225,8 +503,9 @@ export default function BookPage() {
             </h1>
 
             <p>
-              Please return to the venue collection
-              and select a venue again.
+              Please return to the venue
+              collection and select a venue
+              again.
             </p>
 
             <Link
@@ -241,10 +520,22 @@ export default function BookPage() {
     );
   }
 
+  /*
+   * ==========================================================
+   * PAGE
+   * ==========================================================
+   */
+
   return (
     <main className="page">
       <section className="section bookPage">
+
+        {/* ====================================================
+            HEADER
+        ==================================================== */}
+
         <div className="bookHeader">
+
           <Link
             href={`/venues/${venue.id}`}
             className="backLink"
@@ -269,9 +560,15 @@ export default function BookPage() {
               ? 'Tell us about your celebration and continue to review your booking details.'
               : 'Review your event details before proceeding to payment.'}
           </p>
+
         </div>
 
+        {/* ====================================================
+            BOOKING STEPS
+        ==================================================== */}
+
         <div className="bookingSteps">
+
           <div
             className={
               step === 1
@@ -279,11 +576,23 @@ export default function BookPage() {
                 : 'bookingStep complete'
             }
           >
-            <span>1</span>
+
+            <span>
+              1
+            </span>
+
             <div>
-              <strong>Booking details</strong>
-              <small>Your event information</small>
+
+              <strong>
+                Booking details
+              </strong>
+
+              <small>
+                Your event information
+              </small>
+
             </div>
+
           </div>
 
           <div
@@ -293,17 +602,41 @@ export default function BookPage() {
                 : 'bookingStep'
             }
           >
-            <span>2</span>
+
+            <span>
+              2
+            </span>
+
             <div>
-              <strong>Review & payment</strong>
-              <small>Confirm and pay</small>
+
+              <strong>
+                Review & payment
+              </strong>
+
+              <small>
+                Confirm and pay
+              </small>
+
             </div>
+
           </div>
+
         </div>
 
+        {/* ====================================================
+            BOOKING LAYOUT
+        ==================================================== */}
+
         <div className="bookingLayout">
+
+          {/* ==================================================
+              VENUE CARD
+          ================================================== */}
+
           <aside className="bookingVenueCard">
+
             <div className="bookingVenueImage">
+
               {venue.image ? (
                 <img
                   src={venue.image}
@@ -314,23 +647,31 @@ export default function BookPage() {
                   The Venue Search
                 </div>
               )}
+
             </div>
 
             <div className="bookingVenueBody">
+
               <span className="eyebrow">
-                {venue.type} · {venue.city}
+                {venue.type}
+                {' · '}
+                {venue.city}
               </span>
 
-              <h2>{venue.name}</h2>
+              <h2>
+                {venue.name}
+              </h2>
 
               <p>
                 {venue.desc}
               </p>
 
               <div className="bookingVenueMeta">
+
                 <span>
                   Up to{' '}
-                  {venue.capacity.toLocaleString()}{' '}
+                  {venue.capacity.toLocaleString()}
+                  {' '}
                   guests
                 </span>
 
@@ -339,6 +680,7 @@ export default function BookPage() {
                     ★ {venue.rating}
                   </span>
                 )}
+
               </div>
 
               {venue.verified && (
@@ -346,13 +688,33 @@ export default function BookPage() {
                   ✓ Verified venue
                 </span>
               )}
+
             </div>
+
           </aside>
 
+          {/* ==================================================
+              FORM / REVIEW
+          ================================================== */}
+
           <div className="bookingFormCard">
+
             {step === 1 ? (
-              <form onSubmit={handleContinue}>
+
+              /* =================================================
+                 STEP 1 — BOOKING DETAILS
+              ================================================= */
+
+              <form
+                onSubmit={handleContinue}
+              >
+
+                {/* =================================================
+                    YOUR DETAILS
+                ================================================= */}
+
                 <div className="formSection">
+
                   <span className="kicker">
                     YOUR DETAILS
                   </span>
@@ -362,12 +724,18 @@ export default function BookPage() {
                   </h2>
 
                   <div className="formGrid">
+
                     <label>
-                      <span>Full name *</span>
+
+                      <span>
+                        Full name *
+                      </span>
 
                       <input
                         type="text"
-                        value={form.fullName}
+                        value={
+                          form.fullName
+                        }
                         onChange={(e) =>
                           updateField(
                             'fullName',
@@ -377,14 +745,20 @@ export default function BookPage() {
                         placeholder="Your full name"
                         autoComplete="name"
                       />
+
                     </label>
 
                     <label>
-                      <span>Email address *</span>
+
+                      <span>
+                        Email address *
+                      </span>
 
                       <input
                         type="email"
-                        value={form.email}
+                        value={
+                          form.email
+                        }
                         onChange={(e) =>
                           updateField(
                             'email',
@@ -394,14 +768,20 @@ export default function BookPage() {
                         placeholder="you@example.com"
                         autoComplete="email"
                       />
+
                     </label>
 
                     <label>
-                      <span>Mobile number *</span>
+
+                      <span>
+                        Mobile number *
+                      </span>
 
                       <input
                         type="tel"
-                        value={form.mobile}
+                        value={
+                          form.mobile
+                        }
                         onChange={(e) =>
                           updateField(
                             'mobile',
@@ -411,11 +791,19 @@ export default function BookPage() {
                         placeholder="+91 98765 43210"
                         autoComplete="tel"
                       />
+
                     </label>
+
                   </div>
+
                 </div>
 
+                {/* =================================================
+                    EVENT DETAILS
+                ================================================= */}
+
                 <div className="formSection">
+
                   <span className="kicker">
                     EVENT DETAILS
                   </span>
@@ -425,12 +813,20 @@ export default function BookPage() {
                   </h2>
 
                   <div className="formGrid">
+
+                    {/* EVENT DATE */}
+
                     <label>
-                      <span>Event date *</span>
+
+                      <span>
+                        Event date *
+                      </span>
 
                       <input
                         type="date"
-                        value={form.eventDate}
+                        value={
+                          form.eventDate
+                        }
                         min={
                           new Date()
                             .toISOString()
@@ -443,13 +839,21 @@ export default function BookPage() {
                           )
                         }
                       />
+
                     </label>
 
+                    {/* EVENT TYPE */}
+
                     <label>
-                      <span>Event type *</span>
+
+                      <span>
+                        Event type *
+                      </span>
 
                       <select
-                        value={form.eventType}
+                        value={
+                          form.eventType
+                        }
                         onChange={(e) =>
                           updateField(
                             'eventType',
@@ -457,41 +861,59 @@ export default function BookPage() {
                           )
                         }
                       >
+
                         <option value="">
                           Select event type
                         </option>
+
                         <option value="Wedding">
                           Wedding
                         </option>
+
                         <option value="Reception">
                           Reception
                         </option>
+
                         <option value="Engagement">
                           Engagement
                         </option>
+
                         <option value="Mehendi">
                           Mehendi
                         </option>
+
                         <option value="Sangeet">
                           Sangeet
                         </option>
+
                         <option value="Haldi">
                           Haldi
                         </option>
+
                         <option value="Corporate Event">
                           Corporate Event
                         </option>
+
                         <option value="Other">
                           Other
                         </option>
+
                       </select>
+
                     </label>
 
+                    {/* GUEST COUNT */}
+
                     <label>
-                      <span>Guest count *</span>
+
+                      <span>
+                        Guest count *
+                      </span>
 
                       <select
-                        value={form.guestCount}
+                        value={
+                          form.guestCount
+                        }
                         onChange={(e) =>
                           updateField(
                             'guestCount',
@@ -499,32 +921,47 @@ export default function BookPage() {
                           )
                         }
                       >
+
                         <option value="">
                           Select guest count
                         </option>
+
                         <option value="50–100">
                           50–100
                         </option>
+
                         <option value="100–200">
                           100–200
                         </option>
+
                         <option value="200–400">
                           200–400
                         </option>
+
                         <option value="400–600">
                           400–600
                         </option>
+
                         <option value="600+">
                           600+
                         </option>
+
                       </select>
+
                     </label>
 
+                    {/* BUDGET */}
+
                     <label>
-                      <span>Wedding budget *</span>
+
+                      <span>
+                        Wedding budget *
+                      </span>
 
                       <select
-                        value={form.budget}
+                        value={
+                          form.budget
+                        }
                         onChange={(e) =>
                           updateField(
                             'budget',
@@ -532,35 +969,52 @@ export default function BookPage() {
                           )
                         }
                       >
+
                         <option value="">
                           Select budget
                         </option>
+
                         <option value="₹5L – ₹10L">
                           ₹5L – ₹10L
                         </option>
+
                         <option value="₹10L – ₹20L">
                           ₹10L – ₹20L
                         </option>
+
                         <option value="₹20L – ₹40L">
                           ₹20L – ₹40L
                         </option>
+
                         <option value="₹40L – ₹75L">
                           ₹40L – ₹75L
                         </option>
+
                         <option value="₹75L+">
                           ₹75L+
                         </option>
+
                       </select>
+
                     </label>
+
                   </div>
 
+                  {/* NOTES */}
+
                   <label className="fullWidthField">
+
                     <span>
-                      Notes <small>Optional</small>
+                      Notes{' '}
+                      <small>
+                        Optional
+                      </small>
                     </span>
 
                     <textarea
-                      value={form.notes}
+                      value={
+                        form.notes
+                      }
                       onChange={(e) =>
                         updateField(
                           'notes',
@@ -570,8 +1024,12 @@ export default function BookPage() {
                       placeholder="Tell us anything important about your celebration..."
                       rows={5}
                     />
+
                   </label>
+
                 </div>
+
+                {/* ERROR */}
 
                 {error && (
                   <div className="bookingError">
@@ -579,18 +1037,32 @@ export default function BookPage() {
                   </div>
                 )}
 
+                {/* ACTION */}
+
                 <div className="bookingActionRow">
+
                   <button
                     type="submit"
                     className="primaryBtn large"
+                    disabled={submitting}
                   >
                     Review booking →
                   </button>
+
                 </div>
+
               </form>
+
             ) : (
+
+              /* =================================================
+                 STEP 2 — REVIEW
+              ================================================= */
+
               <div className="reviewContent">
+
                 <div className="formSection">
+
                   <span className="kicker">
                     BOOKING SUMMARY
                   </span>
@@ -600,47 +1072,81 @@ export default function BookPage() {
                   </h2>
 
                   <div className="reviewRows">
+
                     <div>
-                      <span>Venue</span>
+
+                      <span>
+                        Venue
+                      </span>
+
                       <strong>
                         {venue.name}
                       </strong>
+
                     </div>
 
                     <div>
-                      <span>Location</span>
+
+                      <span>
+                        Location
+                      </span>
+
                       <strong>
+
                         {venue.city}
+
                         {venue.destination
                           ? `, ${venue.destination}`
                           : ''}
+
                       </strong>
+
                     </div>
 
                     <div>
-                      <span>Guest</span>
+
+                      <span>
+                        Guest
+                      </span>
+
                       <strong>
                         {form.fullName}
                       </strong>
+
                     </div>
 
                     <div>
-                      <span>Email</span>
+
+                      <span>
+                        Email
+                      </span>
+
                       <strong>
                         {form.email}
                       </strong>
+
                     </div>
 
                     <div>
-                      <span>Mobile</span>
+
+                      <span>
+                        Mobile
+                      </span>
+
                       <strong>
                         {form.mobile}
                       </strong>
+
                     </div>
 
                     <div>
-                      <span>Event date</span>
+
+                      <span>
+                        Event date
+                      </span>
+
                       <strong>
+
                         {new Date(
                           `${form.eventDate}T00:00:00`
                         ).toLocaleDateString(
@@ -651,43 +1157,73 @@ export default function BookPage() {
                             year: 'numeric',
                           }
                         )}
+
                       </strong>
+
                     </div>
 
                     <div>
-                      <span>Event type</span>
+
+                      <span>
+                        Event type
+                      </span>
+
                       <strong>
                         {form.eventType}
                       </strong>
+
                     </div>
 
                     <div>
-                      <span>Guests</span>
+
+                      <span>
+                        Guests
+                      </span>
+
                       <strong>
                         {form.guestCount}
                       </strong>
+
                     </div>
 
                     <div>
-                      <span>Wedding budget</span>
+
+                      <span>
+                        Wedding budget
+                      </span>
+
                       <strong>
                         {form.budget}
                       </strong>
+
                     </div>
 
                     {form.notes && (
                       <div>
-                        <span>Notes</span>
+
+                        <span>
+                          Notes
+                        </span>
+
                         <strong>
                           {form.notes}
                         </strong>
+
                       </div>
                     )}
+
                   </div>
+
                 </div>
 
+                {/* =================================================
+                    PAYMENT SUMMARY
+                ================================================= */}
+
                 <div className="paymentSummary">
+
                   <div>
+
                     <span>
                       Instant booking fee
                     </span>
@@ -698,6 +1234,7 @@ export default function BookPage() {
                         'en-IN'
                       )}
                     </strong>
+
                   </div>
 
                   <small>
@@ -707,7 +1244,10 @@ export default function BookPage() {
                     to your venue booking configuration
                     before Razorpay goes live.
                   </small>
+
                 </div>
+
+                {/* ERROR */}
 
                 {error && (
                   <div className="bookingError">
@@ -715,13 +1255,19 @@ export default function BookPage() {
                   </div>
                 )}
 
+                {/* =================================================
+                    ACTIONS
+                ================================================= */}
+
                 <div className="bookingActionRow reviewActions">
+
                   <button
                     type="button"
                     className="secondaryBtn"
                     onClick={() => {
                       setError('');
                       setStep(1);
+
                       window.scrollTo({
                         top: 0,
                         behavior: 'smooth',
@@ -735,19 +1281,68 @@ export default function BookPage() {
                   <button
                     type="button"
                     className="primaryBtn large"
-                    onClick={handlePayment}
+                    onClick={
+                      handlePayment
+                    }
                     disabled={submitting}
                   >
+
                     {submitting
                       ? 'Preparing payment...'
                       : 'Proceed to payment →'}
+
                   </button>
+
                 </div>
+
               </div>
+
             )}
+
           </div>
+
         </div>
+
       </section>
     </main>
+  );
+}
+
+/*
+ * ============================================================
+ * PUBLIC BOOK PAGE
+ * ============================================================
+ *
+ * Next.js 16 requires useSearchParams() to be inside
+ * a Suspense boundary during production builds.
+ * ============================================================
+ */
+
+export default function BookPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="page">
+
+          <section
+            className="section"
+            style={{
+              minHeight: '70vh',
+              display: 'grid',
+              placeItems: 'center',
+            }}
+          >
+
+            <p>
+              Loading booking...
+            </p>
+
+          </section>
+
+        </main>
+      }
+    >
+      <BookPageContent />
+    </Suspense>
   );
 }
