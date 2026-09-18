@@ -8,16 +8,84 @@ import { venues } from '../lib/data';
 import { VenueCard } from '../components/VenueCard';
 
 export default function Home() {
-  const [country, setCountry] = useState('India');
+  const [destination, setDestination] = useState('');
   const [venue, setVenue] = useState('');
   const [guests, setGuests] = useState('');
 
-  const selectedVenue = venues.find((v) => v.id === venue);
+  /*
+   * =====================================================
+   * DESTINATIONS
+   * =====================================================
+   *
+   * Get the destinations directly from the venue data.
+   * This keeps the destination list synchronized with
+   * the venues available on the platform.
+   */
+
+  const destinations = Array.from(
+    new Set(
+      venues
+        .map((v) => v.destination)
+        .filter(Boolean)
+    )
+  );
+
+  /*
+   * =====================================================
+   * FILTER VENUES BY DESTINATION
+   * =====================================================
+   *
+   * When a destination is selected, only venues from
+   * that destination will appear in the Venue dropdown.
+   */
+
+  const destinationVenues = destination
+    ? venues.filter(
+        (v) =>
+          v.destination === destination
+      )
+    : venues;
+
+  /*
+   * =====================================================
+   * SELECTED VENUE
+   * =====================================================
+   */
+
+  const selectedVenue =
+    destinationVenues.find(
+      (v) => v.id === venue
+    );
+
+  /*
+   * =====================================================
+   * EXPLORE URL
+   * =====================================================
+   */
 
   const exploreHref =
-    `/explore?country=${encodeURIComponent(country)}` +
+    `/explore?destination=${encodeURIComponent(
+      destination
+    )}` +
     `${venue ? `&venue=${encodeURIComponent(venue)}` : ''}` +
     `${guests ? `&guests=${encodeURIComponent(guests)}` : ''}`;
+
+  /*
+   * =====================================================
+   * DESTINATION CHANGE
+   * =====================================================
+   *
+   * When the destination changes, reset the selected
+   * venue because the previous venue may belong to
+   * another destination.
+   */
+
+  function handleDestinationChange(
+    value: string
+  ) {
+    setDestination(value);
+    setVenue('');
+  }
 
   return (
     <main>
@@ -44,9 +112,17 @@ export default function Home() {
 
         <div className="heroContent">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            initial={{
+              opacity: 0,
+              y: 30,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.8,
+            }}
           >
             <span className="kicker">
               THE NEW STANDARD FOR VENUE DISCOVERY
@@ -55,13 +131,15 @@ export default function Home() {
             <h1>
               Find the place
               <br />
-              <em>your story deserves.</em>
+              <em>
+                your story deserves.
+              </em>
             </h1>
 
             <p>
-              Verified destination wedding venues, transparent
-              decisions and a booking journey built around
-              certainty.
+              Verified destination wedding venues,
+              transparent decisions and a booking journey
+              built around certainty.
             </p>
 
             {/* =================================================
@@ -69,56 +147,92 @@ export default function Home() {
             ================================================= */}
 
             <div className="searchBox">
+
+              {/* =================================================
+                  DESTINATION
+              ================================================= */}
+
               <div>
-                <small>Country</small>
+                <small>
+                  Destination
+                </small>
 
                 <select
-                  value={country}
+                  value={destination}
                   onChange={(e) =>
-                    setCountry(e.target.value)
+                    handleDestinationChange(
+                      e.target.value
+                    )
                   }
                 >
-                  <option value="India">India</option>
-                  <option value="United Arab Emirates">
-                    United Arab Emirates
+                  <option value="">
+                    All destinations
                   </option>
-                  <option value="Thailand">
-                    Thailand
-                  </option>
+
+                  {destinations.map(
+                    (item) => (
+                      <option
+                        key={item}
+                        value={item}
+                      >
+                        {item}
+                      </option>
+                    )
+                  )}
                 </select>
               </div>
 
+              {/* =================================================
+                  VENUE
+              ================================================= */}
+
               <div>
-                <small>Venue</small>
+                <small>
+                  Venue
+                </small>
 
                 <select
                   value={venue}
                   onChange={(e) =>
-                    setVenue(e.target.value)
+                    setVenue(
+                      e.target.value
+                    )
                   }
                 >
                   <option value="">
-                    All venues
+                    {destination
+                      ? `All ${destination} venues`
+                      : 'All venues'}
                   </option>
 
-                  {venues.map((v) => (
-                    <option
-                      key={v.id}
-                      value={v.id}
-                    >
-                      {v.name}
-                    </option>
-                  ))}
+                  {destinationVenues.map(
+                    (v) => (
+                      <option
+                        key={v.id}
+                        value={v.id}
+                      >
+                        {v.name}
+                      </option>
+                    )
+                  )}
                 </select>
               </div>
 
+              {/* =================================================
+                  GUESTS
+              ================================================= */}
+
               <div>
-                <small>Guests</small>
+                <small>
+                  Guests
+                </small>
 
                 <select
                   value={guests}
                   onChange={(e) =>
-                    setGuests(e.target.value)
+                    setGuests(
+                      e.target.value
+                    )
                   }
                 >
                   <option value="">
@@ -146,6 +260,10 @@ export default function Home() {
                   </option>
                 </select>
               </div>
+
+              {/* =================================================
+                  EXPLORE BUTTON
+              ================================================= */}
 
               <Link
                 data-cursor="open"
@@ -191,18 +309,33 @@ export default function Home() {
 
         <div className="stats">
           <div>
-            <strong>30–40%</strong>
-            <span>planning time saved</span>
+            <strong>
+              30–40%
+            </strong>
+
+            <span>
+              planning time saved
+            </span>
           </div>
 
           <div>
-            <strong>100%</strong>
-            <span>verified-first approach</span>
+            <strong>
+              100%
+            </strong>
+
+            <span>
+              verified-first approach
+            </span>
           </div>
 
           <div>
-            <strong>0</strong>
-            <span>double-booking tolerance</span>
+            <strong>
+              0
+            </strong>
+
+            <span>
+              double-booking tolerance
+            </span>
           </div>
         </div>
       </section>
@@ -229,17 +362,21 @@ export default function Home() {
         </div>
 
         <div className="venueGrid">
-          {venues.slice(0, 3).map((v) => (
-            <VenueCard
-              key={v.id}
-              v={{
-                ...v,
-                slug: v.id,
-                capacityMin: v.capacity,
-                description: v.desc,
-              }}
-            />
-          ))}
+          {venues
+            .slice(0, 3)
+            .map((v) => (
+              <VenueCard
+                key={v.id}
+                v={{
+                  ...v,
+                  slug: v.id,
+                  capacityMin:
+                    v.capacity,
+                  description:
+                    v.desc,
+                }}
+              />
+            ))}
         </div>
       </section>
 
@@ -282,25 +419,33 @@ export default function Home() {
           <span>
             01
             <br />
-            <b>Discover</b>
+            <b>
+              Discover
+            </b>
           </span>
 
           <span>
             02
             <br />
-            <b>Compare</b>
+            <b>
+              Compare
+            </b>
           </span>
 
           <span>
             03
             <br />
-            <b>Hold</b>
+            <b>
+              Hold
+            </b>
           </span>
 
           <span>
             04
             <br />
-            <b>Confirm</b>
+            <b>
+              Confirm
+            </b>
           </span>
         </div>
       </section>
@@ -336,30 +481,32 @@ export default function Home() {
               'Modern Royalty',
               venues[5]?.image,
             ],
-          ].map(([name, image], index) => (
-            <Link
-              href="/collections"
-              className="collection"
-              key={String(name)}
-            >
-              {image && (
-                <img
-                  src={String(image)}
-                  alt={String(name)}
-                />
-              )}
+          ].map(
+            ([name, image], index) => (
+              <Link
+                href="/collections"
+                className="collection"
+                key={String(name)}
+              >
+                {image && (
+                  <img
+                    src={String(image)}
+                    alt={String(name)}
+                  />
+                )}
 
-              <div>
-                <small>
-                  0{index + 1}
-                </small>
+                <div>
+                  <small>
+                    0{index + 1}
+                  </small>
 
-                <h3>
-                  {String(name)}
-                </h3>
-              </div>
-            </Link>
-          ))}
+                  <h3>
+                    {String(name)}
+                  </h3>
+                </div>
+              </Link>
+            )
+          )}
         </div>
       </section>
     </main>
