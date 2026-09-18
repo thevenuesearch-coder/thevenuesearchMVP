@@ -2,120 +2,39 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useMemo, useState } from 'react';
-import { destinations, venues } from '../lib/data';
+import { useState } from 'react';
+
+import { venues } from '../lib/data';
 import { VenueCard } from '../components/VenueCard';
 
 export default function Home() {
-  const [destination, setDestination] = useState('');
+  const [country, setCountry] = useState('India');
   const [venue, setVenue] = useState('');
   const [guests, setGuests] = useState('');
 
-  /*
-   * ---------------------------------------------------------
-   * FILTER VENUES BY SELECTED DESTINATION
-   * ---------------------------------------------------------
-   */
+  const selectedVenue = venues.find((v) => v.id === venue);
 
-  const destinationVenues = useMemo(() => {
-    if (!destination) {
-      return venues;
-    }
-
-    return venues.filter(
-      (v) => v.destination === destination
-    );
-  }, [destination]);
-
-  /*
-   * ---------------------------------------------------------
-   * SELECTED VENUE
-   * ---------------------------------------------------------
-   */
-
-  const selectedVenue = venues.find(
-    (v) =>
-      v.id === venue &&
-      (!destination || v.destination === destination)
-  );
-
-  /*
-   * ---------------------------------------------------------
-   * EXPLORE URL
-   * ---------------------------------------------------------
-   */
-
-  const exploreParams = new URLSearchParams();
-
-  if (destination) {
-    exploreParams.set(
-      'destination',
-      destination
-    );
-  }
-
-  if (venue) {
-    exploreParams.set(
-      'venue',
-      venue
-    );
-  }
-
-  if (guests) {
-    exploreParams.set(
-      'guests',
-      guests
-    );
-  }
-
-  const exploreHref = `/explore${
-    exploreParams.toString()
-      ? `?${exploreParams.toString()}`
-      : ''
-  }`;
-
-  /*
-   * ---------------------------------------------------------
-   * DESTINATION CHANGE
-   * ---------------------------------------------------------
-   *
-   * When the user changes destination,
-   * reset the previously selected venue.
-   *
-   * Example:
-   * Bali → AYANA Bali
-   * then change to Goa
-   * → venue selection resets automatically.
-   *
-   * ---------------------------------------------------------
-   */
-
-  function handleDestinationChange(
-    value: string
-  ) {
-    setDestination(value);
-    setVenue('');
-  }
+  const exploreHref =
+    `/explore?country=${encodeURIComponent(country)}` +
+    `${venue ? `&venue=${encodeURIComponent(venue)}` : ''}` +
+    `${guests ? `&guests=${encodeURIComponent(guests)}` : ''}`;
 
   return (
     <main>
-
       {/* =====================================================
           HERO
       ===================================================== */}
 
       <section className="hero">
-
         <div className="heroVideo">
           <video
             autoPlay
             muted
             loop
             playsInline
-            poster={venues[0].image}
+            poster={venues[0]?.image}
             src={
-              process.env
-                .NEXT_PUBLIC_HERO_VIDEO_URL ||
+              process.env.NEXT_PUBLIC_HERO_VIDEO_URL ||
               undefined
             }
           />
@@ -124,21 +43,11 @@ export default function Home() {
         <div className="heroShade" />
 
         <div className="heroContent">
-
           <motion.div
-            initial={{
-              opacity: 0,
-              y: 30,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            transition={{
-              duration: 0.8,
-            }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
           >
-
             <span className="kicker">
               THE NEW STANDARD FOR VENUE DISCOVERY
             </span>
@@ -146,117 +55,72 @@ export default function Home() {
             <h1>
               Find the place
               <br />
-              <em>
-                your story deserves.
-              </em>
+              <em>your story deserves.</em>
             </h1>
 
             <p>
-              Verified destination wedding
-              venues, transparent decisions and
-              a booking journey built around
+              Verified destination wedding venues, transparent
+              decisions and a booking journey built around
               certainty.
             </p>
 
-
             {/* =================================================
-                SEARCH BOX
+                HERO SEARCH
             ================================================= */}
 
             <div className="searchBox">
-
-              {/* -------------------------------------------------
-                  DESTINATION
-              ------------------------------------------------- */}
-
               <div>
-                <small>
-                  Destination
-                </small>
+                <small>Country</small>
 
                 <select
-                  value={destination}
+                  value={country}
                   onChange={(e) =>
-                    handleDestinationChange(
-                      e.target.value
-                    )
+                    setCountry(e.target.value)
                   }
                 >
-
-                  <option value="">
-                    All destinations
+                  <option value="India">India</option>
+                  <option value="United Arab Emirates">
+                    United Arab Emirates
                   </option>
-
-                  {destinations.map(
-                    (item) => (
-                      <option
-                        key={item}
-                        value={item}
-                      >
-                        {item}
-                      </option>
-                    )
-                  )}
-
+                  <option value="Thailand">
+                    Thailand
+                  </option>
                 </select>
               </div>
 
-
-              {/* -------------------------------------------------
-                  VENUE
-              ------------------------------------------------- */}
-
               <div>
-                <small>
-                  Venue
-                </small>
+                <small>Venue</small>
 
                 <select
                   value={venue}
                   onChange={(e) =>
-                    setVenue(
-                      e.target.value
-                    )
+                    setVenue(e.target.value)
                   }
                 >
-
                   <option value="">
                     All venues
                   </option>
 
-                  {destinationVenues.map(
-                    (v) => (
-                      <option
-                        key={v.id}
-                        value={v.id}
-                      >
-                        {v.name}
-                      </option>
-                    )
-                  )}
-
+                  {venues.map((v) => (
+                    <option
+                      key={v.id}
+                      value={v.id}
+                    >
+                      {v.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-
-              {/* -------------------------------------------------
-                  GUESTS
-              ------------------------------------------------- */}
-
               <div>
-                <small>
-                  Guests
-                </small>
+                <small>Guests</small>
 
                 <select
                   value={guests}
                   onChange={(e) =>
-                    setGuests(
-                      e.target.value
-                    )
+                    setGuests(e.target.value)
                   }
                 >
-
                   <option value="">
                     Guest count
                   </option>
@@ -280,14 +144,8 @@ export default function Home() {
                   <option value="600+">
                     600+
                   </option>
-
                 </select>
               </div>
-
-
-              {/* -------------------------------------------------
-                  EXPLORE BUTTON
-              ------------------------------------------------- */}
 
               <Link
                 data-cursor="open"
@@ -300,142 +158,97 @@ export default function Home() {
               >
                 Explore venues →
               </Link>
-
             </div>
-
           </motion.div>
-
         </div>
-
-
-        {/* =====================================================
-            HERO NOTE
-        ===================================================== */}
 
         <div className="heroNote">
-          A trusted infrastructure layer for
-          weddings & events
-
-          <span>
-            •
-          </span>
-
-          Destination wedding venues
+          A trusted infrastructure layer for weddings & events
+          <span>•</span>
+          Destination venues across India & beyond
         </div>
-
       </section>
-
 
       {/* =====================================================
           STATEMENT
       ===================================================== */}
 
       <section className="statement">
-
         <span className="kicker">
           WHY VENUE SEARCH
         </span>
 
         <h2>
-          Venue discovery shouldn't feel
-          like a negotiation.
+          Venue discovery shouldn't feel like a negotiation.
         </h2>
 
         <p>
-          Today, couples and planners face
-          fragmented listings, opaque quotes,
-          unverified information and manual
-          coordination. We turn that chaos into
-          a clear, data-backed decision journey.
+          Today, couples and planners face fragmented listings,
+          opaque quotes, unverified information and manual
+          coordination. We turn that chaos into a clear,
+          data-backed decision journey.
         </p>
 
         <div className="stats">
-
           <div>
-            <strong>
-              30–40%
-            </strong>
-
-            <span>
-              planning time saved
-            </span>
+            <strong>30–40%</strong>
+            <span>planning time saved</span>
           </div>
 
           <div>
-            <strong>
-              100%
-            </strong>
-
-            <span>
-              verified-first approach
-            </span>
+            <strong>100%</strong>
+            <span>verified-first approach</span>
           </div>
 
           <div>
-            <strong>
-              0
-            </strong>
-
-            <span>
-              double-booking tolerance
-            </span>
+            <strong>0</strong>
+            <span>double-booking tolerance</span>
           </div>
-
         </div>
-
       </section>
 
-
       {/* =====================================================
-          CURATED VENUES
+          FEATURED VENUES
       ===================================================== */}
 
       <section className="darkSection">
-
         <div className="sectionHead">
-
           <div>
-
             <span className="kicker">
               CURATED FOR THE DESTINATION WEDDING
             </span>
 
             <h2>
-              Udaipur, selected beautifully.
+              Discover beautiful venues.
             </h2>
-
           </div>
 
           <Link href="/explore">
             View all venues →
           </Link>
-
         </div>
 
         <div className="venueGrid">
-
-          {venues
-            .slice(0, 3)
-            .map((v) => (
-              <VenueCard
-                key={v.id}
-                v={v}
-              />
-            ))}
-
+          {venues.slice(0, 3).map((v) => (
+            <VenueCard
+              key={v.id}
+              v={{
+                ...v,
+                slug: v.id,
+                capacityMin: v.capacity,
+                description: v.desc,
+              }}
+            />
+          ))}
         </div>
-
       </section>
-
 
       {/* =====================================================
           EXPERIENCE
       ===================================================== */}
 
       <section className="experience">
-
         <div className="experienceText">
-
           <span className="kicker">
             FROM SEARCH TO CERTAINTY
           </span>
@@ -445,12 +258,11 @@ export default function Home() {
           </h2>
 
           <p>
-            One wedding view connects the main
-            venue with mehendi, sangeet and
-            haldi spaces. Enquiries, Instant
-            Holds and Instant Books stay clearly
-            separated so every decision has a
-            defined next step.
+            One wedding view connects the main venue with
+            mehendi, sangeet and haldi spaces. Enquiries,
+            Instant Holds and Instant Books stay clearly
+            separated so every decision has a defined next
+            step.
           </p>
 
           <Link
@@ -460,12 +272,9 @@ export default function Home() {
           >
             See how it works
           </Link>
-
         </div>
 
-
         <div className="orbit">
-
           <div className="orbitCenter">
             TVS
           </div>
@@ -473,46 +282,34 @@ export default function Home() {
           <span>
             01
             <br />
-            <b>
-              Discover
-            </b>
+            <b>Discover</b>
           </span>
 
           <span>
             02
             <br />
-            <b>
-              Compare
-            </b>
+            <b>Compare</b>
           </span>
 
           <span>
             03
             <br />
-            <b>
-              Hold
-            </b>
+            <b>Hold</b>
           </span>
 
           <span>
             04
             <br />
-            <b>
-              Confirm
-            </b>
+            <b>Confirm</b>
           </span>
-
         </div>
-
       </section>
-
 
       {/* =====================================================
           COLLECTIONS
       ===================================================== */}
 
       <section className="collections">
-
         <span className="kicker">
           INSPIRE THE DECISION
         </span>
@@ -522,56 +319,49 @@ export default function Home() {
         </h2>
 
         <div className="collectionRow">
-
           {[
             [
               'Royal Udaipur',
-              venues[0].image,
+              venues[0]?.image,
             ],
             [
               'Lakefront Grandeur',
-              venues[2].image,
+              venues[2]?.image,
             ],
             [
               'Intimate Retreats',
-              venues[4].image,
+              venues[4]?.image,
             ],
             [
               'Modern Royalty',
-              venues[5].image,
+              venues[5]?.image,
             ],
-          ].map(
-            ([n, img], i) => (
-              <Link
-                href="/collections"
-                className="collection"
-                key={n as string}
-              >
-
+          ].map(([name, image], index) => (
+            <Link
+              href="/collections"
+              className="collection"
+              key={String(name)}
+            >
+              {image && (
                 <img
-                  src={img as string}
+                  src={String(image)}
+                  alt={String(name)}
                 />
+              )}
 
-                <div>
+              <div>
+                <small>
+                  0{index + 1}
+                </small>
 
-                  <small>
-                    0{i + 1}
-                  </small>
-
-                  <h3>
-                    {n}
-                  </h3>
-
-                </div>
-
-              </Link>
-            )
-          )}
-
+                <h3>
+                  {String(name)}
+                </h3>
+              </div>
+            </Link>
+          ))}
         </div>
-
       </section>
-
     </main>
   );
 }

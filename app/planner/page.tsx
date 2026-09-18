@@ -1,71 +1,72 @@
 'use client';
 
 import {
-  useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
 import { createClient } from '../../lib/supabase-browser';
 
-type Section =
-  | 'Overview'
-  | 'My Weddings'
-  | 'Shortlist'
-  | 'Requests'
-  | 'Calendar';
-
 type Wedding = {
   id: string;
   title: string;
   city: string | null;
+  owner_id: string;
   created_at: string;
+};
+
+type ShortlistVenue = {
+  id: string;
+  name: string;
+  slug: string;
+  city: string | null;
+  type: string | null;
+  capacity_max: number | null;
+  description: string | null;
 };
 
 type ShortlistItem = {
   id: string;
   venue_id: string;
   created_at: string;
-  venue: {
-    id: string;
-    name: string;
-    slug: string;
-    city: string | null;
-    type: string | null;
-    capacity_max: number | null;
-    description: string | null;
-  } | null;
+  venue: ShortlistVenue | null;
+};
+
+type BookingVenue = {
+  id: string;
+  name: string;
+  slug: string;
+  city: string | null;
 };
 
 type BookingRequest = {
   id: string;
   venue_id: string;
-  event_date: string;
-  guest_count: number | null;
-  event_type: string | null;
-  status: string;
-  notes: string | null;
   created_at: string;
-  venue: {
-    id: string;
-    name: string;
-    slug: string;
-    city: string | null;
-  } | null;
+  event_date: string | null;
+  event_type: string | null;
+  guest_count: number | null;
+  notes: string | null;
+  status: string | null;
+  venue: BookingVenue | null;
 };
 
+type PlannerSection =
+  | 'Overview'
+  | 'My Weddings'
+  | 'Shortlist'
+  | 'Requests'
+  | 'Calendar';
+
 export default function Planner() {
+  const supabase = createClient();
+
   const [active, setActive] =
-    useState<Section>('Overview');
+    useState<PlannerSection>('Overview');
 
   const [user, setUser] =
     useState<any>(null);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState('');
 
   const [weddings, setWeddings] =
     useState<Wedding[]>([]);
@@ -76,41 +77,39 @@ export default function Planner() {
   const [requests, setRequests] =
     useState<BookingRequest[]>([]);
 
-  const [showNewWedding, setShowNewWedding] =
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState('');
+
+  const [showWeddingModal, setShowWeddingModal] =
     useState(false);
 
   const [weddingTitle, setWeddingTitle] =
     useState('');
 
   const [weddingCity, setWeddingCity] =
-    useState('Udaipur');
+    useState('');
 
   const [creatingWedding, setCreatingWedding] =
     useState(false);
 
-  const [actionMessage, setActionMessage] =
-    useState('');
+  /* =====================================================
+     LOAD PLANNER DATA
+  ===================================================== */
 
-  /*
-   * ========================================================
-   * LOAD ALL PLANNER DATA
-   * ========================================================
-   */
+  useEffect(() => {
+    let mounted = true;
 
-  const loadPlannerData = useCallback(
-    async () => {
-      setLoading(true);
-      setError('');
-
+    async function loadPlanner() {
       try {
-        const supabase =
-          createClient();
+        setLoading(true);
+        setError('');
 
-        /*
-         * ----------------------------------------------------
-         * CURRENT USER
-         * ----------------------------------------------------
-         */
+        /* ---------------------------------------------
+           CURRENT USER
+        --------------------------------------------- */
 
         const {
           data: {
@@ -125,19 +124,17 @@ export default function Planner() {
         }
 
         if (!currentUser) {
-          window.location.href =
-            '/login';
-
+          window.location.href = '/login';
           return;
         }
 
+        if (!mounted) return;
+
         setUser(currentUser);
 
-        /*
-         * ----------------------------------------------------
-         * WEDDINGS
-         * ----------------------------------------------------
-         */
+        /* ---------------------------------------------
+           WEDDINGS
+        --------------------------------------------- */
 
         const {
           data: weddingData,
@@ -146,7 +143,13 @@ export default function Planner() {
           await supabase
             .from('weddings')
             .select(
-              'id, title, city, created_at'
+              `
+              id,
+              title,
+              city,
+              owner_id,
+              created_at
+              `
             )
             .eq(
               'owner_id',
@@ -160,18 +163,15 @@ export default function Planner() {
             );
 
         if (weddingError) {
-          throw weddingError;
+          console.warn(
+            'Wedding loading warning:',
+            weddingError
+          );
         }
 
-        setWeddings(
-          weddingData || []
-        );
-
-        /*
-         * ----------------------------------------------------
-         * SHORTLIST
-         * ----------------------------------------------------
-         */
+        /* ---------------------------------------------
+           WISHLIST / SHORTLIST
+        --------------------------------------------- */
 
         const {
           data: shortlistData,
@@ -181,18 +181,18 @@ export default function Planner() {
             .from('wishlists')
             .select(
               `
+              id,
+              venue_id,
+              created_at,
+              venue:venues(
                 id,
-                venue_id,
-                created_at,
-                venue:venues (
-                  id,
-                  name,
-                  slug,
-                  city,
-                  type,
-                  capacity_max,
-                  description
-                )
+                name,
+                slug,
+                city,
+                type,
+                capacity_max,
+                description
+              )
               `
             )
             .eq(
@@ -208,23 +208,35 @@ export default function Planner() {
 
         if (shortlistError) {
           console.warn(
-            'Planner shortlist loading warning:',
+            'Shortlist loading warning:',
             shortlistError
-          );
-
-          setShortlist([]);
-        } else {
-          setShortlist(
-            (shortlistData ||
-              []) as ShortlistItem[]
           );
         }
 
-        /*
-         * ----------------------------------------------------
-         * BOOKING REQUESTS
-         * ----------------------------------------------------
-         */
+        /* ---------------------------------------------
+           NORMALIZE SUPABASE VENUE ARRAY
+        --------------------------------------------- */
+
+        const normalizedShortlist: ShortlistItem[] =
+          (shortlistData || [])
+            .filter((item: any) =>
+              Array.isArray(item.venue)
+                ? item.venue.length > 0
+                : Boolean(item.venue)
+            )
+            .map((item: any) => ({
+              id: item.id,
+              venue_id: item.venue_id,
+              created_at: item.created_at,
+
+              venue: Array.isArray(item.venue)
+                ? item.venue[0] || null
+                : item.venue || null,
+            }));
+
+        /* ---------------------------------------------
+           BOOKING REQUESTS
+        --------------------------------------------- */
 
         const {
           data: requestData,
@@ -234,20 +246,20 @@ export default function Planner() {
             .from('booking_requests')
             .select(
               `
+              id,
+              venue_id,
+              created_at,
+              event_date,
+              event_type,
+              guest_count,
+              notes,
+              status,
+              venue:venues(
                 id,
-                venue_id,
-                event_date,
-                guest_count,
-                event_type,
-                status,
-                notes,
-                created_at,
-                venue:venues (
-                  id,
-                  name,
-                  slug,
-                  city
-                )
+                name,
+                slug,
+                city
+              )
               `
             )
             .eq(
@@ -263,392 +275,194 @@ export default function Planner() {
 
         if (requestError) {
           console.warn(
-            'Planner requests loading warning:',
+            'Booking request loading warning:',
             requestError
           );
-
-          setRequests([]);
-        } else {
-          setRequests(
-            (requestData ||
-              []) as BookingRequest[]
-          );
         }
+
+        /* ---------------------------------------------
+           NORMALIZE BOOKING VENUE ARRAY
+        --------------------------------------------- */
+
+        const normalizedRequests: BookingRequest[] =
+          (requestData || [])
+            .filter((item: any) =>
+              Array.isArray(item.venue)
+                ? item.venue.length > 0
+                : Boolean(item.venue)
+            )
+            .map((item: any) => ({
+              id: item.id,
+              venue_id: item.venue_id,
+              created_at: item.created_at,
+              event_date: item.event_date,
+              event_type: item.event_type,
+              guest_count: item.guest_count,
+              notes: item.notes,
+              status: item.status,
+
+              venue: Array.isArray(item.venue)
+                ? item.venue[0] || null
+                : item.venue || null,
+            }));
+
+        /* ---------------------------------------------
+           SAVE STATE
+        --------------------------------------------- */
+
+        if (!mounted) return;
+
+        setWeddings(
+          (weddingData || []) as Wedding[]
+        );
+
+        setShortlist(
+          normalizedShortlist
+        );
+
+        setRequests(
+          normalizedRequests
+        );
       } catch (err: any) {
         console.error(
           'Planner loading error:',
-          {
-            message:
-              err?.message,
-            details:
-              err?.details,
-            hint:
-              err?.hint,
-            code:
-              err?.code,
-          }
+          err
         );
 
-        setError(
-          'We could not load your planner workspace. Please try again.'
-        );
+        if (mounted) {
+          setError(
+            err?.message ||
+              'Unable to load planner data.'
+          );
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
-    },
-    []
-  );
-
-  /*
-   * ========================================================
-   * INITIAL LOAD
-   * ========================================================
-   */
-
-  useEffect(() => {
-    loadPlannerData();
-  }, [loadPlannerData]);
-
-  /*
-   * ========================================================
-   * CREATE NEW WEDDING
-   * ========================================================
-   */
-
-  async function createWedding() {
-    if (creatingWedding) {
-      return;
     }
 
-    const cleanTitle =
-      weddingTitle.trim();
+    loadPlanner();
 
-    const cleanCity =
-      weddingCity.trim() ||
-      'Udaipur';
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-    if (!cleanTitle) {
-      setActionMessage(
+  /* =====================================================
+     CREATE WEDDING
+  ===================================================== */
+
+  async function createWedding() {
+    if (!user) return;
+
+    if (!weddingTitle.trim()) {
+      setError(
         'Please enter a wedding name.'
       );
-
       return;
     }
 
     try {
       setCreatingWedding(true);
-      setActionMessage('');
-
-      const supabase =
-        createClient();
-
-      /*
-       * Get current user.
-       */
-
-      const {
-        data: {
-          user: currentUser,
-        },
-      } =
-        await supabase.auth.getUser();
-
-      if (!currentUser) {
-        window.location.href =
-          '/login';
-
-        return;
-      }
-
-      /*
-       * Insert wedding.
-       */
+      setError('');
 
       const {
         data,
-        error:
-          createError,
+        error: insertError,
       } =
         await supabase
           .from('weddings')
           .insert({
-            owner_id:
-              currentUser.id,
-            title:
-              cleanTitle,
+            owner_id: user.id,
+            title: weddingTitle.trim(),
             city:
-              cleanCity,
+              weddingCity.trim() ||
+              null,
           })
           .select(
-            'id, title, city, created_at'
+            'id,title,city,owner_id,created_at'
           )
           .single();
 
-      if (createError) {
-        throw createError;
+      if (insertError) {
+        throw insertError;
       }
-
-      /*
-       * Add newly created wedding
-       * to the beginning of the list.
-       */
 
       if (data) {
-        setWeddings(
-          (current) => [
-            data as Wedding,
-            ...current,
-          ]
-        );
+        setWeddings((current) => [
+          data as Wedding,
+          ...current,
+        ]);
       }
 
-      /*
-       * Close modal and reset form.
-       */
-
       setWeddingTitle('');
-      setWeddingCity('Udaipur');
-      setShowNewWedding(false);
-
-      setActive(
-        'My Weddings'
-      );
-
-      setActionMessage(
-        'Your wedding workspace has been created successfully.'
-      );
+      setWeddingCity('');
+      setShowWeddingModal(false);
+      setActive('My Weddings');
     } catch (err: any) {
       console.error(
         'Create wedding error:',
-        {
-          message:
-            err?.message,
-          details:
-            err?.details,
-          hint:
-            err?.hint,
-          code:
-            err?.code,
-        }
+        err
       );
 
-      setActionMessage(
+      setError(
         err?.message ||
-          'We could not create the wedding. Please try again.'
+          'Unable to create wedding.'
       );
     } finally {
       setCreatingWedding(false);
     }
   }
 
-  /*
-   * ========================================================
-   * COUNTS
-   * ========================================================
-   */
+  /* =====================================================
+     DASHBOARD COUNTS
+  ===================================================== */
 
-  const activeWeddingCount =
-    weddings.length;
+  const stats = useMemo(
+    () => ({
+      weddings: weddings.length,
+      shortlist: shortlist.length,
+      requests: requests.length,
 
-  const shortlistCount =
-    shortlist.length;
+      datesHeld: requests.filter(
+        (request) =>
+          String(
+            request.status || ''
+          ).toLowerCase() === 'held'
+      ).length,
+    }),
+    [
+      weddings,
+      shortlist,
+      requests,
+    ]
+  );
 
-  const openRequestCount =
-    requests.filter(
-      (request) =>
-        request.status ===
-          'requested' ||
-        request.status ===
-          'payment_pending'
-    ).length;
-
-  const heldDateCount =
-    requests.filter(
-      (request) =>
-        request.status ===
-          'held'
-    ).length;
-
-  /*
-   * ========================================================
-   * FORMAT DATE
-   * ========================================================
-   */
-
-  function formatDate(
-    value: string
-  ) {
-    if (!value) {
-      return '';
-    }
-
-    return new Date(
-      value
-    ).toLocaleDateString(
-      'en-IN',
-      {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      }
-    );
-  }
-
-  /*
-   * ========================================================
-   * STATUS LABEL
-   * ========================================================
-   */
-
-  function formatStatus(
-    status: string
-  ) {
-    return status
-      .replace(/_/g, ' ')
-      .replace(
-        /\b\w/g,
-        (letter) =>
-          letter.toUpperCase()
-      );
-  }
-
-  /*
-   * ========================================================
-   * NAVIGATION
-   * ========================================================
-   */
-
-  function changeSection(
-    section: Section
-  ) {
-    setActive(section);
-    setActionMessage('');
-  }
-
-  /*
-   * ========================================================
-   * LOADING STATE
-   * ========================================================
-   */
+  /* =====================================================
+     LOADING
+  ===================================================== */
 
   if (loading) {
     return (
       <main className="dashboard">
-
-        <aside className="side">
-          <img
-            src="/logo.png"
-            alt="The Venue Search"
-          />
-
-          <b>
-            Planner Workspace
-          </b>
-
-          <div
-            style={{
-              marginTop: 30,
-              color: '#777',
-              fontSize: 14,
-            }}
-          >
-            Loading workspace...
-          </div>
-        </aside>
-
-        <section className="dashMain">
-
-          <div className="dashHead">
-
-            <div>
-              <span className="kicker">
-                PLANNER WORKSPACE
-              </span>
-
-              <h1>
-                Loading...
-              </h1>
-            </div>
-
-          </div>
-
-        </section>
-
+        <div className="dashboardLoading">
+          Loading planner workspace...
+        </div>
       </main>
     );
   }
 
-  /*
-   * ========================================================
-   * ERROR STATE
-   * ========================================================
-   */
-
-  if (error) {
-    return (
-      <main className="dashboard">
-
-        <aside className="side">
-
-          <img
-            src="/logo.png"
-            alt="The Venue Search"
-          />
-
-          <b>
-            Planner Workspace
-          </b>
-
-        </aside>
-
-        <section className="dashMain">
-
-          <div className="dashHead">
-
-            <div>
-              <span className="kicker">
-                PLANNER WORKSPACE
-              </span>
-
-              <h1>
-                Something went wrong.
-              </h1>
-
-              <p>
-                {error}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              className="primaryBtn"
-              onClick={
-                loadPlannerData
-              }
-            >
-              Try again →
-            </button>
-
-          </div>
-
-        </section>
-
-      </main>
-    );
-  }
-
-  /*
-   * ========================================================
-   * MAIN DASHBOARD
-   * ========================================================
-   */
+  /* =====================================================
+     UI
+  ===================================================== */
 
   return (
     <main className="dashboard">
 
-      {/* ====================================================
+      {/* =================================================
           SIDEBAR
-      ==================================================== */}
+      ================================================= */}
 
       <aside className="side">
 
@@ -661,125 +475,44 @@ export default function Planner() {
           Planner Workspace
         </b>
 
-        <div
-          style={{
-            marginTop: 6,
-            marginBottom: 20,
-            fontSize: 12,
-            color: '#888',
-            wordBreak:
-              'break-word',
-          }}
-        >
-          {user?.email}
-        </div>
-
-        {(
-          [
-            'Overview',
-            'My Weddings',
-            'Shortlist',
-            'Requests',
-            'Calendar',
-          ] as Section[]
-        ).map(
-          (section) => (
-            <button
-              key={section}
-              type="button"
-              className={
-                active === section
-                  ? 'active'
-                  : ''
-              }
-              onClick={() =>
-                changeSection(
-                  section
-                )
-              }
-            >
-              {section}
-
-              {section ===
-                'My Weddings' &&
-                weddings.length >
-                  0 && (
-                  <span
-                    style={{
-                      marginLeft:
-                        'auto',
-                      fontSize:
-                        12,
-                      opacity:
-                        0.6,
-                    }}
-                  >
-                    {
-                      weddings.length
-                    }
-                  </span>
-                )}
-
-              {section ===
-                'Shortlist' &&
-                shortlist.length >
-                  0 && (
-                  <span
-                    style={{
-                      marginLeft:
-                        'auto',
-                      fontSize:
-                        12,
-                      opacity:
-                        0.6,
-                    }}
-                  >
-                    {
-                      shortlist.length
-                    }
-                  </span>
-                )}
-
-              {section ===
-                'Requests' &&
-                openRequestCount >
-                  0 && (
-                  <span
-                    style={{
-                      marginLeft:
-                        'auto',
-                      fontSize:
-                        12,
-                      opacity:
-                        0.6,
-                    }}
-                  >
-                    {
-                      openRequestCount
-                    }
-                  </span>
-                )}
-            </button>
-          )
-        )}
+        {[
+          'Overview',
+          'My Weddings',
+          'Shortlist',
+          'Requests',
+          'Calendar',
+        ].map((item) => (
+          <button
+            key={item}
+            type="button"
+            className={
+              active === item
+                ? 'active'
+                : ''
+            }
+            onClick={() =>
+              setActive(
+                item as PlannerSection
+              )
+            }
+          >
+            {item}
+          </button>
+        ))}
 
       </aside>
 
-
-      {/* ====================================================
+      {/* =================================================
           MAIN
-      ==================================================== */}
+      ================================================= */}
 
       <section className="dashMain">
 
-        {/* ==================================================
-            HEADER
-        ================================================== */}
+        {/* HEADER */}
 
         <div className="dashHead">
 
           <div>
-
             <span className="kicker">
               PLANNER WORKSPACE
             </span>
@@ -787,20 +520,6 @@ export default function Planner() {
             <h1>
               {active}
             </h1>
-
-            <p
-              style={{
-                marginTop:
-                  8,
-                color:
-                  '#777',
-              }}
-            >
-              Plan, shortlist and
-              manage your destination
-              wedding.
-            </p>
-
           </div>
 
           <button
@@ -808,9 +527,7 @@ export default function Planner() {
             data-cursor="open"
             className="primaryBtn"
             onClick={() =>
-              setShowNewWedding(
-                true
-              )
+              setShowWeddingModal(true)
             }
           >
             New wedding +
@@ -818,44 +535,20 @@ export default function Planner() {
 
         </div>
 
+        {/* ERROR */}
 
-        {/* ==================================================
-            SUCCESS / ACTION MESSAGE
-        ================================================== */}
-
-        {actionMessage && (
-
-          <div
-            style={{
-              marginBottom:
-                20,
-              padding:
-                '14px 18px',
-              background:
-                '#f4f7f2',
-              border:
-                '1px solid #dce7d8',
-              borderRadius:
-                10,
-              fontSize:
-                14,
-            }}
-          >
-            {actionMessage}
+        {error && (
+          <div className="plannerError">
+            {error}
           </div>
-
         )}
 
-
-        {/* ==================================================
+        {/* =================================================
             OVERVIEW
-        ================================================== */}
+        ================================================= */}
 
-        {active ===
-          'Overview' && (
-
+        {active === 'Overview' && (
           <>
-
             <div className="dashCards">
 
               <div>
@@ -864,12 +557,9 @@ export default function Planner() {
                 </span>
 
                 <strong>
-                  {activeWeddingCount
-                    .toString()
-                    .padStart(
-                      2,
-                      '0'
-                    )}
+                  {String(
+                    stats.weddings
+                  ).padStart(2, '0')}
                 </strong>
               </div>
 
@@ -879,12 +569,9 @@ export default function Planner() {
                 </span>
 
                 <strong>
-                  {shortlistCount
-                    .toString()
-                    .padStart(
-                      2,
-                      '0'
-                    )}
+                  {String(
+                    stats.shortlist
+                  ).padStart(2, '0')}
                 </strong>
               </div>
 
@@ -894,12 +581,9 @@ export default function Planner() {
                 </span>
 
                 <strong>
-                  {openRequestCount
-                    .toString()
-                    .padStart(
-                      2,
-                      '0'
-                    )}
+                  {String(
+                    stats.requests
+                  ).padStart(2, '0')}
                 </strong>
               </div>
 
@@ -909,301 +593,144 @@ export default function Planner() {
                 </span>
 
                 <strong>
-                  {heldDateCount
-                    .toString()
-                    .padStart(
-                      2,
-                      '0'
-                    )}
+                  {String(
+                    stats.datesHeld
+                  ).padStart(2, '0')}
                 </strong>
               </div>
 
             </div>
 
-
             <div className="tableCard">
 
-              <div
-                style={{
-                  display:
-                    'flex',
-                  alignItems:
-                    'center',
-                  justifyContent:
-                    'space-between',
-                  gap: 20,
-                  marginBottom:
-                    20,
-                }}
-              >
+              <h3>
+                Wedding pipeline
+              </h3>
 
-                <div>
-                  <span className="profileCardKicker">
-                    YOUR WEDDINGS
-                  </span>
-
-                  <h3>
-                    Wedding pipeline
-                  </h3>
-                </div>
-
-                <button
-                  type="button"
-                  className="outlineBtn"
-                  onClick={() =>
-                    setActive(
-                      'My Weddings'
-                    )
-                  }
-                >
-                  View all →
-                </button>
-
-              </div>
-
-
-              {weddings.length ===
-              0 ? (
-
-                <div
-                  style={{
-                    padding:
-                      '50px 20px',
-                    textAlign:
-                      'center',
-                  }}
-                >
-
-                  <h3>
-                    Start planning
-                    your wedding.
-                  </h3>
-
-                  <p
-                    style={{
-                      color:
-                        '#777',
-                      margin:
-                        '10px 0 20px',
-                    }}
-                  >
-                    Create your first
-                    wedding workspace
-                    to begin organising
-                    venues and requests.
+              {weddings.length === 0 ? (
+                <div className="plannerEmpty">
+                  <p>
+                    No weddings created yet.
                   </p>
 
                   <button
                     type="button"
-                    className="primaryBtn"
+                    className="smallBtn"
                     onClick={() =>
-                      setShowNewWedding(
-                        true
-                      )
+                      setShowWeddingModal(true)
                     }
                   >
-                    Create wedding →
+                    Create your first wedding
                   </button>
-
                 </div>
-
               ) : (
+                weddings.map(
+                  (wedding) => (
+                    <div
+                      className="row"
+                      key={wedding.id}
+                    >
+                      <span>
+                        <b>
+                          {wedding.title}
+                        </b>
 
-                weddings
-                  .slice(0, 5)
-                  .map(
-                    (
-                      wedding
-                    ) => (
-                      <div
-                        className="row"
-                        key={
-                          wedding.id
+                        <small>
+                          {wedding.city ||
+                            'Destination not selected'}
+                        </small>
+                      </span>
+
+                      <em>
+                        {
+                          shortlist.length
+                        }{' '}
+                        venues
+                      </em>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActive(
+                            'My Weddings'
+                          )
                         }
                       >
-
-                        <span>
-
-                          <b>
-                            {
-                              wedding.title
-                            }
-                          </b>
-
-                          <small>
-                            {
-                              wedding.city ||
-                              'Udaipur'
-                            }{' '}
-                            · Created{' '}
-                            {formatDate(
-                              wedding.created_at
-                            )}
-                          </small>
-
-                        </span>
-
-                        <em>
-                          {
-                            shortlist.length
-                          }{' '}
-                          venues
-                        </em>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setActive(
-                              'My Weddings'
-                            )
-                          }
-                        >
-                          Open →
-                        </button>
-
-                      </div>
-                    )
+                        Open →
+                      </button>
+                    </div>
                   )
-
+                )
               )}
 
             </div>
-
           </>
-
         )}
 
-
-        {/* ==================================================
+        {/* =================================================
             MY WEDDINGS
-        ================================================== */}
+        ================================================= */}
 
-        {active ===
-          'My Weddings' && (
-
+        {active === 'My Weddings' && (
           <div className="tableCard">
 
-            <div
-              style={{
-                display:
-                  'flex',
-                justifyContent:
-                  'space-between',
-                alignItems:
-                  'center',
-                marginBottom:
-                  20,
-              }}
-            >
-
+            <div className="plannerSectionHeader">
               <div>
-
-                <span className="profileCardKicker">
-                  WEDDING WORKSPACES
-                </span>
-
                 <h3>
-                  My weddings
+                  My Weddings
                 </h3>
 
+                <p>
+                  Manage your wedding
+                  planning workspaces.
+                </p>
               </div>
 
               <button
                 type="button"
-                className="primaryBtn"
+                className="smallBtn"
                 onClick={() =>
-                  setShowNewWedding(
-                    true
-                  )
+                  setShowWeddingModal(true)
                 }
               >
                 New wedding +
               </button>
-
             </div>
 
-
-            {weddings.length ===
-            0 ? (
-
-              <div
-                style={{
-                  textAlign:
-                    'center',
-                  padding:
-                    '60px 20px',
-                }}
-              >
-
+            {weddings.length === 0 ? (
+              <div className="plannerEmpty">
                 <h3>
-                  No wedding
-                  workspaces yet.
+                  No weddings yet
                 </h3>
 
-                <p
-                  style={{
-                    color:
-                      '#777',
-                    margin:
-                      '10px 0 22px',
-                  }}
-                >
-                  Create a wedding
-                  workspace to start
-                  planning.
+                <p>
+                  Create a wedding workspace
+                  to begin planning.
                 </p>
-
-                <button
-                  type="button"
-                  className="primaryBtn"
-                  onClick={() =>
-                    setShowNewWedding(
-                      true
-                    )
-                  }
-                >
-                  Create wedding →
-                </button>
-
               </div>
-
             ) : (
-
               weddings.map(
                 (wedding) => (
                   <div
                     className="row"
-                    key={
-                      wedding.id
-                    }
+                    key={wedding.id}
                   >
-
                     <span>
-
                       <b>
-                        {
-                          wedding.title
-                        }
+                        {wedding.title}
                       </b>
 
                       <small>
-                        {
-                          wedding.city ||
-                          'Udaipur'
-                        }{' '}
-                        · Created{' '}
-                        {formatDate(
-                          wedding.created_at
-                        )}
+                        {wedding.city ||
+                          'Destination not selected'}
                       </small>
-
                     </span>
 
                     <em>
-                      {
-                        shortlist.length
-                      }{' '}
-                      shortlisted
+                      Created{' '}
+                      {new Date(
+                        wedding.created_at
+                      ).toLocaleDateString()}
                     </em>
 
                     <button
@@ -1216,766 +743,365 @@ export default function Planner() {
                     >
                       View →
                     </button>
-
                   </div>
                 )
               )
-
             )}
 
           </div>
-
         )}
 
-
-        {/* ==================================================
+        {/* =================================================
             SHORTLIST
-        ================================================== */}
+        ================================================= */}
 
-        {active ===
-          'Shortlist' && (
-
+        {active === 'Shortlist' && (
           <div className="tableCard">
 
-            <div
-              style={{
-                marginBottom:
-                  24,
-              }}
-            >
-
-              <span className="profileCardKicker">
-                SAVED VENUES
-              </span>
-
-              <h3>
-                Your shortlist
-              </h3>
-
-              <p
-                style={{
-                  color:
-                    '#777',
-                  marginTop:
-                    8,
-                }}
-              >
-                Venues you have saved
-                while exploring The
-                Venue Search.
-              </p>
-
-            </div>
-
-
-            {shortlist.length ===
-            0 ? (
-
-              <div
-                style={{
-                  textAlign:
-                    'center',
-                  padding:
-                    '60px 20px',
-                }}
-              >
-
+            <div className="plannerSectionHeader">
+              <div>
                 <h3>
-                  Your shortlist
-                  is empty.
+                  Shortlisted Venues
                 </h3>
 
-                <p
-                  style={{
-                    color:
-                      '#777',
-                    margin:
-                      '10px 0 22px',
-                  }}
-                >
-                  Explore venues and
-                  save the ones you
-                  love.
+                <p>
+                  Venues saved while
+                  exploring.
+                </p>
+              </div>
+
+              <span>
+                {shortlist.length} saved
+              </span>
+            </div>
+
+            {shortlist.length === 0 ? (
+              <div className="plannerEmpty">
+                <h3>
+                  Your shortlist is empty
+                </h3>
+
+                <p>
+                  Save venues from the
+                  Explore page.
                 </p>
 
                 <a
+                  className="smallBtn"
                   href="/explore"
-                  className="primaryBtn"
                 >
                   Explore venues →
                 </a>
-
               </div>
-
             ) : (
-
               shortlist.map(
-                (item) => {
+                (item) => (
+                  <div
+                    className="row"
+                    key={item.id}
+                  >
+                    <span>
+                      <b>
+                        {item.venue?.name ||
+                          'Venue unavailable'}
+                      </b>
 
-                  const venue =
-                    item.venue;
+                      <small>
+                        {item.venue?.city ||
+                          'Destination'}
+                        {' · '}
+                        {item.venue?.type ||
+                          'Venue'}
+                      </small>
+                    </span>
 
-                  if (!venue) {
-                    return null;
-                  }
+                    <em>
+                      {item.venue?.capacity_max
+                        ? `Up to ${item.venue.capacity_max} guests`
+                        : 'Capacity on request'}
+                    </em>
 
-                  return (
-                    <div
-                      className="row"
-                      key={
-                        item.id
-                      }
-                    >
-
-                      <span>
-
-                        <b>
-                          {
-                            venue.name
-                          }
-                        </b>
-
-                        <small>
-                          {
-                            venue.type ||
-                            'Venue'
-                          }{' '}
-                          ·{' '}
-                          {
-                            venue.city ||
-                            'Udaipur'
-                          }
-                        </small>
-
-                      </span>
-
-                      <em>
-                        {venue.capacity_max
-                          ? `Up to ${venue.capacity_max} guests`
-                          : 'Capacity on request'}
-                      </em>
-
+                    {item.venue?.slug ? (
                       <a
-                        href={`/venues/${venue.slug}`}
+                        href={`/venues/${item.venue.slug}`}
                       >
                         Open →
                       </a>
-
-                    </div>
-                  );
-                }
+                    ) : (
+                      <span>
+                        —
+                      </span>
+                    )}
+                  </div>
+                )
               )
-
             )}
 
           </div>
-
         )}
 
-
-        {/* ==================================================
+        {/* =================================================
             REQUESTS
-        ================================================== */}
+        ================================================= */}
 
-        {active ===
-          'Requests' && (
-
+        {active === 'Requests' && (
           <div className="tableCard">
 
-            <div
-              style={{
-                marginBottom:
-                  24,
-              }}
-            >
-
-              <span className="profileCardKicker">
-                VENUE REQUESTS
-              </span>
-
-              <h3>
-                Your requests
-              </h3>
-
-              <p
-                style={{
-                  color:
-                    '#777',
-                  marginTop:
-                    8,
-                }}
-              >
-                Track your venue
-                availability and
-                booking requests.
-              </p>
-
-            </div>
-
-
-            {requests.length ===
-            0 ? (
-
-              <div
-                style={{
-                  textAlign:
-                    'center',
-                  padding:
-                    '60px 20px',
-                }}
-              >
-
+            <div className="plannerSectionHeader">
+              <div>
                 <h3>
-                  No requests yet.
+                  Booking Requests
                 </h3>
 
-                <p
-                  style={{
-                    color:
-                      '#777',
-                    margin:
-                      '10px 0 22px',
-                  }}
-                >
-                  When you request
-                  a venue, it will
-                  appear here.
+                <p>
+                  Track venue enquiries
+                  and booking requests.
                 </p>
-
-                <a
-                  href="/explore"
-                  className="primaryBtn"
-                >
-                  Explore venues →
-                </a>
-
               </div>
 
-            ) : (
+              <span>
+                {requests.length} requests
+              </span>
+            </div>
 
+            {requests.length === 0 ? (
+              <div className="plannerEmpty">
+                <h3>
+                  No booking requests
+                </h3>
+
+                <p>
+                  Your venue enquiries
+                  will appear here.
+                </p>
+              </div>
+            ) : (
               requests.map(
                 (request) => (
                   <div
                     className="row"
-                    key={
-                      request.id
-                    }
+                    key={request.id}
                   >
-
                     <span>
-
                       <b>
-                        {
-                          request
-                            .venue
-                            ?.name ||
-                          'Venue request'
-                        }
+                        {request.venue?.name ||
+                          'Venue'}
                       </b>
 
                       <small>
                         {request.event_type ||
-                          'Wedding / Event'}
+                          'Event'}
                         {' · '}
-                        {formatDate(
-                          request.event_date
-                        )}
-                        {request.guest_count
-                          ? ` · ${request.guest_count} guests`
-                          : ''}
-                      </small>
-
-                    </span>
-
-                    <em>
-                      {formatStatus(
-                        request.status
-                      )}
-                    </em>
-
-                    <a
-                      href={
-                        request.venue
-                          ?.slug
-                          ? `/venues/${request.venue.slug}`
-                          : '/explore'
-                      }
-                    >
-                      Open →
-                    </a>
-
-                  </div>
-                )
-              )
-
-            )}
-
-          </div>
-
-        )}
-
-
-        {/* ==================================================
-            CALENDAR
-        ================================================== */}
-
-        {active ===
-          'Calendar' && (
-
-          <div className="tableCard">
-
-            <div
-              style={{
-                marginBottom:
-                  24,
-              }}
-            >
-
-              <span className="profileCardKicker">
-                IMPORTANT DATES
-              </span>
-
-              <h3>
-                Wedding calendar
-              </h3>
-
-              <p
-                style={{
-                  color:
-                    '#777',
-                  marginTop:
-                    8,
-                }}
-              >
-                Your held and requested
-                venue dates.
-              </p>
-
-            </div>
-
-
-            {requests.length ===
-            0 ? (
-
-              <div
-                style={{
-                  textAlign:
-                    'center',
-                  padding:
-                    '60px 20px',
-                }}
-              >
-
-                <h3>
-                  No dates to show.
-                </h3>
-
-                <p
-                  style={{
-                    color:
-                      '#777',
-                    marginTop:
-                    10,
-                  }}
-                >
-                  Dates will appear
-                  here when you make
-                  venue requests or
-                  place a hold.
-                </p>
-
-              </div>
-
-            ) : (
-
-              requests.map(
-                (request) => (
-                  <div
-                    className="row"
-                    key={
-                      request.id
-                    }
-                  >
-
-                    <span>
-
-                      <b>
-                        {
-                          request
-                            .venue
-                            ?.name ||
-                          'Venue'
-                        }
-                      </b>
-
-                      <small>
-                        {
-                          request.event_type ||
-                          'Wedding / Event'
-                        }
-                        {' · '}
-                        {
-                          request
-                            .guest_count ||
-                          'Guest count pending'
-                        }{' '}
+                        {request.guest_count ||
+                          'Guest count on request'}{' '}
                         guests
                       </small>
-
                     </span>
 
                     <em>
-                      {formatDate(
-                        request.event_date
-                      )}
+                      {request.event_date
+                        ? new Date(
+                            request.event_date
+                          ).toLocaleDateString()
+                        : 'Date on request'}
                     </em>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActive(
-                          'Requests'
-                        )
-                      }
-                    >
-                      View →
-                    </button>
-
+                    <span>
+                      {request.status ||
+                        'Submitted'}
+                    </span>
                   </div>
                 )
               )
-
             )}
 
           </div>
+        )}
 
+        {/* =================================================
+            CALENDAR
+        ================================================= */}
+
+        {active === 'Calendar' && (
+          <div className="tableCard">
+
+            <div className="plannerSectionHeader">
+              <div>
+                <h3>
+                  Calendar
+                </h3>
+
+                <p>
+                  Upcoming wedding and
+                  venue request dates.
+                </p>
+              </div>
+            </div>
+
+            {requests.length === 0 ? (
+              <div className="plannerEmpty">
+                <h3>
+                  No dates yet
+                </h3>
+
+                <p>
+                  Dates from your venue
+                  requests will appear here.
+                </p>
+              </div>
+            ) : (
+              requests
+                .filter(
+                  (request) =>
+                    Boolean(
+                      request.event_date
+                    )
+                )
+                .sort(
+                  (a, b) =>
+                    new Date(
+                      a.event_date || ''
+                    ).getTime() -
+                    new Date(
+                      b.event_date || ''
+                    ).getTime()
+                )
+                .map(
+                  (request) => (
+                    <div
+                      className="row"
+                      key={request.id}
+                    >
+                      <span>
+                        <b>
+                          {request.venue?.name ||
+                            'Venue'}
+                        </b>
+
+                        <small>
+                          {request.event_type ||
+                            'Event'}
+                        </small>
+                      </span>
+
+                      <em>
+                        {new Date(
+                          request.event_date || ''
+                        ).toLocaleDateString(
+                          undefined,
+                          {
+                            weekday:
+                              'short',
+                            year:
+                              'numeric',
+                            month:
+                              'short',
+                            day:
+                              'numeric',
+                          }
+                        )}
+                      </em>
+
+                      <span>
+                        {request.guest_count
+                          ? `${request.guest_count} guests`
+                          : 'Guests TBD'}
+                      </span>
+                    </div>
+                  )
+                )
+            )}
+
+          </div>
         )}
 
       </section>
 
-
-      {/* ====================================================
+      {/* =====================================================
           NEW WEDDING MODAL
-      ==================================================== */}
+      ===================================================== */}
 
-      {showNewWedding && (
-
+      {showWeddingModal && (
         <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="new-wedding-title"
-          onMouseDown={(event) => {
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
-              setShowNewWedding(
-                false
-              );
-            }
-          }}
-          style={{
-            position:
-              'fixed',
-            inset: 0,
-            zIndex: 1000,
-            background:
-              'rgba(0,0,0,0.48)',
-            display:
-              'flex',
-            alignItems:
-              'center',
-            justifyContent:
-              'center',
-            padding: 20,
-          }}
+          className="plannerModalOverlay"
+          onClick={() =>
+            setShowWeddingModal(false)
+          }
         >
-
           <div
-            style={{
-              width:
-                '100%',
-              maxWidth:
-                520,
-              background:
-                '#fff',
-              borderRadius:
-                18,
-              padding:
-                '34px',
-              boxShadow:
-                '0 30px 80px rgba(0,0,0,0.18)',
-            }}
+            className="plannerModal"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
           >
 
-            <div
-              style={{
-                display:
-                  'flex',
-                justifyContent:
-                  'space-between',
-                alignItems:
-                  'flex-start',
-                gap: 20,
-                marginBottom:
-                  26,
-              }}
+            <button
+              type="button"
+              className="plannerModalClose"
+              onClick={() =>
+                setShowWeddingModal(false)
+              }
+              aria-label="Close"
             >
+              ×
+            </button>
 
-              <div>
+            <span className="kicker">
+              NEW WEDDING
+            </span>
 
-                <span className="kicker">
-                  NEW WORKSPACE
-                </span>
+            <h2>
+              Create a wedding workspace
+            </h2>
 
-                <h2
-                  id="new-wedding-title"
-                  style={{
-                    marginTop:
-                      8,
-                    marginBottom:
-                      8,
-                  }}
-                >
-                  Create your wedding.
-                </h2>
+            <p>
+              Start a dedicated planning
+              workspace for your celebration.
+            </p>
 
-                <p
-                  style={{
-                    color:
-                      '#777',
-                    margin: 0,
-                    lineHeight:
-                      1.6,
-                  }}
-                >
-                  Start a dedicated
-                  workspace for your
-                  wedding planning.
-                </p>
-
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setShowNewWedding(
-                    false
-                  )
-                }
-                aria-label="Close"
-                style={{
-                  border:
-                    'none',
-                  background:
-                    'transparent',
-                  fontSize:
-                    24,
-                  cursor:
-                    'pointer',
-                  lineHeight:
-                    1,
-                }}
-              >
-                ×
-              </button>
-
-            </div>
-
-
-            <label
-              style={{
-                display:
-                  'block',
-                marginBottom:
-                  18,
-              }}
-            >
-
-              <span
-                style={{
-                  display:
-                    'block',
-                  fontSize:
-                    13,
-                  fontWeight:
-                    600,
-                  marginBottom:
-                    8,
-                }}
-              >
-                Wedding name
-              </span>
-
-              <input
-                type="text"
-                value={
-                  weddingTitle
-                }
-                onChange={(event) =>
-                  setWeddingTitle(
-                    event.target
-                      .value
-                  )
-                }
-                placeholder="e.g. Sharma × Mehta"
-                autoFocus
-                disabled={
-                  creatingWedding
-                }
-                style={{
-                  width:
-                    '100%',
-                  boxSizing:
-                    'border-box',
-                  padding:
-                    '14px 16px',
-                  border:
-                    '1px solid #ddd',
-                  borderRadius:
-                    10,
-                  fontSize:
-                    15,
-                  outline:
-                    'none',
-                }}
-              />
-
+            <label>
+              Wedding name
             </label>
 
+            <input
+              value={weddingTitle}
+              onChange={(e) =>
+                setWeddingTitle(
+                  e.target.value
+                )
+              }
+              placeholder="e.g. Sharma × Mehta"
+            />
 
-            <label
-              style={{
-                display:
-                  'block',
-                marginBottom:
-                  24,
-              }}
-            >
-
-              <span
-                style={{
-                  display:
-                    'block',
-                  fontSize:
-                    13,
-                  fontWeight:
-                    600,
-                  marginBottom:
-                    8,
-                }}
-              >
-                Destination
-              </span>
-
-              <input
-                type="text"
-                value={
-                  weddingCity
-                }
-                onChange={(event) =>
-                  setWeddingCity(
-                    event.target
-                      .value
-                  )
-                }
-                placeholder="Udaipur"
-                disabled={
-                  creatingWedding
-                }
-                style={{
-                  width:
-                    '100%',
-                  boxSizing:
-                    'border-box',
-                  padding:
-                    '14px 16px',
-                  border:
-                    '1px solid #ddd',
-                  borderRadius:
-                    10,
-                  fontSize:
-                    15,
-                  outline:
-                    'none',
-                }}
-              />
-
+            <label>
+              Destination
             </label>
 
+            <input
+              value={weddingCity}
+              onChange={(e) =>
+                setWeddingCity(
+                  e.target.value
+                )
+              }
+              placeholder="e.g. Udaipur"
+            />
 
-            {actionMessage &&
-              !creatingWedding && (
-
-              <div
-                style={{
-                  marginBottom:
-                    18,
-                  padding:
-                    '12px 14px',
-                  background:
-                    '#fff6f4',
-                  border:
-                    '1px solid #f0d7d1',
-                  borderRadius:
-                    8,
-                  fontSize:
-                    13,
-                }}
-              >
-                {actionMessage}
-              </div>
-
-            )}
-
-
-            <div
-              style={{
-                display:
-                  'flex',
-                justifyContent:
-                  'flex-end',
-                gap: 10,
-              }}
+            <button
+              type="button"
+              className="primaryBtn"
+              disabled={
+                creatingWedding
+              }
+              onClick={createWedding}
             >
-
-              <button
-                type="button"
-                className="outlineBtn"
-                disabled={
-                  creatingWedding
-                }
-                onClick={() =>
-                  setShowNewWedding(
-                    false
-                  )
-                }
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                className="primaryBtn"
-                disabled={
-                  creatingWedding ||
-                  !weddingTitle.trim()
-                }
-                onClick={
-                  createWedding
-                }
-              >
-                {creatingWedding
-                  ? 'Creating...'
-                  : 'Create wedding →'}
-              </button>
-
-            </div>
+              {creatingWedding
+                ? 'Creating...'
+                : 'Create wedding →'}
+            </button>
 
           </div>
-
         </div>
-
       )}
 
     </main>
