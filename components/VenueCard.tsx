@@ -1,92 +1,48 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import {
+  useEffect,
+  useState,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabase-browser';
 
-export function VenueCard({ v }: { v: any }) {
+type VenueCardData = {
+  id: string;
+  slug: string;
+  name: string;
+  city: string;
+  type: string;
+  capacity: number;
+  capacityMin: number | null;
+  description: string;
+  image: string;
+  rating: number | null;
+  verified: boolean;
+  tags: string[];
+};
+
+export function VenueCard({
+  v,
+}: {
+  v: VenueCardData;
+}) {
   const router = useRouter();
 
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [checkingWishlist, setCheckingWishlist] = useState(true);
-  const [dbVenueId, setDbVenueId] = useState<string | null>(null);
+  const [saved, setSaved] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [checkingWishlist, setCheckingWishlist] =
+    useState(true);
 
   /*
-   * --------------------------------------------------------
-   * FIND THE SUPABASE VENUE ID
-   * --------------------------------------------------------
-   *
-   * Explore uses the local venue data from lib/data.
-   * Supabase uses UUIDs for venue IDs.
-   *
-   * We first try the local v.id as a Supabase UUID.
-   * If that doesn't work, we try the venue slug.
-   * Finally, we try the venue name.
-   */
-
-  async function resolveVenueId() {
-    const supabase = createClient();
-
-    // First: try v.id directly if it looks like a UUID
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-    if (v?.id && uuidRegex.test(String(v.id))) {
-      const {
-        data,
-        error,
-      } = await supabase
-        .from('venues')
-        .select('id')
-        .eq('id', v.id)
-        .maybeSingle();
-
-      if (!error && data?.id) {
-        return data.id;
-      }
-    }
-
-    // Second: try slug
-    if (v?.id) {
-      const {
-        data,
-        error,
-      } = await supabase
-        .from('venues')
-        .select('id')
-        .eq('slug', String(v.id))
-        .maybeSingle();
-
-      if (!error && data?.id) {
-        return data.id;
-      }
-    }
-
-    // Third: try name
-    if (v?.name) {
-      const {
-        data,
-        error,
-      } = await supabase
-        .from('venues')
-        .select('id')
-        .eq('name', v.name)
-        .maybeSingle();
-
-      if (!error && data?.id) {
-        return data.id;
-      }
-    }
-
-    return null;
-  }
-
-  /*
-   * --------------------------------------------------------
-   * CHECK WHETHER VENUE IS ALREADY SHORTLISTED
-   * --------------------------------------------------------
+   * ========================================================
+   * CHECK CURRENT WISHLIST STATE
+   * ========================================================
    */
 
   useEffect(() => {
@@ -94,66 +50,69 @@ export function VenueCard({ v }: { v: any }) {
 
     async function checkWishlist() {
       try {
-        const supabase = createClient();
+        const supabase =
+          createClient();
+
+        /*
+         * Use the current session rather than
+         * assuming the user is logged in.
+         */
 
         const {
           data: {
-            user,
+            session,
           },
-        } = await supabase.auth.getUser();
+        } =
+          await supabase.auth.getSession();
 
-        if (!user) {
-          if (mounted) {
-            setCheckingWishlist(false);
-          }
+        if (!mounted) return;
+
+        if (!session?.user) {
+          setSaved(false);
+          setCheckingWishlist(false);
           return;
-        }
-
-        const venueId =
-          await resolveVenueId();
-
-        if (!venueId) {
-          console.warn(
-            'Could not find Supabase venue for:',
-            v?.name
-          );
-
-          if (mounted) {
-            setCheckingWishlist(false);
-          }
-
-          return;
-        }
-
-        if (mounted) {
-          setDbVenueId(venueId);
         }
 
         const {
           data,
           error,
-        } = await supabase
-          .from('wishlists')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('venue_id', venueId)
-          .maybeSingle();
+        } =
+          await supabase
+            .from('wishlists')
+            .select('id')
+            .eq(
+              'user_id',
+              session.user.id
+            )
+            .eq(
+              'venue_id',
+              v.id
+            )
+            .maybeSingle();
 
         if (error) {
           console.warn(
             'Wishlist check warning:',
             {
-              message: error.message,
-              details: error.details,
-              hint: error.hint,
-              code: error.code,
+              message:
+                error.message,
+              details:
+                error.details,
+              hint:
+                error.hint,
+              code:
+                error.code,
             }
           );
 
           if (mounted) {
             setSaved(false);
           }
-        } else if (mounted) {
+
+          return;
+        }
+
+        if (mounted) {
           setSaved(Boolean(data));
         }
       } catch (error) {
@@ -173,88 +132,86 @@ export function VenueCard({ v }: { v: any }) {
     return () => {
       mounted = false;
     };
-  }, [v?.id, v?.name]);
+  }, [v.id]);
+
 
   /*
-   * --------------------------------------------------------
-   * TOGGLE WISHLIST
-   * --------------------------------------------------------
+   * ========================================================
+   * WISHLIST TOGGLE
+   * ========================================================
    */
 
   async function toggleWishlist() {
-    if (loading) return;
+    if (
+      loading ||
+      checkingWishlist
+    ) {
+      return;
+    }
 
     try {
       setLoading(true);
 
-      const supabase = createClient();
+      const supabase =
+        createClient();
 
       /*
-       * Get current logged-in user
+       * Get the current session.
        */
 
       const {
         data: {
-          user,
+          session,
         },
-      } = await supabase.auth.getUser();
+      } =
+        await supabase.auth.getSession();
 
       /*
-       * User is not logged in
+       * User is not authenticated.
        */
 
-      if (!user) {
+      if (!session?.user) {
         router.push('/login');
         return;
       }
 
-      /*
-       * Resolve Supabase venue ID
-       */
-
-      let venueId = dbVenueId;
-
-      if (!venueId) {
-        venueId =
-          await resolveVenueId();
-
-        if (venueId) {
-          setDbVenueId(venueId);
-        }
-      }
-
-      if (!venueId) {
-        console.error(
-          'Unable to find venue in Supabase:',
-          v?.name
-        );
-
-        return;
-      }
+      const userId =
+        session.user.id;
 
       /*
-       * ----------------------------------------------------
-       * REMOVE FROM SHORTLIST
-       * ----------------------------------------------------
+       * ====================================================
+       * REMOVE
+       * ====================================================
        */
 
       if (saved) {
         const {
           error,
-        } = await supabase
-          .from('wishlists')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('venue_id', venueId);
+        } =
+          await supabase
+            .from('wishlists')
+            .delete()
+            .eq(
+              'user_id',
+              userId
+            )
+            .eq(
+              'venue_id',
+              v.id
+            );
 
         if (error) {
           console.error(
             'Wishlist remove error:',
             {
-              message: error.message,
-              details: error.details,
-              hint: error.hint,
-              code: error.code,
+              message:
+                error.message,
+              details:
+                error.details,
+              hint:
+                error.hint,
+              code:
+                error.code,
             }
           );
 
@@ -267,28 +224,47 @@ export function VenueCard({ v }: { v: any }) {
       }
 
       /*
-       * ----------------------------------------------------
-       * ADD TO SHORTLIST
-       * ----------------------------------------------------
+       * ====================================================
+       * ADD
+       * ====================================================
        */
 
       const {
         error,
-      } = await supabase
-        .from('wishlists')
-        .insert({
-          user_id: user.id,
-          venue_id: venueId,
-        });
+      } =
+        await supabase
+          .from('wishlists')
+          .insert({
+            user_id:
+              userId,
+            venue_id:
+              v.id,
+          });
 
       if (error) {
+        /*
+         * Handle duplicate wishlist records gracefully.
+         */
+
+        if (
+          error.code ===
+          '23505'
+        ) {
+          setSaved(true);
+          return;
+        }
+
         console.error(
           'Wishlist insert error:',
           {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
+            message:
+              error.message,
+            details:
+              error.details,
+            hint:
+              error.hint,
+            code:
+              error.code,
           }
         );
 
@@ -306,10 +282,11 @@ export function VenueCard({ v }: { v: any }) {
     }
   }
 
+
   /*
-   * --------------------------------------------------------
-   * VENUE CARD
-   * --------------------------------------------------------
+   * ========================================================
+   * CARD
+   * ========================================================
    */
 
   return (
@@ -317,30 +294,68 @@ export function VenueCard({ v }: { v: any }) {
 
       <div className="venueImg">
 
-        <img
-          src={v.image}
-          alt={v.name}
-        />
+        {v.image ? (
 
-        <span className="verified">
-          ✓ Verified
-        </span>
+          <img
+            src={v.image}
+            alt={v.name}
+            loading="lazy"
+          />
+
+        ) : (
+
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              minHeight: '300px',
+              background:
+                '#eeeae3',
+              display: 'flex',
+              alignItems:
+                'center',
+              justifyContent:
+                'center',
+              color: '#777',
+            }}
+          >
+            The Venue Search
+          </div>
+
+        )}
+
+
+        {v.verified && (
+
+          <span className="verified">
+            ✓ Verified
+          </span>
+
+        )}
+
 
         <button
           className="heart"
           type="button"
           aria-label={
             saved
-              ? 'Remove from wishlist'
-              : 'Add to wishlist'
+              ? `Remove ${v.name} from shortlist`
+              : `Add ${v.name} to shortlist`
           }
           aria-pressed={saved}
           disabled={
-            loading || checkingWishlist
+            loading ||
+            checkingWishlist
           }
-          onClick={toggleWishlist}
+          onClick={
+            toggleWishlist
+          }
         >
-          {saved ? '♥' : '♡'}
+          {loading
+            ? '…'
+            : saved
+              ? '♥'
+              : '♡'}
         </button>
 
       </div>
@@ -354,7 +369,7 @@ export function VenueCard({ v }: { v: any }) {
 
 
         <Link
-          href={`/venues/${v.id}`}
+          href={`/venues/${v.slug}`}
         >
           <h3>
             {v.name}
@@ -363,19 +378,27 @@ export function VenueCard({ v }: { v: any }) {
 
 
         <p>
-          {v.desc}
+          {v.description}
         </p>
 
 
         <div className="meta">
 
           <span>
-            Up to {v.capacity} guests
+            {v.capacityMin
+              ? `${v.capacityMin} – `
+              : 'Up to '}
+
+            {v.capacity.toLocaleString()}
+
+            {' guests'}
           </span>
 
-          <span>
-            ★ {v.rating}
-          </span>
+          {v.rating && (
+            <span>
+              ★ {v.rating}
+            </span>
+          )}
 
         </div>
 
@@ -389,7 +412,7 @@ export function VenueCard({ v }: { v: any }) {
           <Link
             data-cursor="view"
             className="smallBtn"
-            href={`/venues/${v.id}`}
+            href={`/venues/${v.slug}`}
           >
             View venue
           </Link>
