@@ -141,7 +141,16 @@ export function VenueCard({
    * ========================================================
    */
 
-  async function toggleWishlist() {
+  async function toggleWishlist(
+    event: React.MouseEvent<HTMLButtonElement>
+  ) {
+    /*
+     * Prevent the card click from redirecting
+     * when the wishlist button is clicked.
+     */
+    event.preventDefault();
+    event.stopPropagation();
+
     if (
       loading ||
       checkingWishlist
@@ -285,12 +294,69 @@ export function VenueCard({
 
   /*
    * ========================================================
+   * CARD CLICK
+   * ========================================================
+   */
+
+  function handleCardClick(
+    event: React.MouseEvent<HTMLElement>
+  ) {
+    /*
+     * Do not redirect when clicking an existing
+     * link or interactive element inside the card.
+     */
+    const target =
+      event.target as HTMLElement;
+
+    if (
+      target.closest('a') ||
+      target.closest('button')
+    ) {
+      return;
+    }
+
+    router.push(
+      `/venues/${v.slug}`
+    );
+  }
+
+  function handleCardKeyDown(
+    event: React.KeyboardEvent<HTMLElement>
+  ) {
+    if (
+      event.key === 'Enter' ||
+      event.key === ' '
+    ) {
+      event.preventDefault();
+
+      router.push(
+        `/venues/${v.slug}`
+      );
+    }
+  }
+
+
+  /*
+   * ========================================================
    * CARD
    * ========================================================
    */
 
   return (
-    <article className="venueCard">
+    <article
+      className="venueCard"
+      onClick={
+        handleCardClick
+      }
+      onKeyDown={
+        handleCardKeyDown
+      }
+      role="link"
+      tabIndex={0}
+      style={{
+        cursor: 'pointer',
+      }}
+    >
 
       <div className="venueImg">
 
