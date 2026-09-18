@@ -13,11 +13,14 @@
     "@supabase/supabase-js": "^2.116.0",
     "framer-motion": "latest",
     "next": "latest",
+    "nodemailer": "^10.0.10",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "resend": "^6.28.1"
   },
   "devDependencies": {
     "@types/node": "latest",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "typescript": "latest"

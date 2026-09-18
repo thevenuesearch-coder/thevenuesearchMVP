@@ -866,3 +866,653 @@
     font-size: 22px;
   }
 }
+
+/* =========================================================
+   BOOKING FLOW
+========================================================= */
+
+.bookPage {
+  padding-top: 72px;
+  padding-bottom: 100px;
+}
+
+.bookHeader {
+  max-width: 820px;
+  margin: 0 auto 48px;
+}
+
+.bookHeader .backLink {
+  display: inline-block;
+  margin-bottom: 28px;
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.65;
+  font-size: 14px;
+}
+
+.bookHeader h1 {
+  margin: 12px 0;
+}
+
+.bookHeader p {
+  max-width: 650px;
+  margin: 0;
+  opacity: 0.7;
+  line-height: 1.7;
+}
+
+.bookingSteps {
+  max-width: 820px;
+  margin: 0 auto 42px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.bookingStep {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.55);
+  opacity: 0.55;
+}
+
+.bookingStep.active,
+.bookingStep.complete {
+  opacity: 1;
+}
+
+.bookingStep span {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  font-size: 13px;
+}
+
+.bookingStep strong {
+  display: block;
+  font-size: 14px;
+}
+
+.bookingStep small {
+  display: block;
+  margin-top: 3px;
+  opacity: 0.6;
+  font-size: 12px;
+}
+
+.bookingLayout {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.bookingVenueCard,
+.bookingFormCard {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.bookingVenueCard {
+  position: sticky;
+  top: 24px;
+}
+
+.bookingVenueImage {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #eeeae3;
+}
+
+.bookingVenueImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.bookingVenueImage > div {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: #777;
+}
+
+.bookingVenueBody {
+  padding: 24px;
+}
+
+.bookingVenueBody h2 {
+  margin: 8px 0 12px;
+  font-size: 25px;
+}
+
+.bookingVenueBody p {
+  margin: 0;
+  line-height: 1.7;
+  opacity: 0.68;
+}
+
+.bookingVenueMeta {
+  display: flex;
+  gap: 18px;
+  margin-top: 20px;
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+.bookingVerified {
+  display: inline-block;
+  margin-top: 18px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.bookingFormCard {
+  padding: 36px;
+}
+
+.formSection {
+  padding-bottom: 34px;
+  margin-bottom: 34px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.09);
+}
+
+.formSection:last-child {
+  margin-bottom: 0;
+}
+
+.formSection h2 {
+  margin: 8px 0 24px;
+  font-size: 26px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.formGrid label,
+.fullWidthField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formGrid label span,
+.fullWidthField > span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.fullWidthField {
+  margin-top: 20px;
+}
+
+.fullWidthField small {
+  font-weight: 400;
+  opacity: 0.55;
+}
+
+.formGrid input,
+.formGrid select,
+.fullWidthField textarea {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: #faf9f6;
+  padding: 14px 15px;
+  font: inherit;
+  color: inherit;
+  outline: none;
+  border-radius: 0;
+}
+
+.formGrid input:focus,
+.formGrid select:focus,
+.fullWidthField textarea:focus {
+  border-color: rgba(0, 0, 0, 0.45);
+}
+
+.fullWidthField textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.bookingActionRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  align-items: center;
+}
+
+.bookingActionRow button {
+  cursor: pointer;
+}
+
+.bookingActionRow button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.bookingError {
+  margin-bottom: 22px;
+  padding: 14px 16px;
+  border: 1px solid rgba(150, 0, 0, 0.18);
+  background: rgba(150, 0, 0, 0.04);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.reviewContent {
+  width: 100%;
+}
+
+.reviewRows {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.reviewRows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 17px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.reviewRows span {
+  opacity: 0.55;
+  font-size: 13px;
+}
+
+.reviewRows strong {
+  text-align: right;
+  font-size: 14px;
+  font-weight: 500;
+  max-width: 60%;
+}
+
+.paymentSummary {
+  margin: 30px 0;
+  padding: 24px;
+  background: #f5f2eb;
+}
+
+.paymentSummary > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.paymentSummary span {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.paymentSummary strong {
+  font-size: 27px;
+  font-weight: 500;
+}
+
+.paymentSummary small {
+  display: block;
+  margin-top: 12px;
+  line-height: 1.6;
+  opacity: 0.58;
+  font-size: 11px;
+}
+
+.reviewActions {
+  justify-content: space-between;
+}
+
+.secondaryBtn {
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: transparent;
+  padding: 14px 20px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.emptyState {
+  max-width: 650px;
+  margin: 100px auto;
+  text-align: center;
+}
+
+.emptyState h1 {
+  margin: 12px 0;
+}
+
+.emptyState p {
+  opacity: 0.65;
+  line-height: 1.7;
+  margin-bottom: 28px;
+}
+
+/* =========================================================
+   BOOKING FLOW — MOBILE
+========================================================= */
+
+@media (max-width: 820px) {
+  .bookPage {
+    padding-top: 42px;
+    padding-bottom: 70px;
+  }
+
+  .bookHeader {
+    margin-bottom: 30px;
+  }
+
+  .bookHeader h1 {
+    font-size: 38px;
+  }
+
+  .bookingSteps {
+    grid-template-columns: 1fr;
+    margin-bottom: 28px;
+  }
+
+  .bookingLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .bookingVenueCard {
+    position: static;
+  }
+
+  .bookingFormCard {
+    padding: 24px;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .bookingActionRow {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .bookingActionRow .primaryBtn,
+  .bookingActionRow .secondaryBtn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .reviewActions {
+    flex-direction: column-reverse;
+  }
+}
+
+@media (max-width: 520px) {
+  .bookHeader h1 {
+    font-size: 32px;
+  }
+
+  .bookingVenueBody {
+    padding: 20px;
+  }
+
+  .bookingFormCard {
+    padding: 20px;
+  }
+
+  .formSection h2 {
+    font-size: 23px;
+  }
+
+  .reviewRows > div {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .reviewRows strong {
+    max-width: none;
+    text-align: left;
+  }
+
+  .paymentSummary > div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .paymentSummary strong {
+    font-size: 25px;
+  }
+}
+
+/* =========================================================
+   INSTANT BOOKING FLOW
+========================================================= */
+
+.bookingProgress {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 760px;
+  margin: 0 auto 32px;
+}
+
+.bookingProgressItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.4;
+}
+
+.bookingProgressItem.active,
+.bookingProgressItem.complete {
+  opacity: 1;
+}
+
+.bookingProgressItem > span {
+  width: 34px;
+  height: 34px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.bookingProgressItem strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.bookingProgressItem small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.bookingProgressLine {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.12);
+  flex: 1;
+  min-width: 30px;
+}
+
+.formSectionHeading {
+  margin-bottom: 24px;
+}
+
+.formSectionHeading h2 {
+  margin: 8px 0 0;
+  font-size: 25px;
+}
+
+.formSectionHeadingSpaced {
+  margin-top: 34px;
+}
+
+.reviewCard {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 34px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.09);
+}
+
+.reviewHeader {
+  padding-bottom: 24px;
+  margin-bottom: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.09);
+}
+
+.reviewHeader h2 {
+  margin: 8px 0 0;
+  font-size: 27px;
+}
+
+.reviewRows {
+  border-top: 0;
+}
+
+.reviewRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 30px;
+  padding: 17px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.reviewRow span {
+  font-size: 13px;
+  opacity: 0.55;
+}
+
+.reviewRow strong {
+  font-size: 14px;
+  font-weight: 500;
+  text-align: right;
+  max-width: 60%;
+  line-height: 1.5;
+}
+
+.bookingPaymentBox {
+  margin-top: 28px;
+  padding: 24px;
+  background: #f5f2eb;
+}
+
+.bookingPaymentTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.bookingPaymentTop span {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.bookingPaymentTop strong {
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.bookingPaymentBox p {
+  margin: 12px 0 0;
+  font-size: 11px;
+  line-height: 1.6;
+  opacity: 0.55;
+}
+
+.reviewActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.reviewActions button {
+  cursor: pointer;
+}
+
+.reviewActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.secondaryBtn {
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: transparent;
+  padding: 14px 20px;
+  font: inherit;
+}
+
+@media (max-width: 650px) {
+  .bookingProgress {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .bookingProgressItem {
+    align-items: flex-start;
+  }
+
+  .bookingProgressItem > span {
+    width: 30px;
+    height: 30px;
+  }
+
+  .bookingProgressItem strong {
+    font-size: 11px;
+  }
+
+  .bookingProgressItem small {
+    font-size: 10px;
+  }
+
+  .bookingProgressLine {
+    margin-top: 14px;
+  }
+
+  .reviewCard {
+    padding: 22px;
+  }
+
+  .reviewRow {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .reviewRow strong {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .bookingPaymentTop {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .reviewActions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .reviewActions button {
+    width: 100%;
+  }
+}
