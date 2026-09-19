@@ -17,6 +17,66 @@ import {
 import { createClient } from '../../lib/supabase-browser';
 import { venues } from '../../lib/data';
 
+/*
+ * ============================================================
+ * RAZORPAY TYPES
+ * ============================================================
+ */
+
+declare global {
+  interface Window {
+    Razorpay: new (
+      options: RazorpayOptions
+    ) => RazorpayInstance;
+  }
+}
+
+interface RazorpayOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+
+  prefill?: {
+    name?: string;
+    email?: string;
+    contact?: string;
+  };
+
+  notes?: Record<string, string>;
+
+  theme?: {
+    color?: string;
+  };
+
+  handler?: (
+    response: RazorpayResponse
+  ) => void;
+
+  modal?: {
+    ondismiss?: () => void;
+  };
+}
+
+interface RazorpayInstance {
+  open: () => void;
+  close: () => void;
+}
+
+interface RazorpayResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+
+/*
+ * ============================================================
+ * BOOKING FORM
+ * ============================================================
+ */
+
 type BookingForm = {
   fullName: string;
   email: string;
@@ -38,6 +98,15 @@ const initialForm: BookingForm = {
   budget: '',
   notes: '',
 };
+
+/*
+ * Temporary booking amount.
+ *
+ * ₹25,000
+ *
+ * The actual amount is controlled by the server-side
+ * create-order API.
+ */
 
 const TEMP_BOOKING_FEE = 25000;
 
@@ -326,8 +395,8 @@ function BookPageContent() {
     stage: 'review' | 'payment'
   ) {
     /*
-     * TypeScript fix:
-     * Make sure venue exists before accessing venue.name.
+     * Make sure venue exists before
+     * accessing venue.name.
      */
 
     if (!venue) {
@@ -401,6 +470,75 @@ function BookPageContent() {
 
   /*
    * ==========================================================
+   * LOAD RAZORPAY CHECKOUT SCRIPT
+   * ==========================================================
+   */
+
+  function loadRazorpayScript(): Promise<boolean> {
+    return new Promise(
+      (resolve) => {
+        /*
+         * Razorpay is already loaded.
+         */
+
+        if (window.Razorpay) {
+          resolve(true);
+          return;
+        }
+
+        /*
+         * Check whether the script is
+         * already being loaded.
+         */
+
+        const existingScript =
+          document.querySelector(
+            'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+          );
+
+        if (existingScript) {
+          existingScript.addEventListener(
+            'load',
+            () => resolve(true)
+          );
+
+          existingScript.addEventListener(
+            'error',
+            () => resolve(false)
+          );
+
+          return;
+        }
+
+        /*
+         * Create Razorpay Checkout script.
+         */
+
+        const script =
+          document.createElement(
+            'script'
+          );
+
+        script.src =
+          'https://checkout.razorpay.com/v1/checkout.js';
+
+        script.async = true;
+
+        script.onload = () =>
+          resolve(true);
+
+        script.onerror = () =>
+          resolve(false);
+
+        document.body.appendChild(
+          script
+        );
+      }
+    );
+  }
+
+  /*
+   * ==========================================================
    * PROCEED TO PAYMENT
    * ==========================================================
    */
@@ -419,41 +557,256 @@ function BookPageContent() {
 
     try {
       /*
-       * Send booking details to admin
-       * before proceeding to payment.
+       * ======================================================
+       * STEP 1
+       * Load Razorpay Checkout.
+       * ======================================================
        */
 
-      const result =
+      const razorpayLoaded =
+        await loadRazorpayScript();
+
+      if (!razorpayLoaded) {
+        throw new Error(
+          'Unable to load Razorpay Checkout. Please check your internet connection and try again.'
+        );
+      }
+
+      /*
+       * ======================================================
+       * STEP 2
+       * Send booking information to admin.
+       * ======================================================
+       */
+
+      const emailResult =
         await sendBookingEmail(
           'payment'
         );
 
       console.log(
         'Booking email sent:',
-        result
+        emailResult
       );
 
       /*
        * ======================================================
-       * RAZORPAY WILL BE CONNECTED HERE
+       * STEP 3
+       * Create Razorpay order.
+       *
+       * IMPORTANT:
+       * The amount is determined by the server.
        * ======================================================
        */
 
-      alert(
-        'Booking details sent successfully. Razorpay payment will open here.'
-      );
+      const orderResponse =
+        await fetch(
+          '/api/razorpay/create-order',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body: JSON.stringify({
+              venueId:
+                venue.id,
+
+              venueName:
+                venue.name,
+
+              fullName:
+                form.fullName,
+
+              email:
+                form.email,
+
+              mobile:
+                form.mobile,
+
+              eventDate:
+                form.eventDate,
+            }),
+          }
+        );
+
+      const orderData =
+        await orderResponse.json();
+
+      if (!orderResponse.ok) {
+        throw new Error(
+          orderData.error ||
+            'Unable to create Razorpay order.'
+        );
+      }
+
+      /*
+       * Make sure the server returned
+       * everything required by Checkout.
+       */
+
+      if (
+        !orderData.orderId ||
+        !orderData.keyId ||
+        !orderData.amount ||
+        !orderData.currency
+      ) {
+        throw new Error(
+          'Razorpay order information is incomplete.'
+        );
+      }
+
+      /*
+       * ======================================================
+       * STEP 4
+       * Configure Razorpay Checkout.
+       * ======================================================
+       */
+
+      const options: RazorpayOptions = {
+        key:
+          orderData.keyId,
+
+        amount:
+          orderData.amount,
+
+        currency:
+          orderData.currency,
+
+        name:
+          'The Venue Search',
+
+        description:
+          `Instant booking — ${venue.name}`,
+
+        order_id:
+          orderData.orderId,
+
+        prefill: {
+          name:
+            form.fullName,
+
+          email:
+            form.email,
+
+          contact:
+            form.mobile,
+        },
+
+        notes: {
+          venue:
+            venue.name,
+
+          event_date:
+            form.eventDate,
+
+          event_type:
+            form.eventType,
+
+          guest_count:
+            form.guestCount,
+        },
+
+        theme: {
+          color:
+            '#0f766e',
+        },
+
+        /*
+         * ====================================================
+         * PAYMENT HANDLER
+         * ====================================================
+         *
+         * Razorpay calls this after a successful
+         * Checkout payment.
+         *
+         * Server-side verification will be connected
+         * in the next step.
+         * ====================================================
+         */
+
+        handler:
+          (response) => {
+            console.log(
+              'Razorpay payment response:',
+              response
+            );
+
+            /*
+             * Keep the payment response available
+             * for the verification step.
+             */
+
+            setSubmitting(false);
+
+            alert(
+              'Payment received. We are now verifying your payment.'
+            );
+
+            /*
+             * IMPORTANT:
+             *
+             * We are intentionally NOT marking the
+             * booking as confirmed here.
+             *
+             * The next step will send:
+             *
+             * razorpay_payment_id
+             * razorpay_order_id
+             * razorpay_signature
+             *
+             * to the secure verification API.
+             */
+          },
+
+        /*
+         * ====================================================
+         * CHECKOUT CLOSED
+         * ====================================================
+         */
+
+        modal: {
+          ondismiss: () => {
+            setSubmitting(false);
+          },
+        },
+      };
+
+      /*
+       * ======================================================
+       * STEP 5
+       * Create Razorpay instance.
+       * ======================================================
+       */
+
+      const razorpay =
+        new window.Razorpay(
+          options
+        );
+
+      /*
+       * ======================================================
+       * STEP 6
+       * OPEN RAZORPAY CHECKOUT.
+       * ======================================================
+       */
+
+      razorpay.open();
+
     } catch (err) {
       console.error(
-        'Payment error:',
+        'Razorpay payment error:',
         err
       );
 
       setError(
         err instanceof Error
           ? err.message
-          : 'Something went wrong. Please try again.'
+          : 'Unable to start payment. Please try again.'
       );
-    } finally {
+
       setSubmitting(false);
     }
   }
@@ -467,6 +820,7 @@ function BookPageContent() {
   if (loading) {
     return (
       <main className="page">
+
         <section
           className="section"
           style={{
@@ -475,10 +829,13 @@ function BookPageContent() {
             placeItems: 'center',
           }}
         >
+
           <p>
             Loading booking...
           </p>
+
         </section>
+
       </main>
     );
   }
@@ -492,8 +849,11 @@ function BookPageContent() {
   if (!venue) {
     return (
       <main className="page">
+
         <section className="section">
+
           <div className="emptyState">
+
             <span className="kicker">
               VENUE NOT FOUND
             </span>
@@ -514,8 +874,11 @@ function BookPageContent() {
             >
               Explore venues →
             </Link>
+
           </div>
+
         </section>
+
       </main>
     );
   }
@@ -528,6 +891,7 @@ function BookPageContent() {
 
   return (
     <main className="page">
+
       <section className="section bookPage">
 
         {/* ====================================================
@@ -544,21 +908,27 @@ function BookPageContent() {
           </Link>
 
           <span className="kicker">
+
             {step === 1
               ? 'BOOK THIS VENUE'
               : 'REVIEW YOUR BOOKING'}
+
           </span>
 
           <h1>
+
             {step === 1
               ? 'Start your booking.'
               : 'Review your booking.'}
+
           </h1>
 
           <p>
+
             {step === 1
               ? 'Tell us about your celebration and continue to review your booking details.'
               : 'Review your event details before proceeding to payment.'}
+
           </p>
 
         </div>
@@ -638,14 +1008,18 @@ function BookPageContent() {
             <div className="bookingVenueImage">
 
               {venue.image ? (
+
                 <img
                   src={venue.image}
                   alt={venue.name}
                 />
+
               ) : (
+
                 <div>
                   The Venue Search
                 </div>
+
               )}
 
             </div>
@@ -653,9 +1027,11 @@ function BookPageContent() {
             <div className="bookingVenueBody">
 
               <span className="eyebrow">
+
                 {venue.type}
                 {' · '}
                 {venue.city}
+
               </span>
 
               <h2>
@@ -676,17 +1052,21 @@ function BookPageContent() {
                 </span>
 
                 {venue.rating && (
+
                   <span>
                     ★ {venue.rating}
                   </span>
+
                 )}
 
               </div>
 
               {venue.verified && (
+
                 <span className="bookingVerified">
                   ✓ Verified venue
                 </span>
+
               )}
 
             </div>
@@ -1032,9 +1412,11 @@ function BookPageContent() {
                 {/* ERROR */}
 
                 {error && (
+
                   <div className="bookingError">
                     {error}
                   </div>
+
                 )}
 
                 {/* ACTION */}
@@ -1199,6 +1581,7 @@ function BookPageContent() {
                     </div>
 
                     {form.notes && (
+
                       <div>
 
                         <span>
@@ -1210,6 +1593,7 @@ function BookPageContent() {
                         </strong>
 
                       </div>
+
                     )}
 
                   </div>
@@ -1238,11 +1622,11 @@ function BookPageContent() {
                   </div>
 
                   <small>
-                    This is a temporary booking amount
-                    for the current development flow.
-                    The final amount will be connected
-                    to your venue booking configuration
-                    before Razorpay goes live.
+                    This is the current Test Mode
+                    booking amount. The final amount
+                    will be connected to your venue
+                    booking configuration before
+                    Razorpay goes live.
                   </small>
 
                 </div>
@@ -1250,9 +1634,11 @@ function BookPageContent() {
                 {/* ERROR */}
 
                 {error && (
+
                   <div className="bookingError">
                     {error}
                   </div>
+
                 )}
 
                 {/* =================================================
@@ -1304,6 +1690,7 @@ function BookPageContent() {
         </div>
 
       </section>
+
     </main>
   );
 }
