@@ -3,6 +3,16 @@ import { Resend } from 'resend';
 
 const ADMIN_EMAIL = 'thevenuesearch@gmail.com';
 
+type BookingEvent = {
+  venueSpace?: string;
+  eventDate?: string;
+  eventType?: string;
+  guestCount?: string | number;
+  meal?: string;
+  mealType?: string;
+  notes?: string;
+};
+
 function escapeHtml(value: unknown): string {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -12,12 +22,68 @@ function escapeHtml(value: unknown): string {
     .replace(/'/g, '&#039;');
 }
 
+function formatDate(value: unknown): string {
+  if (!value) return 'Not provided';
+
+  const date = new Date(`${String(value)}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return date.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+function formatBookingFee(value: unknown): string {
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return '₹25,000';
+  }
+
+  return `₹${amount.toLocaleString('en-IN')}`;
+}
+
+function eventRow(
+  label: string,
+  value: unknown
+): string {
+  return `
+    <tr>
+      <td
+        style="
+          padding: 9px 0;
+          color: #777777;
+          width: 40%;
+          vertical-align: top;
+        "
+      >
+        ${escapeHtml(label)}
+      </td>
+
+      <td
+        style="
+          padding: 9px 0;
+          font-weight: 500;
+          vertical-align: top;
+        "
+      >
+        ${escapeHtml(value || 'Not provided')}
+      </td>
+    </tr>
+  `;
+}
+
 export async function POST(request: Request) {
   try {
     /*
-     * ============================================
+     * ============================================================
      * CHECK RESEND API KEY
-     * ============================================
+     * ============================================================
      */
 
     const apiKey = process.env.RESEND_API_KEY;
@@ -38,9 +104,9 @@ export async function POST(request: Request) {
     }
 
     /*
-     * ============================================
+     * ============================================================
      * READ REQUEST
-     * ============================================
+     * ============================================================
      */
 
     const body = await request.json();
@@ -52,19 +118,16 @@ export async function POST(request: Request) {
       fullName,
       email,
       mobile,
-      eventDate,
-      eventType,
-      guestCount,
-      budget,
-      notes,
+      numberOfEvents,
+      events,
       bookingFee,
       stage,
     } = body;
 
     /*
-     * ============================================
-     * VALIDATION
-     * ============================================
+     * ============================================================
+     * VALIDATE BASIC BOOKING INFORMATION
+     * ============================================================
      */
 
     const requiredFields = {
@@ -72,9 +135,6 @@ export async function POST(request: Request) {
       fullName,
       email,
       mobile,
-      eventDate,
-      eventType,
-      guestCount,
     };
 
     const missingFields = Object.entries(
@@ -100,27 +160,192 @@ export async function POST(request: Request) {
     }
 
     /*
-     * ============================================
+     * ============================================================
+     * VALIDATE EVENTS
+     *
+     * New booking structure:
+     *
+     * events: [
+     *   {
+     *     venueSpace,
+     *     eventDate,
+     *     eventType,
+     *     guestCount,
+     *     meal,
+     *     mealType,
+     *     notes
+     *   }
+     * ]
+     * ============================================================
+     */
+
+    let bookingEvents: BookingEvent[] = [];
+
+    if (Array.isArray(events)) {
+      bookingEvents = events;
+    }
+
+    /*
+     * Backward compatibility:
+     *
+     * If an older frontend sends one event using the old
+     * top-level fields, convert it into the new events array.
+     *
+     * This prevents old deployed pages from immediately
+     * breaking while the new frontend is being deployed.
+     */
+
+    if (
+      bookingEvents.length === 0 &&
+      body.eventDate &&
+      body.eventType &&
+      body.guestCount
+    ) {
+      bookingEvents = [
+        {
+          venueSpace:
+            body.venueSpace || '',
+          eventDate:
+            body.eventDate,
+          eventType:
+            body.eventType,
+          guestCount:
+            body.guestCount,
+          meal:
+            body.meal || '',
+          mealType:
+            body.mealType || '',
+          notes:
+            body.notes || '',
+        },
+      ];
+    }
+
+    if (bookingEvents.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'At least one event is required for the booking.',
+        },
+        { status: 400 }
+      );
+    }
+
+    /*
+     * ============================================================
+     * VALIDATE EACH EVENT
+     * ============================================================
+     */
+
+    for (
+      let index = 0;
+      index < bookingEvents.length;
+      index++
+    ) {
+      const event = bookingEvents[index];
+
+      const eventNumber = index + 1;
+
+      if (
+        !event.eventDate ||
+        String(event.eventDate).trim() === ''
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Event ${eventNumber}: event date is required.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      if (
+        !event.eventType ||
+        String(event.eventType).trim() === ''
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Event ${eventNumber}: event type is required.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      if (
+        event.guestCount === undefined ||
+        event.guestCount === null ||
+        String(event.guestCount).trim() === ''
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Event ${eventNumber}: guest count is required.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      /*
+       * Meal is required for the new booking flow.
+       */
+
+      if (
+        !event.meal ||
+        String(event.meal).trim() === ''
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Event ${eventNumber}: meal preference is required.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      /*
+       * Meal type is required for the new booking flow.
+       */
+
+      if (
+        !event.mealType ||
+        String(event.mealType).trim() === ''
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Event ${eventNumber}: meal type is required.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    /*
+     * ============================================================
      * CREATE RESEND CLIENT
-     * ============================================
+     * ============================================================
      */
 
     const resend = new Resend(apiKey);
 
     /*
-     * ============================================
-     * FORMAT DATA
-     * ============================================
+     * ============================================================
+     * SAFE BASIC DATA
+     * ============================================================
      */
 
     const safeVenueName =
       escapeHtml(venueName);
 
     const safeVenueId =
-      escapeHtml(venueId);
+      escapeHtml(venueId || 'Not provided');
 
     const safeMode =
-      escapeHtml(mode || 'instant-book');
+      escapeHtml(
+        mode || 'instant-book'
+      );
 
     const safeFullName =
       escapeHtml(fullName);
@@ -131,32 +356,15 @@ export async function POST(request: Request) {
     const safeMobile =
       escapeHtml(mobile);
 
-    const safeEventDate =
-      escapeHtml(eventDate);
-
-    const safeEventType =
-      escapeHtml(eventType);
-
-    const safeGuestCount =
-      escapeHtml(guestCount);
-
-    const safeBudget =
+    const safeNumberOfEvents =
       escapeHtml(
-        budget || 'Not provided'
-      );
-
-    const safeNotes =
-      escapeHtml(
-        notes || 'No notes provided.'
+        numberOfEvents ||
+          bookingEvents.length
       );
 
     const safeBookingFee =
       escapeHtml(
-        bookingFee
-          ? `₹${Number(
-              bookingFee
-            ).toLocaleString('en-IN')}`
-          : '₹25,000'
+        formatBookingFee(bookingFee)
       );
 
     const bookingStage =
@@ -165,9 +373,168 @@ export async function POST(request: Request) {
         : 'Proceed to Payment';
 
     /*
-     * ============================================
-     * EMAIL
-     * ============================================
+     * ============================================================
+     * BUILD EVENT HTML
+     * ============================================================
+     */
+
+    const eventsHtml = bookingEvents
+      .map((event, index) => {
+        const safeSpace =
+          escapeHtml(
+            event.venueSpace ||
+              'Not specified'
+          );
+
+        const safeDate =
+          escapeHtml(
+            formatDate(
+              event.eventDate
+            )
+          );
+
+        const safeType =
+          escapeHtml(
+            event.eventType ||
+              'Not specified'
+          );
+
+        const safeGuests =
+          escapeHtml(
+            event.guestCount ||
+              'Not specified'
+          );
+
+        const safeMeal =
+          escapeHtml(
+            event.meal ||
+              'Not specified'
+          );
+
+        const safeMealType =
+          escapeHtml(
+            event.mealType ||
+              'Not specified'
+          );
+
+        const safeNotes =
+          escapeHtml(
+            event.notes ||
+              'No notes provided.'
+          );
+
+        return `
+          <div
+            style="
+              margin-bottom: 24px;
+              border: 1px solid #e8e5df;
+              background: #ffffff;
+            "
+          >
+
+            <div
+              style="
+                padding: 16px 20px;
+                background: #151515;
+                color: #ffffff;
+              "
+            >
+              <div
+                style="
+                  font-size: 11px;
+                  letter-spacing: 2px;
+                  text-transform: uppercase;
+                  color: #9fd8e8;
+                  margin-bottom: 5px;
+                "
+              >
+                EVENT ${index + 1}
+              </div>
+
+              <div
+                style="
+                  font-size: 18px;
+                  font-weight: 600;
+                "
+              >
+                ${safeType}
+              </div>
+            </div>
+
+            <div style="padding: 18px 20px;">
+
+              <table
+                width="100%"
+                cellpadding="0"
+                cellspacing="0"
+                style="border-collapse: collapse;"
+              >
+
+                ${eventRow(
+                  'Venue space',
+                  safeSpace
+                )}
+
+                ${eventRow(
+                  'Event date',
+                  safeDate
+                )}
+
+                ${eventRow(
+                  'Event type',
+                  safeType
+                )}
+
+                ${eventRow(
+                  'Guest count',
+                  safeGuests
+                )}
+
+                ${eventRow(
+                  'Meal',
+                  safeMeal
+                )}
+
+                ${eventRow(
+                  'Meal type',
+                  safeMealType
+                )}
+
+              </table>
+
+              <div
+                style="
+                  margin-top: 14px;
+                  padding: 14px;
+                  background: #f7f5f1;
+                  font-size: 13px;
+                  line-height: 1.6;
+                "
+              >
+                <div
+                  style="
+                    color: #777777;
+                    margin-bottom: 5px;
+                  "
+                >
+                  Event notes
+                </div>
+
+                <div>
+                  ${safeNotes}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+
+    /*
+     * ============================================================
+     * SEND EMAIL
+     * ============================================================
      */
 
     const { data, error } =
@@ -188,10 +555,12 @@ export async function POST(request: Request) {
           <html>
             <head>
               <meta charset="UTF-8" />
+
               <meta
                 name="viewport"
                 content="width=device-width, initial-scale=1.0"
               />
+
               <title>
                 Venue Search Booking
               </title>
@@ -262,7 +631,7 @@ export async function POST(request: Request) {
 
                 </div>
 
-                <!-- VENUE -->
+                <!-- VENUE DETAILS -->
 
                 <div
                   style="
@@ -288,70 +657,31 @@ export async function POST(request: Request) {
                     "
                   >
 
-                    <tr>
-                      <td
-                        style="
-                          padding: 10px 0;
-                          color: #777777;
-                          width: 40%;
-                        "
-                      >
-                        Venue
-                      </td>
+                    ${eventRow(
+                      'Venue',
+                      safeVenueName
+                    )}
 
-                      <td
-                        style="
-                          padding: 10px 0;
-                          font-weight: 600;
-                        "
-                      >
-                        ${safeVenueName}
-                      </td>
-                    </tr>
+                    ${eventRow(
+                      'Venue ID',
+                      safeVenueId
+                    )}
 
-                    <tr>
-                      <td
-                        style="
-                          padding: 10px 0;
-                          color: #777777;
-                        "
-                      >
-                        Venue ID
-                      </td>
+                    ${eventRow(
+                      'Booking mode',
+                      safeMode
+                    )}
 
-                      <td
-                        style="
-                          padding: 10px 0;
-                        "
-                      >
-                        ${safeVenueId}
-                      </td>
-                    </tr>
-
-                    <tr>
-                      <td
-                        style="
-                          padding: 10px 0;
-                          color: #777777;
-                        "
-                      >
-                        Booking mode
-                      </td>
-
-                      <td
-                        style="
-                          padding: 10px 0;
-                        "
-                      >
-                        ${safeMode}
-                      </td>
-                    </tr>
+                    ${eventRow(
+                      'Number of events',
+                      safeNumberOfEvents
+                    )}
 
                   </table>
 
                 </div>
 
-                <!-- CUSTOMER -->
+                <!-- CUSTOMER DETAILS -->
 
                 <div
                   style="
@@ -377,70 +707,26 @@ export async function POST(request: Request) {
                     "
                   >
 
-                    <tr>
-                      <td
-                        style="
-                          padding: 10px 0;
-                          color: #777777;
-                          width: 40%;
-                        "
-                      >
-                        Full name
-                      </td>
+                    ${eventRow(
+                      'Full name',
+                      safeFullName
+                    )}
 
-                      <td
-                        style="
-                          padding: 10px 0;
-                          font-weight: 600;
-                        "
-                      >
-                        ${safeFullName}
-                      </td>
-                    </tr>
+                    ${eventRow(
+                      'Email',
+                      safeEmail
+                    )}
 
-                    <tr>
-                      <td
-                        style="
-                          padding: 10px 0;
-                          color: #777777;
-                        "
-                      >
-                        Email
-                      </td>
-
-                      <td
-                        style="
-                          padding: 10px 0;
-                        "
-                      >
-                        ${safeEmail}
-                      </td>
-                    </tr>
-
-                    <tr>
-                      <td
-                        style="
-                          padding: 10px 0;
-                          color: #777777;
-                        "
-                      >
-                        Mobile
-                      </td>
-
-                      <td
-                        style="
-                          padding: 10px 0;
-                        "
-                      >
-                        ${safeMobile}
-                      </td>
-                    </tr>
+                    ${eventRow(
+                      'Mobile',
+                      safeMobile
+                    )}
 
                   </table>
 
                 </div>
 
-                <!-- EVENT -->
+                <!-- EVENTS -->
 
                 <div
                   style="
@@ -457,123 +743,7 @@ export async function POST(request: Request) {
                     Event Details
                   </h2>
 
-                  <table
-                    width="100%"
-                    cellpadding="0"
-                    cellspacing="0"
-                    style="
-                      border-collapse: collapse;
-                    "
-                  >
-
-                    <tr>
-                      <td
-                        style="
-                          padding: 10px 0;
-                          color: #777777;
-                          width: 40%;
-                        "
-                      >
-                        Event date
-                      </td>
-
-                      <td
-                        style="
-                          padding: 10px 0;
-                        "
-                      >
-                        ${safeEventDate}
-                      </td>
-                    </tr>
-
-                    <tr>
-                      <td
-                        style="
-                          padding: 10px 0;
-                          color: #777777;
-                        "
-                      >
-                        Event type
-                      </td>
-
-                      <td
-                        style="
-                          padding: 10px 0;
-                        "
-                      >
-                        ${safeEventType}
-                      </td>
-                    </tr>
-
-                    <tr>
-                      <td
-                        style="
-                          padding: 10px 0;
-                          color: #777777;
-                        "
-                      >
-                        Guest count
-                      </td>
-
-                      <td
-                        style="
-                          padding: 10px 0;
-                        "
-                      >
-                        ${safeGuestCount}
-                      </td>
-                    </tr>
-
-                    <tr>
-                      <td
-                        style="
-                          padding: 10px 0;
-                          color: #777777;
-                        "
-                      >
-                        Wedding budget
-                      </td>
-
-                      <td
-                        style="
-                          padding: 10px 0;
-                        "
-                      >
-                        ${safeBudget}
-                      </td>
-                    </tr>
-
-                  </table>
-
-                </div>
-
-                <!-- NOTES -->
-
-                <div
-                  style="
-                    padding: 20px 32px;
-                  "
-                >
-
-                  <h2
-                    style="
-                      margin: 0 0 18px;
-                      font-size: 18px;
-                    "
-                  >
-                    Customer Notes
-                  </h2>
-
-                  <div
-                    style="
-                      background: #f7f5f1;
-                      padding: 18px;
-                      line-height: 1.6;
-                      font-size: 14px;
-                    "
-                  >
-                    ${safeNotes}
-                  </div>
+                  ${eventsHtml}
 
                 </div>
 
@@ -632,9 +802,9 @@ export async function POST(request: Request) {
       });
 
     /*
-     * ============================================
+     * ============================================================
      * RESEND ERROR
-     * ============================================
+     * ============================================================
      */
 
     if (error) {
@@ -655,9 +825,9 @@ export async function POST(request: Request) {
     }
 
     /*
-     * ============================================
+     * ============================================================
      * SUCCESS
-     * ============================================
+     * ============================================================
      */
 
     console.log(
@@ -669,10 +839,17 @@ export async function POST(request: Request) {
       success: true,
       message:
         'Booking details sent successfully.',
-      emailId: data?.id || null,
+      emailId:
+        data?.id || null,
     });
 
   } catch (error) {
+    /*
+     * ============================================================
+     * UNEXPECTED SERVER ERROR
+     * ============================================================
+     */
+
     console.error(
       'BOOKING EMAIL SERVER ERROR:',
       error

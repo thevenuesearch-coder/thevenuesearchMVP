@@ -145,7 +145,7 @@ export const venues: Venue[] = [
     rating: 4.9,
     verified: true,
     image:
-      'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1600&q=85',
+      "/images/venues/itc-kohenur.png",
     tags: ['Luxury', 'Hotel', 'Wedding'],
     desc:
       'An elegant luxury hotel overlooking Durgam Cheruvu, offering sophisticated spaces for premium celebrations.',

@@ -17,11 +17,9 @@ import {
 import { createClient } from '../../lib/supabase-browser';
 import { venues } from '../../lib/data';
 
-/*
- * ============================================================
- * RAZORPAY TYPES
- * ============================================================
- */
+/* ============================================================
+   RAZORPAY TYPES
+============================================================ */
 
 declare global {
   interface Window {
@@ -38,23 +36,16 @@ interface RazorpayOptions {
   name: string;
   description: string;
   order_id: string;
-
   prefill?: {
     name?: string;
     email?: string;
     contact?: string;
   };
-
   notes?: Record<string, string>;
-
   theme?: {
     color?: string;
   };
-
-  handler?: (
-    response: RazorpayResponse
-  ) => void;
-
+  handler?: (response: RazorpayResponse) => void;
   modal?: {
     ondismiss?: () => void;
   };
@@ -71,60 +62,88 @@ interface RazorpayResponse {
   razorpay_signature: string;
 }
 
-/*
- * ============================================================
- * BOOKING FORM
- * ============================================================
- */
+/* ============================================================
+   EVENT DETAILS
+============================================================ */
+
+type EventDetails = {
+  venueSpace: string;
+  eventDate: string;
+  eventType: string;
+  guestCount: string;
+  meal: string;
+  mealType: string;
+  notes: string;
+};
+
+/* ============================================================
+   BOOKING FORM
+============================================================ */
 
 type BookingForm = {
   fullName: string;
   email: string;
   mobile: string;
-  eventDate: string;
-  eventType: string;
-  guestCount: string;
-  budget: string;
-  notes: string;
+  numberOfEvents: string;
+  events: EventDetails[];
 };
+
+/* ============================================================
+   CREATE EMPTY EVENT
+============================================================ */
+
+function createEmptyEvent(): EventDetails {
+  return {
+    venueSpace: '',
+    eventDate: '',
+    eventType: '',
+    guestCount: '',
+    meal: '',
+    mealType: '',
+    notes: '',
+  };
+}
+
+/* ============================================================
+   INITIAL FORM
+============================================================ */
 
 const initialForm: BookingForm = {
   fullName: '',
   email: '',
   mobile: '',
-  eventDate: '',
-  eventType: '',
-  guestCount: '',
-  budget: '',
-  notes: '',
+  numberOfEvents: '',
+  events: [],
 };
 
-/*
- * Temporary booking amount.
- *
- * ₹25,000
- *
- * The actual amount is controlled by the server-side
- * create-order API.
- */
+/* ============================================================
+   TEMPORARY BOOKING FEE
+============================================================ */
 
-const TEMP_BOOKING_FEE = 25000;
+const TEMP_BOOKING_FEE = 2500000;
 
-/*
- * ============================================================
- * BOOKING PAGE CONTENT
- * ============================================================
- */
+/* ============================================================
+   ITC KOHENUR VENUE SPACES
+============================================================ */
+
+const ITC_KOHENUR_SPACES = [
+  'Deccan Stateroom',
+  'Dresden Green',
+  'Golconda Greens',
+  'Pearl Deck',
+];
+
+/* ============================================================
+   BOOKING PAGE CONTENT
+============================================================ */
 
 function BookPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  /*
-   * ==========================================================
-   * URL PARAMETERS
-   * ==========================================================
-   */
+  /* ==========================================================
+     URL PARAMETERS
+  ========================================================== */
 
   const venueId =
     searchParams.get('venue') || '';
@@ -132,11 +151,9 @@ function BookPageContent() {
   const mode =
     searchParams.get('mode');
 
-  /*
-   * ==========================================================
-   * FIND VENUE
-   * ==========================================================
-   */
+  /* ==========================================================
+     FIND VENUE
+  ========================================================== */
 
   const venue = useMemo(
     () =>
@@ -146,11 +163,18 @@ function BookPageContent() {
     [venueId]
   );
 
-  /*
-   * ==========================================================
-   * STATE
-   * ==========================================================
-   */
+  /* ==========================================================
+     CHECK ITC KOHENUR
+  ========================================================== */
+
+  const isITCKohenur =
+    venue?.name
+      ?.toLowerCase()
+      .includes('itc kohenur');
+
+  /* ==========================================================
+     STATE
+  ========================================================== */
 
   const [form, setForm] =
     useState<BookingForm>(
@@ -172,11 +196,9 @@ function BookPageContent() {
   const [error, setError] =
     useState('');
 
-  /*
-   * ==========================================================
-   * LOAD AUTHENTICATED USER
-   * ==========================================================
-   */
+  /* ==========================================================
+     LOAD AUTHENTICATED USER
+  ========================================================== */
 
   useEffect(() => {
     async function loadUser() {
@@ -189,31 +211,31 @@ function BookPageContent() {
         } =
           await supabase.auth.getSession();
 
-        /*
-         * User is not logged in
-         */
+        /* ------------------------------------------------------
+           USER NOT LOGGED IN
+        ------------------------------------------------------ */
 
         if (!session?.user) {
           router.replace(
             `/login?redirect=${encodeURIComponent(
-              `/book?venue=${venueId}`
+              `/book?venue=${venueId}&mode=${mode || ''}`
             )}`
           );
 
           return;
         }
 
-        /*
-         * Save user ID
-         */
+        /* ------------------------------------------------------
+           SAVE USER ID
+        ------------------------------------------------------ */
 
         setUserId(
           session.user.id
         );
 
-        /*
-         * Pre-fill email
-         */
+        /* ------------------------------------------------------
+           PRE-FILL EMAIL
+        ------------------------------------------------------ */
 
         setForm((current) => ({
           ...current,
@@ -235,16 +257,21 @@ function BookPageContent() {
     }
 
     loadUser();
-  }, [router, venueId]);
+  }, [
+    router,
+    venueId,
+    mode,
+  ]);
 
-  /*
-   * ==========================================================
-   * UPDATE FORM FIELD
-   * ==========================================================
-   */
+  /* ==========================================================
+     UPDATE CUSTOMER FIELD
+  ========================================================== */
 
   function updateField(
-    field: keyof BookingForm,
+    field:
+      | 'fullName'
+      | 'email'
+      | 'mobile',
     value: string
   ) {
     setForm((current) => ({
@@ -255,11 +282,76 @@ function BookPageContent() {
     setError('');
   }
 
-  /*
-   * ==========================================================
-   * CONTINUE TO REVIEW
-   * ==========================================================
-   */
+  /* ==========================================================
+     NUMBER OF EVENTS
+  ========================================================== */
+
+  function handleEventCountChange(
+    value: string
+  ) {
+    const count =
+      Number(value);
+
+    if (!count) {
+      setForm((current) => ({
+        ...current,
+        numberOfEvents: '',
+        events: [],
+      }));
+
+      setError('');
+
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      numberOfEvents: value,
+
+      events: Array.from(
+        { length: count },
+        (_, index) =>
+          current.events[index] ||
+          createEmptyEvent()
+      ),
+    }));
+
+    setError('');
+  }
+
+  /* ==========================================================
+     UPDATE EVENT FIELD
+  ========================================================== */
+
+  function updateEventField(
+    index: number,
+    field: keyof EventDetails,
+    value: string
+  ) {
+    setForm((current) => ({
+      ...current,
+
+      events:
+        current.events.map(
+          (
+            event,
+            eventIndex
+          ) =>
+            eventIndex === index
+              ? {
+                  ...event,
+                  [field]: value,
+                }
+              : event
+        ),
+    }));
+
+    setError('');
+  }
+
+  /* ==========================================================
+     CONTINUE TO REVIEW
+  ========================================================== */
 
   function handleContinue(
     event: FormEvent
@@ -268,9 +360,9 @@ function BookPageContent() {
 
     setError('');
 
-    /*
-     * Venue validation
-     */
+    /* --------------------------------------------------------
+       VENUE
+    -------------------------------------------------------- */
 
     if (!venue) {
       setError(
@@ -280,9 +372,9 @@ function BookPageContent() {
       return;
     }
 
-    /*
-     * Full name
-     */
+    /* --------------------------------------------------------
+       FULL NAME
+    -------------------------------------------------------- */
 
     if (!form.fullName.trim()) {
       setError(
@@ -292,9 +384,9 @@ function BookPageContent() {
       return;
     }
 
-    /*
-     * Email
-     */
+    /* --------------------------------------------------------
+       EMAIL
+    -------------------------------------------------------- */
 
     if (!form.email.trim()) {
       setError(
@@ -304,9 +396,9 @@ function BookPageContent() {
       return;
     }
 
-    /*
-     * Mobile
-     */
+    /* --------------------------------------------------------
+       MOBILE
+    -------------------------------------------------------- */
 
     if (!form.mobile.trim()) {
       setError(
@@ -316,57 +408,112 @@ function BookPageContent() {
       return;
     }
 
-    /*
-     * Event date
-     */
+    /* --------------------------------------------------------
+       NUMBER OF EVENTS
+    -------------------------------------------------------- */
 
-    if (!form.eventDate) {
+    if (!form.numberOfEvents) {
       setError(
-        'Please select your event date.'
+        'Please select the number of events.'
       );
 
       return;
     }
 
-    /*
-     * Event type
-     */
+    /* --------------------------------------------------------
+       EVENT ARRAY
+    -------------------------------------------------------- */
 
-    if (!form.eventType) {
+    if (
+      form.events.length !==
+      Number(form.numberOfEvents)
+    ) {
       setError(
-        'Please select your event type.'
+        'Please select the number of events again.'
       );
 
       return;
     }
 
-    /*
-     * Guest count
-     */
+    /* --------------------------------------------------------
+       VALIDATE EVERY EVENT
+    -------------------------------------------------------- */
 
-    if (!form.guestCount) {
-      setError(
-        'Please select your guest count.'
-      );
+    for (
+      let index = 0;
+      index < form.events.length;
+      index++
+    ) {
+      const currentEvent =
+        form.events[index];
 
-      return;
+      /* Venue space — ITC Kohenur */
+
+      if (
+        isITCKohenur &&
+        !currentEvent.venueSpace
+      ) {
+        setError(
+          `Please select the venue space for Event ${index + 1}.`
+        );
+
+        return;
+      }
+
+      /* Event date */
+
+      if (!currentEvent.eventDate) {
+        setError(
+          `Please select the date for Event ${index + 1}.`
+        );
+
+        return;
+      }
+
+      /* Event type */
+
+      if (!currentEvent.eventType) {
+        setError(
+          `Please select the event type for Event ${index + 1}.`
+        );
+
+        return;
+      }
+
+      /* Guest count */
+
+      if (!currentEvent.guestCount) {
+        setError(
+          `Please select the guest count for Event ${index + 1}.`
+        );
+
+        return;
+      }
+
+      /* Meal */
+
+      if (!currentEvent.meal) {
+        setError(
+          `Please select the meal preference for Event ${index + 1}.`
+        );
+
+        return;
+      }
+
+      /* Type of meal */
+
+      if (!currentEvent.mealType) {
+        setError(
+          `Please select the meal type for Event ${index + 1}.`
+        );
+
+        return;
+      }
     }
 
-    /*
-     * Budget
-     */
-
-    if (!form.budget) {
-      setError(
-        'Please select your budget.'
-      );
-
-      return;
-    }
-
-    /*
-     * Everything is valid
-     */
+    /* --------------------------------------------------------
+       EVERYTHING VALID
+    -------------------------------------------------------- */
 
     setStep(2);
 
@@ -376,84 +523,62 @@ function BookPageContent() {
     });
   }
 
-  /*
-   * ==========================================================
-   * SEND BOOKING EMAIL
-   * ==========================================================
-   *
-   * Sends booking information to:
-   *
-   * thevenuesearch@gmail.com
-   *
-   * through:
-   *
-   * /api/booking-payment
-   * ==========================================================
-   */
+  /* ==========================================================
+     SEND BOOKING DATA
+  ========================================================== */
 
   async function sendBookingEmail(
-    stage: 'review' | 'payment'
+    stage:
+      | 'review'
+      | 'payment'
   ) {
-    /*
-     * Make sure venue exists before
-     * accessing venue.name.
-     */
-
     if (!venue) {
       throw new Error(
         'The selected venue could not be found.'
       );
     }
 
-    const response = await fetch(
-      '/api/booking-payment',
-      {
-        method: 'POST',
+    const response =
+      await fetch(
+        '/api/booking-payment',
+        {
+          method: 'POST',
 
-        headers: {
-          'Content-Type':
-            'application/json',
-        },
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
 
-        body: JSON.stringify({
-          venueName:
-            venue.name,
+          body: JSON.stringify({
+            venueName:
+              venue.name,
 
-          venueId,
+            venueId,
 
-          mode,
+            mode,
 
-          fullName:
-            form.fullName,
+            fullName:
+              form.fullName,
 
-          email:
-            form.email,
+            email:
+              form.email,
 
-          mobile:
-            form.mobile,
+            mobile:
+              form.mobile,
 
-          eventDate:
-            form.eventDate,
+            numberOfEvents:
+              form.numberOfEvents,
 
-          eventType:
-            form.eventType,
+            events:
+              form.events,
 
-          guestCount:
-            form.guestCount,
+            bookingFee:
+              TEMP_BOOKING_FEE,
 
-          budget:
-            form.budget,
-
-          notes:
-            form.notes,
-
-          bookingFee:
-            TEMP_BOOKING_FEE,
-
-          stage,
-        }),
-      }
-    );
+            stage,
+          }),
+        }
+      );
 
     const result =
       await response.json();
@@ -468,83 +593,15 @@ function BookPageContent() {
     return result;
   }
 
-  /*
-   * ==========================================================
-   * LOAD RAZORPAY CHECKOUT SCRIPT
-   * ==========================================================
-   */
-
-  function loadRazorpayScript(): Promise<boolean> {
-    return new Promise(
-      (resolve) => {
-        /*
-         * Razorpay is already loaded.
-         */
-
-        if (window.Razorpay) {
-          resolve(true);
-          return;
-        }
-
-        /*
-         * Check whether the script is
-         * already being loaded.
-         */
-
-        const existingScript =
-          document.querySelector(
-            'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
-          );
-
-        if (existingScript) {
-          existingScript.addEventListener(
-            'load',
-            () => resolve(true)
-          );
-
-          existingScript.addEventListener(
-            'error',
-            () => resolve(false)
-          );
-
-          return;
-        }
-
-        /*
-         * Create Razorpay Checkout script.
-         */
-
-        const script =
-          document.createElement(
-            'script'
-          );
-
-        script.src =
-          'https://checkout.razorpay.com/v1/checkout.js';
-
-        script.async = true;
-
-        script.onload = () =>
-          resolve(true);
-
-        script.onerror = () =>
-          resolve(false);
-
-        document.body.appendChild(
-          script
-        );
-      }
-    );
-  }
-
-  /*
-   * ==========================================================
-   * PROCEED TO PAYMENT
-   * ==========================================================
-   */
+  /* ==========================================================
+     PROCEED TO PAYMENT
+  ========================================================== */
 
   async function handlePayment() {
-    if (!userId || !venue) {
+    if (
+      !userId ||
+      !venue
+    ) {
       setError(
         'Your session or venue information is unavailable.'
       );
@@ -556,266 +613,66 @@ function BookPageContent() {
     setError('');
 
     try {
-      /*
-       * ======================================================
-       * STEP 1
-       * Load Razorpay Checkout.
-       * ======================================================
-       */
-
-      const razorpayLoaded =
-        await loadRazorpayScript();
-
-      if (!razorpayLoaded) {
-        throw new Error(
-          'Unable to load Razorpay Checkout. Please check your internet connection and try again.'
-        );
-      }
-
-      /*
-       * ======================================================
-       * STEP 2
-       * Send booking information to admin.
-       * ======================================================
-       */
-
-      const emailResult =
+      const result =
         await sendBookingEmail(
           'payment'
         );
 
       console.log(
-        'Booking email sent:',
-        emailResult
+        'Booking details sent:',
+        result
       );
 
       /*
-       * ======================================================
-       * STEP 3
-       * Create Razorpay order.
-       *
-       * IMPORTANT:
-       * The amount is determined by the server.
-       * ======================================================
+       * Razorpay payment will be connected
+       * here using the existing payment flow.
        */
 
-      const orderResponse =
-        await fetch(
-          '/api/razorpay/create-order',
-          {
-            method: 'POST',
-
-            headers: {
-              'Content-Type':
-                'application/json',
-            },
-
-            body: JSON.stringify({
-              venueId:
-                venue.id,
-
-              venueName:
-                venue.name,
-
-              fullName:
-                form.fullName,
-
-              email:
-                form.email,
-
-              mobile:
-                form.mobile,
-
-              eventDate:
-                form.eventDate,
-            }),
-          }
-        );
-
-      const orderData =
-        await orderResponse.json();
-
-      if (!orderResponse.ok) {
-        throw new Error(
-          orderData.error ||
-            'Unable to create Razorpay order.'
-        );
-      }
-
-      /*
-       * Make sure the server returned
-       * everything required by Checkout.
-       */
-
-      if (
-        !orderData.orderId ||
-        !orderData.keyId ||
-        !orderData.amount ||
-        !orderData.currency
-      ) {
-        throw new Error(
-          'Razorpay order information is incomplete.'
-        );
-      }
-
-      /*
-       * ======================================================
-       * STEP 4
-       * Configure Razorpay Checkout.
-       * ======================================================
-       */
-
-      const options: RazorpayOptions = {
-        key:
-          orderData.keyId,
-
-        amount:
-          orderData.amount,
-
-        currency:
-          orderData.currency,
-
-        name:
-          'The Venue Search',
-
-        description:
-          `Instant booking — ${venue.name}`,
-
-        order_id:
-          orderData.orderId,
-
-        prefill: {
-          name:
-            form.fullName,
-
-          email:
-            form.email,
-
-          contact:
-            form.mobile,
-        },
-
-        notes: {
-          venue:
-            venue.name,
-
-          event_date:
-            form.eventDate,
-
-          event_type:
-            form.eventType,
-
-          guest_count:
-            form.guestCount,
-        },
-
-        theme: {
-          color:
-            '#0f766e',
-        },
-
-        /*
-         * ====================================================
-         * PAYMENT HANDLER
-         * ====================================================
-         *
-         * Razorpay calls this after a successful
-         * Checkout payment.
-         *
-         * Server-side verification will be connected
-         * in the next step.
-         * ====================================================
-         */
-
-        handler:
-          (response) => {
-            console.log(
-              'Razorpay payment response:',
-              response
-            );
-
-            /*
-             * Keep the payment response available
-             * for the verification step.
-             */
-
-            setSubmitting(false);
-
-            alert(
-              'Payment received. We are now verifying your payment.'
-            );
-
-            /*
-             * IMPORTANT:
-             *
-             * We are intentionally NOT marking the
-             * booking as confirmed here.
-             *
-             * The next step will send:
-             *
-             * razorpay_payment_id
-             * razorpay_order_id
-             * razorpay_signature
-             *
-             * to the secure verification API.
-             */
-          },
-
-        /*
-         * ====================================================
-         * CHECKOUT CLOSED
-         * ====================================================
-         */
-
-        modal: {
-          ondismiss: () => {
-            setSubmitting(false);
-          },
-        },
-      };
-
-      /*
-       * ======================================================
-       * STEP 5
-       * Create Razorpay instance.
-       * ======================================================
-       */
-
-      const razorpay =
-        new window.Razorpay(
-          options
-        );
-
-      /*
-       * ======================================================
-       * STEP 6
-       * OPEN RAZORPAY CHECKOUT.
-       * ======================================================
-       */
-
-      razorpay.open();
-
+      alert(
+        'Booking details sent successfully. Razorpay payment will open here.'
+      );
     } catch (err) {
       console.error(
-        'Razorpay payment error:',
+        'Payment error:',
         err
       );
 
       setError(
         err instanceof Error
           ? err.message
-          : 'Unable to start payment. Please try again.'
+          : 'Something went wrong. Please try again.'
       );
-
+    } finally {
       setSubmitting(false);
     }
   }
 
-  /*
-   * ==========================================================
-   * LOADING STATE
-   * ==========================================================
-   */
+  /* ==========================================================
+     FORMAT DATE
+  ========================================================== */
+
+  function formatDate(
+    date: string
+  ) {
+    if (!date) {
+      return '';
+    }
+
+    return new Date(
+      `${date}T00:00:00`
+    ).toLocaleDateString(
+      'en-IN',
+      {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }
+    );
+  }
+
+  /* ==========================================================
+     LOADING STATE
+  ========================================================== */
 
   if (loading) {
     return (
@@ -824,27 +681,25 @@ function BookPageContent() {
         <section
           className="section"
           style={{
-            minHeight: '70vh',
+            minHeight:
+              '70vh',
             display: 'grid',
-            placeItems: 'center',
+            placeItems:
+              'center',
           }}
         >
-
           <p>
             Loading booking...
           </p>
-
         </section>
 
       </main>
     );
   }
 
-  /*
-   * ==========================================================
-   * VENUE NOT FOUND
-   * ==========================================================
-   */
+  /* ==========================================================
+     VENUE NOT FOUND
+  ========================================================== */
 
   if (!venue) {
     return (
@@ -883,11 +738,9 @@ function BookPageContent() {
     );
   }
 
-  /*
-   * ==========================================================
-   * PAGE
-   * ==========================================================
-   */
+  /* ==========================================================
+     PAGE
+  ========================================================== */
 
   return (
     <main className="page">
@@ -908,27 +761,21 @@ function BookPageContent() {
           </Link>
 
           <span className="kicker">
-
             {step === 1
               ? 'BOOK THIS VENUE'
               : 'REVIEW YOUR BOOKING'}
-
           </span>
 
           <h1>
-
             {step === 1
               ? 'Start your booking.'
               : 'Review your booking.'}
-
           </h1>
 
           <p>
-
             {step === 1
               ? 'Tell us about your celebration and continue to review your booking details.'
-              : 'Review your event details before proceeding to payment.'}
-
+              : 'Review all your event details before proceeding to payment.'}
           </p>
 
         </div>
@@ -1008,18 +855,14 @@ function BookPageContent() {
             <div className="bookingVenueImage">
 
               {venue.image ? (
-
                 <img
                   src={venue.image}
                   alt={venue.name}
                 />
-
               ) : (
-
                 <div>
                   The Venue Search
                 </div>
-
               )}
 
             </div>
@@ -1027,11 +870,9 @@ function BookPageContent() {
             <div className="bookingVenueBody">
 
               <span className="eyebrow">
-
                 {venue.type}
                 {' · '}
                 {venue.city}
-
               </span>
 
               <h2>
@@ -1052,21 +893,17 @@ function BookPageContent() {
                 </span>
 
                 {venue.rating && (
-
                   <span>
                     ★ {venue.rating}
                   </span>
-
                 )}
 
               </div>
 
               {venue.verified && (
-
                 <span className="bookingVerified">
                   ✓ Verified venue
                 </span>
-
               )}
 
             </div>
@@ -1086,11 +923,13 @@ function BookPageContent() {
               ================================================= */
 
               <form
-                onSubmit={handleContinue}
+                onSubmit={
+                  handleContinue
+                }
               >
 
                 {/* =================================================
-                    YOUR DETAILS
+                    CUSTOMER DETAILS
                 ================================================= */}
 
                 <div className="formSection">
@@ -1104,6 +943,8 @@ function BookPageContent() {
                   </h2>
 
                   <div className="formGrid">
+
+                    {/* FULL NAME */}
 
                     <label>
 
@@ -1128,6 +969,8 @@ function BookPageContent() {
 
                     </label>
 
+                    {/* EMAIL */}
+
                     <label>
 
                       <span>
@@ -1150,6 +993,8 @@ function BookPageContent() {
                       />
 
                     </label>
+
+                    {/* MOBILE */}
 
                     <label>
 
@@ -1189,189 +1034,58 @@ function BookPageContent() {
                   </span>
 
                   <h2>
-                    Tell us about your celebration
+                    Plan your celebration
                   </h2>
+
+                  {/* =================================================
+                      NUMBER OF EVENTS
+                  ================================================= */}
 
                   <div className="formGrid">
 
-                    {/* EVENT DATE */}
-
                     <label>
 
                       <span>
-                        Event date *
-                      </span>
-
-                      <input
-                        type="date"
-                        value={
-                          form.eventDate
-                        }
-                        min={
-                          new Date()
-                            .toISOString()
-                            .split('T')[0]
-                        }
-                        onChange={(e) =>
-                          updateField(
-                            'eventDate',
-                            e.target.value
-                          )
-                        }
-                      />
-
-                    </label>
-
-                    {/* EVENT TYPE */}
-
-                    <label>
-
-                      <span>
-                        Event type *
+                        Number of events *
                       </span>
 
                       <select
                         value={
-                          form.eventType
+                          form.numberOfEvents
                         }
                         onChange={(e) =>
-                          updateField(
-                            'eventType',
+                          handleEventCountChange(
                             e.target.value
                           )
                         }
                       >
 
                         <option value="">
-                          Select event type
+                          Select number of events
                         </option>
 
-                        <option value="Wedding">
-                          Wedding
+                        <option value="1">
+                          1 Event
                         </option>
 
-                        <option value="Reception">
-                          Reception
+                        <option value="2">
+                          2 Events
                         </option>
 
-                        <option value="Engagement">
-                          Engagement
+                        <option value="3">
+                          3 Events
                         </option>
 
-                        <option value="Mehendi">
-                          Mehendi
+                        <option value="4">
+                          4 Events
                         </option>
 
-                        <option value="Sangeet">
-                          Sangeet
+                        <option value="5">
+                          5 Events
                         </option>
 
-                        <option value="Haldi">
-                          Haldi
-                        </option>
-
-                        <option value="Corporate Event">
-                          Corporate Event
-                        </option>
-
-                        <option value="Other">
-                          Other
-                        </option>
-
-                      </select>
-
-                    </label>
-
-                    {/* GUEST COUNT */}
-
-                    <label>
-
-                      <span>
-                        Guest count *
-                      </span>
-
-                      <select
-                        value={
-                          form.guestCount
-                        }
-                        onChange={(e) =>
-                          updateField(
-                            'guestCount',
-                            e.target.value
-                          )
-                        }
-                      >
-
-                        <option value="">
-                          Select guest count
-                        </option>
-
-                        <option value="50–100">
-                          50–100
-                        </option>
-
-                        <option value="100–200">
-                          100–200
-                        </option>
-
-                        <option value="200–400">
-                          200–400
-                        </option>
-
-                        <option value="400–600">
-                          400–600
-                        </option>
-
-                        <option value="600+">
-                          600+
-                        </option>
-
-                      </select>
-
-                    </label>
-
-                    {/* BUDGET */}
-
-                    <label>
-
-                      <span>
-                        Wedding budget *
-                      </span>
-
-                      <select
-                        value={
-                          form.budget
-                        }
-                        onChange={(e) =>
-                          updateField(
-                            'budget',
-                            e.target.value
-                          )
-                        }
-                      >
-
-                        <option value="">
-                          Select budget
-                        </option>
-
-                        <option value="₹5L – ₹10L">
-                          ₹5L – ₹10L
-                        </option>
-
-                        <option value="₹10L – ₹20L">
-                          ₹10L – ₹20L
-                        </option>
-
-                        <option value="₹20L – ₹40L">
-                          ₹20L – ₹40L
-                        </option>
-
-                        <option value="₹40L – ₹75L">
-                          ₹40L – ₹75L
-                        </option>
-
-                        <option value="₹75L+">
-                          ₹75L+
+                        <option value="6">
+                          6 Events
                         </option>
 
                       </select>
@@ -1380,53 +1094,399 @@ function BookPageContent() {
 
                   </div>
 
-                  {/* NOTES */}
+                  {/* =================================================
+                      DYNAMIC EVENTS
+                  ================================================= */}
 
-                  <label className="fullWidthField">
+                  {form.events.map(
+                    (
+                      currentEvent,
+                      index
+                    ) => (
 
-                    <span>
-                      Notes{' '}
-                      <small>
-                        Optional
-                      </small>
-                    </span>
+                      <div
+                        key={index}
+                        className="formSection"
+                        style={{
+                          marginTop:
+                            '28px',
+                          paddingTop:
+                            '28px',
+                          borderTop:
+                            '1px solid rgba(0,0,0,0.08)',
+                        }}
+                      >
 
-                    <textarea
-                      value={
-                        form.notes
-                      }
-                      onChange={(e) =>
-                        updateField(
-                          'notes',
-                          e.target.value
-                        )
-                      }
-                      placeholder="Tell us anything important about your celebration..."
-                      rows={5}
-                    />
+                        <span className="kicker">
+                          EVENT {index + 1}
+                        </span>
 
-                  </label>
+                        <h3
+                          style={{
+                            marginTop:
+                              '8px',
+                            marginBottom:
+                              '20px',
+                          }}
+                        >
+                          Tell us about Event{' '}
+                          {index + 1}
+                        </h3>
+
+                        <div className="formGrid">
+
+                          {/* =================================================
+                              VENUE SPACE
+                          ================================================= */}
+
+                          {isITCKohenur && (
+                            <label>
+
+                              <span>
+                                Venue space *
+                              </span>
+
+                              <select
+                                value={
+                                  currentEvent.venueSpace
+                                }
+                                onChange={(e) =>
+                                  updateEventField(
+                                    index,
+                                    'venueSpace',
+                                    e.target.value
+                                  )
+                                }
+                              >
+
+                                <option value="">
+                                  Select venue space
+                                </option>
+
+                                {ITC_KOHENUR_SPACES.map(
+                                  (space) => (
+                                    <option
+                                      key={
+                                        space
+                                      }
+                                      value={
+                                        space
+                                      }
+                                    >
+                                      {space}
+                                    </option>
+                                  )
+                                )}
+
+                              </select>
+
+                            </label>
+                          )}
+
+                          {/* =================================================
+                              EVENT DATE
+                          ================================================= */}
+
+                          <label>
+
+                            <span>
+                              Event date *
+                            </span>
+
+                            <input
+                              type="date"
+                              value={
+                                currentEvent.eventDate
+                              }
+                              min={
+                                new Date()
+                                  .toISOString()
+                                  .split(
+                                    'T'
+                                  )[0]
+                              }
+                              onChange={(e) =>
+                                updateEventField(
+                                  index,
+                                  'eventDate',
+                                  e.target.value
+                                )
+                              }
+                            />
+
+                          </label>
+
+                          {/* =================================================
+                              EVENT TYPE
+                          ================================================= */}
+
+                          <label>
+
+                            <span>
+                              Event type *
+                            </span>
+
+                            <select
+                              value={
+                                currentEvent.eventType
+                              }
+                              onChange={(e) =>
+                                updateEventField(
+                                  index,
+                                  'eventType',
+                                  e.target.value
+                                )
+                              }
+                            >
+
+                              <option value="">
+                                Select event type
+                              </option>
+
+                              <option value="Engagement">
+                                Engagement
+                              </option>
+
+                              <option value="Wedding">
+                                Sangeeth
+                              </option>
+
+                              <option value="Reception">
+                                Haldi
+                              </option>                              
+
+                              <option value="Mehendi">
+                                Mehendi
+                              </option>
+
+                              <option value="Sangeet">
+                                Marriage
+                              </option>
+
+                              <option value="Haldi">
+                                Reception
+                              </option>
+
+                              <option value="Other">
+                                Other
+                              </option>
+
+                            </select>
+
+                          </label>
+
+                          {/* =================================================
+                              GUEST COUNT
+                          ================================================= */}
+
+                          <label>
+
+                            <span>
+                              Guest count *
+                            </span>
+
+                            <select
+                              value={
+                                currentEvent.guestCount
+                              }
+                              onChange={(e) =>
+                                updateEventField(
+                                  index,
+                                  'guestCount',
+                                  e.target.value
+                                )
+                              }
+                            >
+
+                              <option value="">
+                                Select guest count
+                              </option>
+
+                              <option value="50–100">
+                                50–100
+                              </option>
+
+                              <option value="100–150">
+                                100–150
+                              </option>
+
+                              <option value="150–200">
+                                150–200
+                              </option>
+
+                              <option value="200–250">
+                                200–250
+                              </option>
+
+                              <option value="250–300">
+                                250–300
+                              </option>
+
+                              <option value="300–350">
+                                300–350
+                              </option>
+
+                              <option value="900+">
+                                350+
+                              </option>
+
+                            </select>
+
+                          </label>
+
+                          {/* =================================================
+                              MEAL
+                          ================================================= */}
+
+                          <label>
+
+                            <span>
+                              Meal *
+                            </span>
+
+                            <select
+                              value={
+                                currentEvent.meal
+                              }
+                              onChange={(e) =>
+                                updateEventField(
+                                  index,
+                                  'meal',
+                                  e.target.value
+                                )
+                              }
+                            >
+
+                              <option value="">
+                                Select meal
+                              </option>
+
+                              <option value="Veg">
+                                Veg
+                              </option>
+
+                              <option value="Non-Veg">
+                                Non-Veg
+                              </option>
+
+                              <option value="Mix">
+                                Mix
+                              </option>
+
+                            </select>
+
+                          </label>
+
+                          {/* =================================================
+                              TYPE OF MEAL
+                          ================================================= */}
+
+                          <label>
+
+                            <span>
+                              Type of meal *
+                            </span>
+
+                            <select
+                              value={
+                                currentEvent.mealType
+                              }
+                              onChange={(e) =>
+                                updateEventField(
+                                  index,
+                                  'mealType',
+                                  e.target.value
+                                )
+                              }
+                            >
+
+                              <option value="">
+                                Select type of meal
+                              </option>
+
+                              <option value="Normal">
+                                Normal
+                              </option>
+
+                              <option value="Breakfast">
+                                Breakfast
+                              </option>
+
+                              <option value="Premium">
+                                Premium
+                              </option>
+
+                            </select>
+
+                          </label>
+
+                        </div>
+
+                        {/* =================================================
+                            NOTES
+                        ================================================= */}
+
+                        <label
+                          className="fullWidthField"
+                          style={{
+                            marginTop:
+                              '20px',
+                          }}
+                        >
+
+                          <span>
+                            Notes{' '}
+                            <small>
+                              Optional
+                            </small>
+                          </span>
+
+                          <textarea
+                            value={
+                              currentEvent.notes
+                            }
+                            onChange={(e) =>
+                              updateEventField(
+                                index,
+                                'notes',
+                                e.target.value
+                              )
+                            }
+                            placeholder={`Tell us anything important about Event ${index + 1}...`}
+                            rows={4}
+                          />
+
+                        </label>
+
+                      </div>
+
+                    )
+                  )}
 
                 </div>
 
-                {/* ERROR */}
+                {/* =================================================
+                    ERROR
+                ================================================= */}
 
                 {error && (
-
                   <div className="bookingError">
                     {error}
                   </div>
-
                 )}
 
-                {/* ACTION */}
+                {/* =================================================
+                    ACTION
+                ================================================= */}
 
                 <div className="bookingActionRow">
 
                   <button
                     type="submit"
                     className="primaryBtn large"
-                    disabled={submitting}
+                    disabled={
+                      submitting
+                    }
                   >
                     Review booking →
                   </button>
@@ -1442,6 +1502,10 @@ function BookPageContent() {
               ================================================= */
 
               <div className="reviewContent">
+
+                {/* =================================================
+                    BOOKING SUMMARY
+                ================================================= */}
 
                 <div className="formSection">
 
@@ -1474,13 +1538,11 @@ function BookPageContent() {
                       </span>
 
                       <strong>
-
                         {venue.city}
 
                         {venue.destination
                           ? `, ${venue.destination}`
                           : ''}
-
                       </strong>
 
                     </div>
@@ -1524,76 +1586,216 @@ function BookPageContent() {
                     <div>
 
                       <span>
-                        Event date
+                        Number of events
                       </span>
 
                       <strong>
-
-                        {new Date(
-                          `${form.eventDate}T00:00:00`
-                        ).toLocaleDateString(
-                          'en-IN',
-                          {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                          }
-                        )}
-
+                        {form.numberOfEvents}
                       </strong>
 
                     </div>
 
-                    <div>
+                  </div>
 
-                      <span>
-                        Event type
-                      </span>
+                </div>
 
-                      <strong>
-                        {form.eventType}
-                      </strong>
+                {/* =================================================
+                    EVENT SCHEDULE
+                ================================================= */}
 
-                    </div>
+                <div className="formSection">
 
-                    <div>
+                  <span className="kicker">
+                    EVENT SCHEDULE
+                  </span>
 
-                      <span>
-                        Guests
-                      </span>
+                  <h2>
+                    Your event details
+                  </h2>
 
-                      <strong>
-                        {form.guestCount}
-                      </strong>
+                  <div
+                    style={{
+                      display:
+                        'grid',
+                      gap:
+                        '18px',
+                    }}
+                  >
 
-                    </div>
+                    {form.events.map(
+                      (
+                        currentEvent,
+                        index
+                      ) => (
 
-                    <div>
+                        <div
+                          key={index}
+                          style={{
+                            padding:
+                              '22px',
+                            border:
+                              '1px solid rgba(0,0,0,0.1)',
+                            borderRadius:
+                              '12px',
+                          }}
+                        >
 
-                      <span>
-                        Wedding budget
-                      </span>
+                          <div
+                            style={{
+                              display:
+                                'flex',
+                              justifyContent:
+                                'space-between',
+                              alignItems:
+                                'center',
+                              marginBottom:
+                                '18px',
+                              gap:
+                                '16px',
+                            }}
+                          >
 
-                      <strong>
-                        {form.budget}
-                      </strong>
+                            <h3
+                              style={{
+                                margin:
+                                  0,
+                              }}
+                            >
+                              Event{' '}
+                              {index + 1}
+                            </h3>
 
-                    </div>
+                            <span className="eyebrow">
+                              {
+                                currentEvent.eventType
+                              }
+                            </span>
 
-                    {form.notes && (
+                          </div>
 
-                      <div>
+                          <div className="reviewRows">
 
-                        <span>
-                          Notes
-                        </span>
+                            {/* VENUE SPACE */}
 
-                        <strong>
-                          {form.notes}
-                        </strong>
+                            {isITCKohenur && (
+                              <div>
 
-                      </div>
+                                <span>
+                                  Venue space
+                                </span>
 
+                                <strong>
+                                  {
+                                    currentEvent.venueSpace
+                                  }
+                                </strong>
+
+                              </div>
+                            )}
+
+                            {/* DATE */}
+
+                            <div>
+
+                              <span>
+                                Date
+                              </span>
+
+                              <strong>
+                                {formatDate(
+                                  currentEvent.eventDate
+                                )}
+                              </strong>
+
+                            </div>
+
+                            {/* EVENT TYPE */}
+
+                            <div>
+
+                              <span>
+                                Event type
+                              </span>
+
+                              <strong>
+                                {
+                                  currentEvent.eventType
+                                }
+                              </strong>
+
+                            </div>
+
+                            {/* GUEST COUNT */}
+
+                            <div>
+
+                              <span>
+                                Guests
+                              </span>
+
+                              <strong>
+                                {
+                                  currentEvent.guestCount
+                                }
+                              </strong>
+
+                            </div>
+
+                            {/* MEAL */}
+
+                            <div>
+
+                              <span>
+                                Meal
+                              </span>
+
+                              <strong>
+                                {
+                                  currentEvent.meal
+                                }
+                              </strong>
+
+                            </div>
+
+                            {/* MEAL TYPE */}
+
+                            <div>
+
+                              <span>
+                                Type of meal
+                              </span>
+
+                              <strong>
+                                {
+                                  currentEvent.mealType
+                                }
+                              </strong>
+
+                            </div>
+
+                            {/* NOTES */}
+
+                            {currentEvent.notes && (
+                              <div>
+
+                                <span>
+                                  Notes
+                                </span>
+
+                                <strong>
+                                  {
+                                    currentEvent.notes
+                                  }
+                                </strong>
+
+                              </div>
+                            )}
+
+                          </div>
+
+                        </div>
+
+                      )
                     )}
 
                   </div>
@@ -1622,30 +1824,33 @@ function BookPageContent() {
                   </div>
 
                   <small>
-                    This is the current Test Mode
-                    booking amount. The final amount
-                    will be connected to your venue
-                    booking configuration before
-                    Razorpay goes live.
+                    This is a temporary booking
+                    amount for the current
+                    development flow. The final
+                    amount will be connected to
+                    your venue booking configuration
+                    before Razorpay goes live.
                   </small>
 
                 </div>
 
-                {/* ERROR */}
+                {/* =================================================
+                    ERROR
+                ================================================= */}
 
                 {error && (
-
                   <div className="bookingError">
                     {error}
                   </div>
-
                 )}
 
                 {/* =================================================
                     ACTIONS
                 ================================================= */}
 
-                <div className="bookingActionRow reviewActions">
+                <div
+                  className="bookingActionRow reviewActions"
+                >
 
                   <button
                     type="button"
@@ -1656,10 +1861,13 @@ function BookPageContent() {
 
                       window.scrollTo({
                         top: 0,
-                        behavior: 'smooth',
+                        behavior:
+                          'smooth',
                       });
                     }}
-                    disabled={submitting}
+                    disabled={
+                      submitting
+                    }
                   >
                     ← Edit details
                   </button>
@@ -1670,7 +1878,9 @@ function BookPageContent() {
                     onClick={
                       handlePayment
                     }
-                    disabled={submitting}
+                    disabled={
+                      submitting
+                    }
                   >
 
                     {submitting
@@ -1695,15 +1905,9 @@ function BookPageContent() {
   );
 }
 
-/*
- * ============================================================
- * PUBLIC BOOK PAGE
- * ============================================================
- *
- * Next.js 16 requires useSearchParams() to be inside
- * a Suspense boundary during production builds.
- * ============================================================
- */
+/* ============================================================
+   PUBLIC BOOK PAGE
+============================================================ */
 
 export default function BookPage() {
   return (
@@ -1714,9 +1918,12 @@ export default function BookPage() {
           <section
             className="section"
             style={{
-              minHeight: '70vh',
-              display: 'grid',
-              placeItems: 'center',
+              minHeight:
+                '70vh',
+              display:
+                'grid',
+              placeItems:
+                'center',
             }}
           >
 
@@ -1729,7 +1936,9 @@ export default function BookPage() {
         </main>
       }
     >
+
       <BookPageContent />
+
     </Suspense>
   );
 }
