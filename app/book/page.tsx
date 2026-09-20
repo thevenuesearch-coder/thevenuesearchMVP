@@ -120,7 +120,7 @@ const initialForm: BookingForm = {
    TEMPORARY BOOKING FEE
 ============================================================ */
 
-const TEMP_BOOKING_FEE = 2500000;
+const TEMP_BOOKING_FEE = 1;
 
 /* ============================================================
    ITC KOHENUR VENUE SPACES
