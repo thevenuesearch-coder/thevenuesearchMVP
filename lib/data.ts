@@ -142,7 +142,7 @@ export const venues: Venue[] = [
     rating: 4.8,
     verified: true,
     image:
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1800&q=90',
+      '/images/venues/hilton.jpg',
     tags: ['Resort', 'Luxury', 'Lawn', 'Destination Wedding'],
     desc:
       'A contemporary luxury resort offering expansive lawns, elegant ballrooms and premium hospitality.',
@@ -152,7 +152,7 @@ export const venues: Venue[] = [
         name: 'Cassia Lawn',
         capacity: 1800,
         image:
-          'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/hilton-1.jpg',
         description:
           'A spectacular outdoor lawn designed for large weddings and celebrations.',
         tags: ['Lawn', 'Large Events', 'Wedding'],
@@ -162,7 +162,7 @@ export const venues: Venue[] = [
         name: 'Bauhinia Lawn',
         capacity: 500,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/hilton-2.jpg',
         description:
           'A landscaped outdoor venue suited for elegant celebrations.',
         tags: ['Lawn', 'Outdoor'],
@@ -172,7 +172,7 @@ export const venues: Venue[] = [
         name: 'Plumeria Lawn',
         capacity: 500,
         image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/hilton-3.jpg',
         description:
           'A versatile garden venue for intimate and mid-sized events.',
         tags: ['Garden', 'Outdoor'],
@@ -182,7 +182,7 @@ export const venues: Venue[] = [
         name: 'Cassia Ballroom',
         capacity: 600,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/hilton-4.jpg',
         description:
           'A refined ballroom for sophisticated indoor celebrations.',
         tags: ['Ballroom', 'Indoor', 'Luxury'],
@@ -192,7 +192,7 @@ export const venues: Venue[] = [
         name: 'Celosia Ballroom',
         capacity: 300,
         image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/hilton-5.jpg',
         description:
           'A stylish indoor ballroom suitable for weddings and social events.',
         tags: ['Ballroom', 'Indoor'],
@@ -202,7 +202,7 @@ export const venues: Venue[] = [
         name: 'Lotus Mandapam',
         capacity: 150,
         image:
-          'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/hilton-6.jpg',
         description:
           'A dedicated ceremonial space ideal for intimate wedding rituals.',
         tags: ['Wedding', 'Ceremony', 'Intimate'],
@@ -212,7 +212,7 @@ export const venues: Venue[] = [
         name: 'Lotus Deck',
         capacity: 70,
         image:
-          'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/hilton-7.jpg',
         description:
           'An elegant open-air deck for private celebrations and receptions.',
         tags: ['Deck', 'Outdoor'],
@@ -222,7 +222,7 @@ export const venues: Venue[] = [
         name: 'Canna Indica',
         capacity: 120,
         image:
-          'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/hilton-8.jpg',
         description:
           'A private event room designed for smaller celebrations.',
         tags: ['Indoor', 'Private'],
@@ -487,6 +487,16 @@ export const venues: Venue[] = [
         capacity: 900,
         image:
           '/images/venues/ITC-1.jpeg',
+        description:
+          'The signature grand event space designed for large-scale celebrations.',
+        tags: ['Grand Hall', 'Large Events', 'Wedding'],
+      },
+      {
+        id: 'itc-drseden-green',
+        name: 'Drseden Green',
+        capacity: 180,
+        image:
+          '/images/venues/ITC-5.jpg',
         description:
           'The signature grand event space designed for large-scale celebrations.',
         tags: ['Grand Hall', 'Large Events', 'Wedding'],

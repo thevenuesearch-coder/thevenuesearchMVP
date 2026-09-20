@@ -949,7 +949,7 @@ function BookPageContent() {
                     <label>
 
                       <span>
-                        Full name *
+                        Legal Name *
                       </span>
 
                       <input
@@ -1260,7 +1260,7 @@ function BookPageContent() {
                               </option>
 
                               <option value="Sangeet">
-                                Marriage
+                                Wedding
                               </option>
 
                               <option value="Haldi">
@@ -1341,7 +1341,7 @@ function BookPageContent() {
                           <label>
 
                             <span>
-                              Meal *
+                              Meal Plan*
                             </span>
 
                             <select
@@ -1435,7 +1435,7 @@ function BookPageContent() {
                         >
 
                           <span>
-                            Notes{' '}
+                            Special Notes{' '}
                             <small>
                               Optional
                             </small>

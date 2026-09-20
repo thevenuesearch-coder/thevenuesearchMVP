@@ -322,7 +322,7 @@ export default function VenuePage() {
                 </span>
 
                 <h3>
-                  Spaces at this property
+                  Venues at this property
                 </h3>
 
               </div>
