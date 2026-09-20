@@ -598,7 +598,7 @@ export const venues: Venue[] = [
     rating: 4.9,
     verified: true,
     image:
-      'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1800&q=90',
+      '/images/venues/Tajk.png',
     tags: ['Luxury', 'Hotel', 'Wedding', 'Heritage'],
     desc:
       'A landmark luxury hotel in Hyderabad offering grand indoor and outdoor settings for celebrations.',
@@ -608,7 +608,7 @@ export const venues: Venue[] = [
         name: 'Gardenia',
         capacity: 1300,
         image:
-          'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/Tajk-1.png',
         description:
           'A grand outdoor setting designed for large weddings and celebrations.',
         tags: ['Garden', 'Large Events', 'Wedding'],
@@ -618,7 +618,7 @@ export const venues: Venue[] = [
         name: 'Grand Ballroom',
         capacity: 1000,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/Tajk-2.png',
         description:
           'A magnificent ballroom for large-scale indoor celebrations.',
         tags: ['Ballroom', 'Luxury', 'Large Events'],
@@ -628,7 +628,7 @@ export const venues: Venue[] = [
         name: 'Emerald',
         capacity: 1000,
         image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/Tajk-3.png',
         description:
           'An elegant event space suitable for premium celebrations.',
         tags: ['Indoor', 'Luxury'],
@@ -638,7 +638,7 @@ export const venues: Venue[] = [
         name: 'Garden Room',
         capacity: 120,
         image:
-          'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/Tajk-4.png',
         description:
           'An intimate indoor event room for private celebrations.',
         tags: ['Indoor', 'Intimate'],
@@ -648,7 +648,7 @@ export const venues: Venue[] = [
         name: 'Sapphire',
         capacity: 120,
         image:
-          'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/Tajk-5.png',
         description:
           'A polished private event space for smaller gatherings.',
         tags: ['Private', 'Indoor'],
@@ -658,7 +658,7 @@ export const venues: Venue[] = [
         name: 'Golden Room',
         capacity: 80,
         image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/Tajk-6.png',
         description:
           'An intimate room designed for private celebrations.',
         tags: ['Private', 'Intimate'],
@@ -668,7 +668,7 @@ export const venues: Venue[] = [
         name: 'Pearl Room',
         capacity: 40,
         image:
-          'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/Tajk-7.png',
         description:
           'A compact private setting for small gatherings.',
         tags: ['Private', 'Small Events'],
