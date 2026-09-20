@@ -41,7 +41,7 @@ export const venues: Venue[] = [
     rating: 4.9,
     verified: true,
     image:
-      'https://images.unsplash.com/photo-1590073242678-70ee3fc28f95?auto=format&fit=crop&w=1800&q=90',
+      '/images/venues/TAJ-1.jpg',
     tags: ['Palace', 'Luxury', 'Heritage', 'Destination Wedding'],
     desc:
       'A majestic palace wedding destination offering an unforgettable royal setting for intimate and grand celebrations.',
@@ -51,7 +51,7 @@ export const venues: Venue[] = [
         name: 'Main Lawns',
         capacity: 1200,
         image:
-          'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/TAJ-2.jpg',
         description:
           'A grand outdoor lawn designed for spectacular weddings and large celebrations.',
         tags: ['Outdoor', 'Large Events', 'Wedding'],
@@ -61,7 +61,7 @@ export const venues: Venue[] = [
         name: 'Pool Lawns',
         capacity: 500,
         image:
-          'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/TAJ-3.jpg',
         description:
           'An elegant poolside setting suited for stylish receptions and evening celebrations.',
         tags: ['Poolside', 'Outdoor', 'Reception'],
@@ -71,7 +71,7 @@ export const venues: Venue[] = [
         name: 'Rajasthani Gardens',
         capacity: 150,
         image:
-          'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/TAJ-4.jpg',
         description:
           'A charming heritage garden space for intimate celebrations and traditional ceremonies.',
         tags: ['Garden', 'Intimate', 'Heritage'],
@@ -81,7 +81,7 @@ export const venues: Venue[] = [
         name: 'Coronation Hall',
         capacity: 60,
         image:
-          'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/TAJ-5.png',
         description:
           'An intimate royal indoor setting perfect for elegant private celebrations.',
         tags: ['Indoor', 'Intimate', 'Royal'],
@@ -91,7 +91,7 @@ export const venues: Venue[] = [
         name: 'Ballroom – Durbar Hall',
         capacity: 150,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/TAJ-6.jpg',
         description:
           'A sophisticated indoor ballroom surrounded by the grandeur of the palace.',
         tags: ['Ballroom', 'Indoor', 'Luxury'],
@@ -101,7 +101,7 @@ export const venues: Venue[] = [
         name: 'Jade Room & Jade Terrace',
         capacity: 60,
         image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/TAJ-7.jpg',
         description:
           'An intimate indoor and terrace setting for refined private events.',
         tags: ['Terrace', 'Intimate', 'Luxury'],
@@ -111,7 +111,7 @@ export const venues: Venue[] = [
         name: '101 Dining Hall',
         capacity: 90,
         image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/TAJ-8.jpg',
         description:
           'An elegant dining space for private dinners and intimate celebrations.',
         tags: ['Dining', 'Private Events'],
@@ -476,7 +476,7 @@ export const venues: Venue[] = [
     rating: 4.9,
     verified: true,
     image:
-      'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1800&q=90',
+      '/images/venues/itc-kohenur.png',
     tags: ['Luxury', 'Hotel', 'Wedding', 'Premium'],
     desc:
       'An elegant luxury hotel overlooking Durgam Cheruvu, offering sophisticated spaces for premium celebrations.',
@@ -486,27 +486,17 @@ export const venues: Venue[] = [
         name: 'Deccan Stateroom',
         capacity: 900,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/ITC-1.jpeg',
         description:
           'The signature grand event space designed for large-scale celebrations.',
         tags: ['Grand Hall', 'Large Events', 'Wedding'],
-      },
-      {
-        id: 'itc-dresden-green',
-        name: 'Dresden Green',
-        capacity: 180,
-        image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
-        description:
-          'A refined event room for intimate and mid-sized celebrations.',
-        tags: ['Indoor', 'Luxury'],
       },
       {
         id: 'itc-golconda-greens',
         name: 'Golconda Greens',
         capacity: 550,
         image:
-          'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/ITC-2.jpeg',
         description:
           'An expansive green setting suitable for elegant outdoor celebrations.',
         tags: ['Outdoor', 'Lawn', 'Wedding'],
@@ -516,7 +506,7 @@ export const venues: Venue[] = [
         name: 'Pearl Deck',
         capacity: 75,
         image:
-          'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/ITC-3.jpeg',
         description:
           'A stylish deck overlooking the surrounding landscape.',
         tags: ['Deck', 'Intimate'],
@@ -526,7 +516,7 @@ export const venues: Venue[] = [
         name: 'Hi-tech Board Room',
         capacity: 25,
         image:
-          'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/ITC-4.jpeg',
         description:
           'A private room designed for small gatherings.',
         tags: ['Private', 'Small Events'],
