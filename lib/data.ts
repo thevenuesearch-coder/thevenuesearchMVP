@@ -537,7 +537,7 @@ export const venues: Venue[] = [
     rating: 4.8,
     verified: true,
     image:
-      'https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1800&q=90',
+      '/images/venues/westin.png',
     tags: ['Luxury', 'Hotel', 'Wedding', 'Events'],
     desc:
       'A contemporary luxury hotel offering elegant ballrooms, lawns and event spaces for celebrations.',
@@ -547,7 +547,7 @@ export const venues: Venue[] = [
         name: 'Westin Ballroom',
         capacity: 500,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/westin-1.png',
         description:
           'A sophisticated ballroom for weddings, receptions and large celebrations.',
         tags: ['Ballroom', 'Indoor', 'Wedding'],
@@ -557,7 +557,7 @@ export const venues: Venue[] = [
         name: 'Westin Lawns',
         capacity: 600,
         image:
-          'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/westin-2.png',
         description:
           'A spacious outdoor lawn for grand celebrations and wedding ceremonies.',
         tags: ['Lawn', 'Outdoor', 'Wedding'],
@@ -567,7 +567,7 @@ export const venues: Venue[] = [
         name: 'Elevate',
         capacity: 300,
         image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/westin-3.png',
         description:
           'A stylish event space for sophisticated private celebrations.',
         tags: ['Event Space', 'Luxury'],
@@ -577,7 +577,7 @@ export const venues: Venue[] = [
         name: 'Poolside',
         capacity: 120,
         image:
-          'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/westin-4.png',
         description:
           'A beautiful poolside environment for intimate celebrations and cocktail events.',
         tags: ['Poolside', 'Outdoor', 'Intimate'],
