@@ -689,7 +689,7 @@ export const venues: Venue[] = [
     rating: 4.8,
     verified: true,
     image:
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1800&q=90',
+      '/images/venues/marriott.png',
     tags: ['Hotel', 'Convention', 'Luxury', 'Large Events'],
     desc:
       'A premium city hotel with a large convention centre, gardens and sophisticated event spaces.',
@@ -699,7 +699,7 @@ export const venues: Venue[] = [
         name: 'Marriott Convention Centre',
         capacity: 1400,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/marriott-1.png',
         description:
           'A large convention environment designed for major weddings and events.',
         tags: ['Convention', 'Large Events'],
@@ -709,7 +709,7 @@ export const venues: Venue[] = [
         name: 'Pearl Gardens',
         capacity: 700,
         image:
-          'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/marriott-2.png',
         description:
           'A landscaped outdoor venue suitable for grand wedding celebrations.',
         tags: ['Garden', 'Outdoor', 'Wedding'],
@@ -719,7 +719,7 @@ export const venues: Venue[] = [
         name: 'Amethyst Gardens',
         capacity: 400,
         image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/marriott-3.png',
         description:
           'A spacious garden setting for elegant outdoor celebrations.',
         tags: ['Garden', 'Outdoor'],
@@ -729,7 +729,7 @@ export const venues: Venue[] = [
         name: 'Sapphire Ballroom I',
         capacity: 170,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/marriott-4.png',
         description:
           'A refined ballroom for intimate and mid-sized celebrations.',
         tags: ['Ballroom', 'Indoor'],
@@ -739,7 +739,7 @@ export const venues: Venue[] = [
         name: 'Sapphire Ballroom II',
         capacity: 150,
         image:
-          'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/marriott-5.png',
         description:
           'An elegant indoor venue for receptions and private events.',
         tags: ['Ballroom', 'Indoor'],
