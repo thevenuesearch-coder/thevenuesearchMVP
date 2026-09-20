@@ -304,7 +304,7 @@ export const venues: Venue[] = [
     rating: 4.8,
     verified: true,
     image:
-      'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1800&q=90',
+      '/images/venues/trident.png',
     tags: ['Hotel', 'Luxury', 'Wedding'],
     desc:
       'A refined luxury hotel in the heart of HITEC City with elegant spaces for premium celebrations.',
@@ -314,7 +314,7 @@ export const venues: Venue[] = [
         name: 'Kaveri',
         capacity: 250,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/trident-1.png',
         description:
           'An elegant event space for sophisticated weddings and social gatherings.',
         tags: ['Indoor', 'Wedding'],
@@ -324,7 +324,7 @@ export const venues: Venue[] = [
         name: 'Godavari',
         capacity: 300,
         image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/trident-2.png',
         description:
           'A spacious event venue suitable for celebrations and receptions.',
         tags: ['Indoor', 'Reception'],
@@ -334,37 +334,27 @@ export const venues: Venue[] = [
         name: 'Padma',
         capacity: 250,
         image:
-          'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/trident-3.png',
         description:
           'A polished event space for intimate and mid-sized celebrations.',
         tags: ['Indoor', 'Celebration'],
       },
       {
-        id: 'trident-padma-godavari',
-        name: 'Padma & Godavari',
-        capacity: 600,
-        image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
-        description:
-          'A combined event space designed for larger celebrations.',
-        tags: ['Large Events', 'Indoor'],
-      },
-      {
-        id: 'trident-all-spaces',
-        name: 'Kaveri, Godavari & Padma',
+        id: 'trident-tulip',
+        name: 'Tulip',
         capacity: 900,
         image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/trident-4.png',
         description:
           'The combined event configuration for large-scale celebrations.',
         tags: ['Large Events', 'Wedding'],
       },
       {
-        id: 'trident-tulip-iris',
-        name: 'Tulip & Iris',
+        id: 'trident-iris',
+        name: 'Iris',
         capacity: 45,
         image:
-          'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/trident-5.png',
         description:
           'A private setting for small gatherings and intimate occasions.',
         tags: ['Private', 'Intimate'],
