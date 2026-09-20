@@ -243,7 +243,7 @@ export const venues: Venue[] = [
     rating: 4.7,
     verified: true,
     image:
-      'https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1800&q=90',
+      '/images/venues/novotel.png',
     tags: ['Hotel', 'Convention', 'Large Events', 'Wedding'],
     desc:
       'A contemporary hospitality destination with extensive event infrastructure for large celebrations.',
@@ -253,7 +253,7 @@ export const venues: Venue[] = [
         name: 'Convention Centre',
         capacity: 2000,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/novotel-1.jpeg',
         description:
           'A large-scale event environment designed for major weddings, conferences and celebrations.',
         tags: ['Convention', 'Large Events'],
@@ -263,7 +263,7 @@ export const venues: Venue[] = [
         name: 'Grand Ballroom',
         capacity: 1000,
         image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/novotel-3.jpeg',
         description:
           'A sophisticated ballroom suitable for large indoor celebrations.',
         tags: ['Ballroom', 'Indoor'],
@@ -273,7 +273,7 @@ export const venues: Venue[] = [
         name: 'Event Lawns',
         capacity: 1200,
         image:
-          'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/novotel-4.jpeg',
         description:
           'Spacious outdoor event lawns for weddings and large gatherings.',
         tags: ['Lawn', 'Outdoor', 'Wedding'],
@@ -283,7 +283,7 @@ export const venues: Venue[] = [
         name: 'Banquet Hall',
         capacity: 500,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/novotel-2.jpeg',
         description:
           'A versatile indoor space for receptions, ceremonies and private events.',
         tags: ['Banquet', 'Indoor'],
