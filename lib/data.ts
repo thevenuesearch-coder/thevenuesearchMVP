@@ -762,7 +762,7 @@ export const venues: Venue[] = [
     rating: 4.8,
     verified: true,
     image:
-      'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1800&q=90',
+      '/images/venues/hyatt.png',
     tags: ['Luxury', 'Hotel', 'Wedding', 'Premium'],
     desc:
       'A contemporary luxury hotel with elegant event rooms and a sophisticated ballroom for premium celebrations.',
@@ -772,7 +772,7 @@ export const venues: Venue[] = [
         name: 'The Ballroom',
         capacity: 600,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/hyatt-1.png',
         description:
           'The signature ballroom for elegant weddings, receptions and large celebrations.',
         tags: ['Ballroom', 'Luxury', 'Wedding'],
@@ -782,7 +782,7 @@ export const venues: Venue[] = [
         name: 'Ballroom I',
         capacity: 120,
         image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/hyatt-2.png',
         description:
           'A flexible ballroom section suitable for smaller celebrations.',
         tags: ['Ballroom', 'Indoor'],
@@ -792,7 +792,7 @@ export const venues: Venue[] = [
         name: 'The Manor',
         capacity: 120,
         image:
-          'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/hyatt-3.png',
         description:
           'A collection of elegant private event rooms for intimate celebrations.',
         tags: ['Private', 'Luxury'],
@@ -802,7 +802,7 @@ export const venues: Venue[] = [
         name: 'Event Room',
         capacity: 80,
         image:
-          'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/hyatt-4.png',
         description:
           'A sophisticated private room for intimate gatherings.',
         tags: ['Private', 'Indoor'],
@@ -812,7 +812,7 @@ export const venues: Venue[] = [
         name: 'Boardroom',
         capacity: 12,
         image:
-          'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/hyatt-5.png',
         description:
           'An exclusive private room for small gatherings.',
         tags: ['Private', 'Small Events'],
