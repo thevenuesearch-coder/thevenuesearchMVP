@@ -375,7 +375,7 @@ export const venues: Venue[] = [
     rating: 4.6,
     verified: true,
     image:
-      'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1800&q=90',
+      '/images/venues/radisson.png',
     tags: ['Hotel', 'Intimate Weddings', 'Luxury'],
     desc:
       'A modern luxury hotel offering sophisticated spaces for intimate weddings, receptions and private events.',
@@ -385,7 +385,7 @@ export const venues: Venue[] = [
         name: 'Summit II',
         capacity: 196,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/radisson-1.png',
         description:
           'The largest event configuration at the property for receptions and celebrations.',
         tags: ['Event Hall', 'Reception'],
@@ -395,7 +395,7 @@ export const venues: Venue[] = [
         name: 'Crystal I',
         capacity: 182,
         image:
-          'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/radisson-2.png',
         description:
           'A refined event space suitable for weddings and private celebrations.',
         tags: ['Event Hall', 'Wedding'],
@@ -405,7 +405,8 @@ export const venues: Venue[] = [
         name: 'Crystal II',
         capacity: 150,
         image:
-          'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=90',
+        '/images/venues/radisson-7.png',
+          
         description:
           'A flexible indoor space for celebrations and social events.',
         tags: ['Indoor', 'Celebration'],
@@ -415,7 +416,7 @@ export const venues: Venue[] = [
         name: 'Summit I',
         capacity: 140,
         image:
-          'https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/radisson-4.png',
         description:
           'A sophisticated event room for intimate and mid-sized gatherings.',
         tags: ['Indoor', 'Intimate'],
@@ -425,7 +426,7 @@ export const venues: Venue[] = [
         name: 'Crest',
         capacity: 82,
         image:
-          'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/radisson-5.png',
         description:
           'A private event room for smaller celebrations.',
         tags: ['Private', 'Small Events'],
@@ -435,7 +436,7 @@ export const venues: Venue[] = [
         name: 'Council III',
         capacity: 48,
         image:
-          'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/radisson-6.png',
         description:
           'A compact private room for intimate gatherings.',
         tags: ['Private', 'Intimate'],
@@ -445,7 +446,8 @@ export const venues: Venue[] = [
         name: 'Council I & II',
         capacity: 26,
         image:
-          'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=90',
+          '/images/venues/radisson-3.png',
+          
         description:
           'Flexible smaller meeting and private event rooms.',
         tags: ['Private', 'Small Events'],
