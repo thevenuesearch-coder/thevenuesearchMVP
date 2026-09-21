@@ -466,19 +466,19 @@ export default function Home() {
         <div className="collectionRow">
           {[
             [
-              'Park Hyatt',
+              'TAJ Falaknuma Palace',
               venues[0]?.image,
             ],
             [
-              'Taj Krishna',
+              'Novotel Hyderabad',
               venues[2]?.image,
             ],
             [
-              'ITC Kohenur',
+              'Radisson Hyderabad',
               venues[4]?.image,
             ],
             [
-              'Radisson Hyderabad',
+              'ITC Kohenur',
               venues[5]?.image,
             ],
           ].map(
