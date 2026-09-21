@@ -4,19 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '../../lib/supabase-browser';
-import { venues as localVenues } from '../../lib/data';
-
-type LocalVenue = {
-  id: string;
-  name: string;
-  city?: string;
-  type?: string;
-  tags?: string[];
-  capacity?: number;
-  image?: string;
-  rating?: number;
-  desc?: string;
-};
 
 type DbVenue = {
   id: string;
@@ -27,6 +14,8 @@ type DbVenue = {
   description: string | null;
   capacity_min: number | null;
   capacity_max: number | null;
+  hero_image: string | null;
+  rating: number | null;
   status: string | null;
 };
 
@@ -122,7 +111,7 @@ export default function ProfilePage() {
           data: wishlistData,
           error: wishlistError,
         } = await supabase
-          .from('wishlists')
+          .from('wishlist')
           .select(
             'id, venue_id, created_at'
           )
@@ -196,6 +185,8 @@ export default function ProfilePage() {
               description,
               capacity_min,
               capacity_max,
+              hero_image,
+              rating,
               status
             `
           )
@@ -260,49 +251,6 @@ export default function ProfilePage() {
               };
             }
 
-            const localVenue = (
-              localVenues as LocalVenue[]
-            ).find(
-              (local) =>
-                local.id === dbVenue.slug ||
-                local.id === dbVenue.id ||
-                local.name.toLowerCase() ===
-                  dbVenue.name.toLowerCase()
-            );
-
-            const type =
-              dbVenue.type ||
-              localVenue?.type ||
-              localVenue?.tags?.[0] ||
-              'Venue';
-
-            const description =
-              dbVenue.description ||
-              localVenue?.desc ||
-              '';
-
-            const image =
-              localVenue?.image ||
-              null;
-
-            const rating =
-              localVenue?.rating ||
-              null;
-
-            let capacityMin =
-              dbVenue.capacity_min;
-
-            let capacityMax =
-              dbVenue.capacity_max;
-
-            if (
-              !capacityMax &&
-              localVenue?.capacity
-            ) {
-              capacityMax =
-                localVenue.capacity;
-            }
-
             return {
               id: item.id,
               venue_id: item.venue_id,
@@ -311,16 +259,13 @@ export default function ProfilePage() {
               venue: {
                 id: dbVenue.id,
                 name: dbVenue.name,
-                city:
-                  dbVenue.city ||
-                  localVenue?.city ||
-                  'India',
-                type,
-                description,
-                capacity_min: capacityMin,
-                capacity_max: capacityMax,
-                image,
-                rating,
+                city: dbVenue.city || 'India',
+                type: dbVenue.type || 'Venue',
+                description: dbVenue.description || '',
+                capacity_min: dbVenue.capacity_min,
+                capacity_max: dbVenue.capacity_max,
+                image: dbVenue.hero_image,
+                rating: dbVenue.rating,
               },
             };
           });
@@ -495,7 +440,7 @@ export default function ProfilePage() {
       const {
         error,
       } = await supabase
-        .from('wishlists')
+        .from('wishlist')
         .delete()
         .eq('id', wishlistId);
 

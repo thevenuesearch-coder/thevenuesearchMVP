@@ -290,6 +290,59 @@ export async function POST(
 
       /*
        * ----------------------------------------
+       * DUPLICATE CHECK
+       * ----------------------------------------
+       *
+       * Guards against double-clicks/retries: if this exact
+       * email + venue + event date was already submitted in
+       * the last 24 hours, reuse that enquiry instead of
+       * creating a duplicate row and sending a second email.
+       * ----------------------------------------
+       */
+
+      const twentyFourHoursAgo = new Date(
+        Date.now() - 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      const {
+        data: existingEnquiry,
+        error: duplicateCheckError,
+      } = await admin
+        .from('enquiries')
+        .select('id')
+        .eq('email', email)
+        .eq('event_date', eventDate)
+        .eq(
+          'venue_id',
+          resolvedVenueId
+        )
+        .gte('created_at', twentyFourHoursAgo)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (duplicateCheckError) {
+        console.error(
+          'Enquiry duplicate check failed:',
+          duplicateCheckError
+        );
+        // Non-fatal — fall through and submit normally.
+      }
+
+      if (existingEnquiry?.id) {
+        return NextResponse.json(
+          {
+            success: true,
+            enquiryId: existingEnquiry.id,
+            message:
+              'Your enquiry is already being processed.',
+          },
+          { status: 200 }
+        );
+      }
+
+      /*
+       * ----------------------------------------
        * SAVE ENQUIRY
        * ----------------------------------------
        *

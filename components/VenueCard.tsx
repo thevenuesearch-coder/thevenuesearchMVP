@@ -78,7 +78,7 @@ export function VenueCard({
           error,
         } =
           await supabase
-            .from('wishlists')
+            .from('wishlist')
             .select('id')
             .eq(
               'user_id',
@@ -198,7 +198,7 @@ export function VenueCard({
           error,
         } =
           await supabase
-            .from('wishlists')
+            .from('wishlist')
             .delete()
             .eq(
               'user_id',
@@ -242,7 +242,7 @@ export function VenueCard({
         error,
       } =
         await supabase
-          .from('wishlists')
+          .from('wishlist')
           .insert({
             user_id:
               userId,

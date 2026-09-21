@@ -1,7 +1,19 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '../../../../lib/supabase';
 
-export async function GET() {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await params;
+
+  if (!slug) {
+    return NextResponse.json(
+      { error: 'A venue slug is required.' },
+      { status: 400 }
+    );
+  }
+
   const { data, error } = await supabase
     .from('venues')
     .select(
@@ -32,13 +44,21 @@ export async function GET() {
         )
       `
     )
+    .eq('slug', slug)
     .eq('status', 'published')
-    .order('featured', { ascending: false });
+    .maybeSingle();
 
   if (error) {
     return NextResponse.json(
       { error: error.message },
       { status: 500 }
+    );
+  }
+
+  if (!data) {
+    return NextResponse.json(
+      { error: 'Venue not found.' },
+      { status: 404 }
     );
   }
 

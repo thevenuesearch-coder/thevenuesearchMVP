@@ -2,10 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import {
-  destinations,
-  venues,
-} from '../../lib/data';
+import { fetchVenues } from '../../lib/venues';
+import type { Venue } from '../../lib/data';
 
 import { VenueCard } from '../../components/VenueCard';
 
@@ -14,6 +12,52 @@ export default function Explore() {
   const [venueType, setVenueType] = useState('');
   const [capacity, setCapacity] = useState('');
 
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [venuesLoading, setVenuesLoading] = useState(true);
+  const [venuesError, setVenuesError] = useState('');
+
+  /* =====================================================
+     LOAD VENUES FROM SUPABASE
+  ===================================================== */
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetchVenues()
+      .then((data) => {
+        if (mounted) setVenues(data);
+      })
+      .catch((err) => {
+        console.error('Failed to load venues:', err);
+        if (mounted) {
+          setVenuesError(
+            'We could not load venues right now. Please refresh the page.'
+          );
+        }
+      })
+      .finally(() => {
+        if (mounted) setVenuesLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  /* =====================================================
+     DESTINATIONS (derived from live venue data)
+  ===================================================== */
+
+  const destinations = useMemo(() => {
+    return Array.from(
+      new Set(
+        venues
+          .map((v) => v.destination)
+          .filter(Boolean)
+      )
+    );
+  }, [venues]);
+
   /* =====================================================
      READ DESTINATION FROM URL
      Example:
@@ -21,6 +65,12 @@ export default function Explore() {
   ===================================================== */
 
   useEffect(() => {
+    /*
+     * Destinations are derived from fetched venue data, so this
+     * only tries to match once venues have loaded.
+     */
+    if (destinations.length === 0) return;
+
     const params = new URLSearchParams(
       window.location.search
     );
@@ -56,11 +106,7 @@ export default function Explore() {
         );
       }
     }
-  }, []);
-
-  /* =====================================================
-     VENUE TYPES
-  ===================================================== */
+  }, [destinations]);
 
   const venueTypes = useMemo(() => {
     const types = venues
@@ -70,7 +116,7 @@ export default function Explore() {
     return Array.from(
       new Set(types)
     );
-  }, []);
+  }, [venues]);
 
   /* =====================================================
      FILTER VENUES
@@ -118,6 +164,7 @@ export default function Explore() {
       );
     });
   }, [
+    venues,
     destination,
     venueType,
     capacity,
@@ -341,7 +388,28 @@ export default function Explore() {
           VENUE GRID
       ================================================= */}
 
-      {filteredVenues.length > 0 ? (
+      {venuesLoading ? (
+
+        /* =================================================
+           LOADING STATE
+        ================================================= */
+
+        <div className="emptyState">
+          <p>Loading venues…</p>
+        </div>
+
+      ) : venuesError ? (
+
+        /* =================================================
+           ERROR STATE
+        ================================================= */
+
+        <div className="emptyState">
+          <h3>Something went wrong</h3>
+          <p>{venuesError}</p>
+        </div>
+
+      ) : filteredVenues.length > 0 ? (
 
         <div className="venueGrid">
 
@@ -374,7 +442,7 @@ export default function Explore() {
       ) : (
 
         /* =================================================
-           EMPTY STATE
+           EMPTY STATE (no matches for current filters)
         ================================================= */
 
         <div className="emptyState">

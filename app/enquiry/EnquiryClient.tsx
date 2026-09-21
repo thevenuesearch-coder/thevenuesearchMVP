@@ -4,7 +4,8 @@ import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 
 import { createClient } from '../../lib/supabase-browser';
-import { venues } from '../../lib/data';
+import { fetchVenueBySlug } from '../../lib/venues';
+import type { Venue } from '../../lib/data';
 
 type EnquiryClientProps = {
   venueId: string;
@@ -45,13 +46,37 @@ export default function EnquiryClient({
 
   const [error, setError] = useState('');
 
-  const venue = venues.find(
-    (item) => item.id === venueId
-  );
+  const [venue, setVenue] = useState<Venue | null>(null);
+  const [venueLoading, setVenueLoading] = useState(true);
+  const [venueError, setVenueError] = useState('');
 
   const selectedSpace = venue?.venueSpaces?.find(
     (space) => space.id === spaceId
   );
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetchVenueBySlug(venueId)
+      .then((data) => {
+        if (mounted) setVenue(data);
+      })
+      .catch((err) => {
+        console.error('Failed to load venue:', err);
+        if (mounted) {
+          setVenueError(
+            'We could not load this venue right now. Please refresh the page.'
+          );
+        }
+      })
+      .finally(() => {
+        if (mounted) setVenueLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [venueId]);
 
   useEffect(() => {
     async function loadUser() {
@@ -173,7 +198,7 @@ export default function EnquiryClient({
 
           body: JSON.stringify({
             venueName: venue.name,
-            venueId: venue.id,
+            venueId: venue.dbId,
 
             venueSpace:
               selectedSpace?.name || '',
@@ -241,6 +266,44 @@ export default function EnquiryClient({
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (venueLoading) {
+    return (
+      <main
+        style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          background: '#f7f5f0',
+          padding: '30px',
+        }}
+      >
+        <p>Loading venue…</p>
+      </main>
+    );
+  }
+
+  if (venueError) {
+    return (
+      <main
+        style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          background: '#f7f5f0',
+          padding: '30px',
+        }}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <p>{venueError}</p>
+
+          <Link href="/">
+            ← Back to venues
+          </Link>
+        </div>
+      </main>
+    );
   }
 
   if (!venue) {

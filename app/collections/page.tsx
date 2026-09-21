@@ -1,1 +1,74 @@
-import {venues} from '../../lib/data';import Link from 'next/link';export default function Collections(){return <main className="page"><div className="centerIntro"><span className="kicker">CURATED COLLECTIONS</span><h1>Choose the mood before the menu.</h1><p>Destination wedding discovery starts with the experience you want guests to remember.</p></div><div className="collectionGrid">{[['Taj Falaknuma',venues[0].image,''],['Hilton Resort',venues[2].image,''],['Trident Hyderabad',venues[4].image,''],['ITC Kohenur',venues[5].image,'']].map(c=><Link className="collectionLarge" href="/explore" key={c[0]}><img src={c[1]}/><div><span className="kicker">COLLECTION</span><h2>{c[0]}</h2><p>{c[2]}</p><b>Explore →</b></div></Link>)}</div></main>}
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+
+import { fetchVenues } from '../../lib/venues';
+import type { Venue } from '../../lib/data';
+
+export default function Collections() {
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetchVenues()
+      .then((data) => {
+        if (mounted) setVenues(data);
+      })
+      .catch((err) => {
+        console.error('Failed to load venues:', err);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const featured = venues.slice(0, 4);
+
+  return (
+    <main className="page">
+      <div className="centerIntro">
+        <span className="kicker">CURATED COLLECTIONS</span>
+        <h1>Choose the mood before the menu.</h1>
+        <p>
+          Destination wedding discovery starts with the
+          experience you want guests to remember.
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="emptyState">
+          <p>Loading collections…</p>
+        </div>
+      ) : featured.length === 0 ? (
+        <div className="emptyState">
+          <p>No venues are published yet — check back soon.</p>
+        </div>
+      ) : (
+        <div className="collectionGrid">
+          {featured.map((v) => (
+            <Link
+              className="collectionLarge"
+              href={`/venues/${v.id}`}
+              key={v.id}
+            >
+              <img src={v.image} alt={v.name} />
+              <div>
+                <span className="kicker">COLLECTION</span>
+                <h2>{v.name}</h2>
+                <p>{v.type}</p>
+                <b>Explore →</b>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </main>
+  );
+}

@@ -1,7 +1,28 @@
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
+import { createClient } from '@supabase/supabase-js';
 
-const BOOKING_AMOUNT = 25000;
+/*
+ * Single source of truth for the booking fee, shared with the
+ * client (app/book/page.tsx reads the same NEXT_PUBLIC_ var) so
+ * the amount shown to the customer always matches what gets
+ * charged.
+ */
+const BOOKING_AMOUNT =
+  Number(process.env.NEXT_PUBLIC_BOOKING_FEE_INR) || 25000;
+
+/*
+ * Bookings that already occupy a date for this venue.
+ */
+const BLOCKING_STATUSES = [
+  'held',
+  'payment_pending',
+  'confirmed',
+];
+
+type IncomingEvent = {
+  eventDate?: string;
+};
 
 export async function POST(request: Request) {
   try {
@@ -38,6 +59,7 @@ export async function POST(request: Request) {
       email,
       mobile,
       eventDate,
+      events,
     } = body;
 
     /*
@@ -62,6 +84,106 @@ export async function POST(request: Request) {
     }
 
     /*
+     * ==========================================================
+     * AVAILABILITY PRE-CHECK
+     *
+     * Before charging anything, confirm none of the requested
+     * event dates are already held/pending/confirmed for this
+     * venue. This is a best-effort check -- the database's
+     * unique index (confirmed_venue_date_unique) remains the
+     * final source of truth in case of a race condition between
+     * this check and payment completing.
+     * ==========================================================
+     */
+
+    const eventDates = Array.from(
+      new Set(
+        (Array.isArray(events) ? events : [])
+          .map(
+            (event: IncomingEvent) => event?.eventDate
+          )
+          .filter(Boolean)
+          .concat(eventDate ? [eventDate] : [])
+      )
+    );
+
+    if (eventDates.length > 0) {
+      const serviceRoleKey =
+        process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+      const supabaseUrl =
+        process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+      if (!serviceRoleKey || !supabaseUrl) {
+        console.error(
+          'SUPABASE_SERVICE_ROLE_KEY is missing — cannot run the availability check.'
+        );
+
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              'Booking service is not fully configured. Please contact support.',
+          },
+          { status: 500 }
+        );
+      }
+
+      /*
+       * The anon client is bound by RLS ("own bookings" — a
+       * user can only SELECT their own rows), which would make
+       * this check silently useless: it needs to see OTHER
+       * users' held/confirmed bookings to detect a real
+       * conflict, so it must run with the service role key.
+       */
+      const admin = createClient(
+        supabaseUrl,
+        serviceRoleKey,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+          },
+        }
+      );
+
+      const { data: conflicts, error: conflictError } =
+        await admin
+          .from('booking_requests')
+          .select('event_date, status')
+          .eq('venue_id', venueId)
+          .in('event_date', eventDates)
+          .in('status', BLOCKING_STATUSES);
+
+      if (conflictError) {
+        console.error(
+          'Availability check failed:',
+          conflictError
+        );
+
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              'Unable to confirm availability right now. Please try again.',
+          },
+          { status: 500 }
+        );
+      }
+
+      if (conflicts && conflicts.length > 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              'One of the selected dates is no longer available for this venue. Please choose a different date.',
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    /*
      * Create Razorpay client
      */
     const razorpay = new Razorpay({
@@ -74,8 +196,6 @@ export async function POST(request: Request) {
      *
      * Razorpay amount is always sent in the
      * smallest currency unit.
-     *
-     * ₹25,000 = 2,500,000 paise
      */
     const order = await razorpay.orders.create({
       amount: BOOKING_AMOUNT * 100,
@@ -88,6 +208,7 @@ export async function POST(request: Request) {
         customer_email: String(email),
         customer_mobile: String(mobile),
         event_date: String(eventDate),
+        event_dates: eventDates.join(', '),
       },
     });
 

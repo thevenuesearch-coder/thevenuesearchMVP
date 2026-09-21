@@ -10,12 +10,12 @@ import {
   FormEvent,
   Suspense,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 
 import { createClient } from '../../lib/supabase-browser';
-import { venues } from '../../lib/data';
+import { fetchVenueBySlug } from '../../lib/venues';
+import type { Venue } from '../../lib/data';
 
 /* ============================================================
    RAZORPAY TYPES
@@ -117,10 +117,16 @@ const initialForm: BookingForm = {
 };
 
 /* ============================================================
-   TEMPORARY BOOKING FEE
+   BOOKING FEE
+   Single source of truth shared with the server (see
+   /api/razorpay/create-order), so what's displayed here always
+   matches what Razorpay actually charges.
 ============================================================ */
 
-const TEMP_BOOKING_FEE = 1;
+const BOOKING_FEE_INR =
+  Number(
+    process.env.NEXT_PUBLIC_BOOKING_FEE_INR
+  ) || 25000;
 
 /* ============================================================
    BOOKING PAGE CONTENT
@@ -147,13 +153,7 @@ function BookPageContent() {
      FIND VENUE
   ========================================================== */
 
-  const venue = useMemo(
-    () =>
-      venues.find(
-        (v) => v.id === venueId
-      ),
-    [venueId]
-  );
+  const [venue, setVenue] = useState<Venue | null>(null);
 
   /* ==========================================================
      STATE
@@ -183,6 +183,9 @@ function BookPageContent() {
     useState(false);
 
   const [documentRequestSuccess, setDocumentRequestSuccess] =
+    useState(false);
+
+  const [paymentSuccess, setPaymentSuccess] =
     useState(false);
 
   /* ==========================================================
@@ -223,6 +226,17 @@ function BookPageContent() {
         );
 
         /* ------------------------------------------------------
+           LOAD VENUE
+        ------------------------------------------------------ */
+
+        const venueData =
+          await fetchVenueBySlug(
+            venueId
+          );
+
+        setVenue(venueData);
+
+        /* ------------------------------------------------------
            PRE-FILL EMAIL
         ------------------------------------------------------ */
 
@@ -238,7 +252,7 @@ function BookPageContent() {
         );
 
         setError(
-          'Unable to load your account. Please try again.'
+          'Unable to load your booking. Please try again.'
         );
       } finally {
         setLoading(false);
@@ -574,7 +588,7 @@ function BookPageContent() {
               form.events,
 
             bookingFee:
-              TEMP_BOOKING_FEE,
+              BOOKING_FEE_INR,
 
             stage,
           }),
@@ -665,6 +679,35 @@ function BookPageContent() {
   }
 
   /* ==========================================================
+     LOAD RAZORPAY CHECKOUT SCRIPT
+  ========================================================== */
+
+  function loadRazorpayScript(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (typeof window === 'undefined') {
+        resolve(false);
+        return;
+      }
+
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+
+      const script =
+        document.createElement('script');
+
+      script.src =
+        'https://checkout.razorpay.com/v1/checkout.js';
+
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+
+      document.body.appendChild(script);
+    });
+  }
+
+  /* ==========================================================
      PROCEED TO PAYMENT
   ========================================================== */
 
@@ -684,24 +727,117 @@ function BookPageContent() {
     setError('');
 
     try {
-      const result =
-        await sendBookingEmail(
-          'payment'
+      /* ------------------------------------------------------
+         1. CREATE THE RAZORPAY ORDER
+         The server checks venue-date availability here and
+         rejects before any money moves if a date is already
+         held/booked.
+      ------------------------------------------------------ */
+
+      const orderResponse =
+        await fetch(
+          '/api/razorpay/create-order',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+            body: JSON.stringify({
+              venueId: venue.dbId,
+              venueName: venue.name,
+              fullName: form.fullName,
+              email: form.email,
+              mobile: form.mobile,
+              eventDate:
+                form.events[0]?.eventDate,
+              events: form.events,
+            }),
+          }
         );
 
-      console.log(
-        'Booking details sent:',
-        result
-      );
+      const orderResult =
+        await orderResponse.json();
 
-      /*
-       * Razorpay payment will be connected
-       * here using the existing payment flow.
-       */
+      if (
+        !orderResponse.ok ||
+        !orderResult.success
+      ) {
+        throw new Error(
+          orderResult.error ||
+            'Unable to start payment. Please try again.'
+        );
+      }
 
-      alert(
-        'Booking details sent successfully. Razorpay payment will open here.'
-      );
+      /* ------------------------------------------------------
+         2. NOTIFY ADMIN (best-effort — booking still proceeds
+         even if this notification fails)
+      ------------------------------------------------------ */
+
+      try {
+        await sendBookingEmail('payment');
+      } catch (notifyError) {
+        console.error(
+          'Booking notification email failed:',
+          notifyError
+        );
+      }
+
+      /* ------------------------------------------------------
+         3. LOAD RAZORPAY CHECKOUT
+      ------------------------------------------------------ */
+
+      const scriptLoaded =
+        await loadRazorpayScript();
+
+      if (!scriptLoaded) {
+        throw new Error(
+          'Unable to load the payment gateway. Please check your connection and try again.'
+        );
+      }
+
+      /* ------------------------------------------------------
+         4. OPEN CHECKOUT
+      ------------------------------------------------------ */
+
+      const razorpay = new window.Razorpay({
+        key: orderResult.keyId,
+        amount: orderResult.amount,
+        currency: orderResult.currency,
+        name: 'The Venue Search',
+        description: `Instant booking — ${venue.name}`,
+        order_id: orderResult.orderId,
+
+        prefill: {
+          name: form.fullName,
+          email: form.email,
+          contact: form.mobile,
+        },
+
+        theme: {
+          color: '#151515',
+        },
+
+        handler: async (
+          response: RazorpayResponse
+        ) => {
+          await handlePaymentSuccess(
+            response
+          );
+        },
+
+        modal: {
+          ondismiss: () => {
+            setSubmitting(false);
+
+            setError(
+              'Payment was cancelled before it completed. You can try again whenever you are ready.'
+            );
+          },
+        },
+      });
+
+      razorpay.open();
     } catch (err) {
       console.error(
         'Payment error:',
@@ -712,6 +848,85 @@ function BookPageContent() {
         err instanceof Error
           ? err.message
           : 'Something went wrong. Please try again.'
+      );
+
+      setSubmitting(false);
+    }
+  }
+
+  /* ==========================================================
+     PAYMENT SUCCEEDED — VERIFY + CREATE THE BOOKING
+  ========================================================== */
+
+  async function handlePaymentSuccess(
+    response: RazorpayResponse
+  ) {
+    if (!venue || !userId) {
+      setError(
+        'Your session or venue information is unavailable.'
+      );
+
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      const verifyResponse =
+        await fetch(
+          '/api/razorpay/verify-payment',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+            body: JSON.stringify({
+              razorpay_order_id:
+                response.razorpay_order_id,
+              razorpay_payment_id:
+                response.razorpay_payment_id,
+              razorpay_signature:
+                response.razorpay_signature,
+
+              venueId: venue.dbId,
+              venueName: venue.name,
+              venueCity: venue.city,
+              userId,
+              mode: mode || 'instant_book',
+              fullName: form.fullName,
+              email: form.email,
+              mobile: form.mobile,
+              events: form.events,
+            }),
+          }
+        );
+
+      const verifyResult =
+        await verifyResponse.json();
+
+      if (
+        !verifyResponse.ok ||
+        !verifyResult.success
+      ) {
+        throw new Error(
+          verifyResult.error ||
+            'Your payment succeeded, but we could not confirm the booking. Please contact us with your payment ID: ' +
+              response.razorpay_payment_id
+        );
+      }
+
+      setPaymentSuccess(true);
+    } catch (err) {
+      console.error(
+        'Payment verification error:',
+        err
+      );
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong while confirming your booking. Please contact us with your payment ID: ' +
+              response.razorpay_payment_id
       );
     } finally {
       setSubmitting(false);
@@ -1878,7 +2093,7 @@ function BookPageContent() {
 
                     <strong>
                       ₹
-                      {TEMP_BOOKING_FEE.toLocaleString(
+                      {BOOKING_FEE_INR.toLocaleString(
                         'en-IN'
                       )}
                     </strong>
@@ -1886,12 +2101,12 @@ function BookPageContent() {
                   </div>
 
                   <small>
-                    This is a temporary booking
-                    amount for the current
-                    development flow. The final
-                    amount will be connected to
-                    your venue booking configuration
-                    before Razorpay goes live.
+                    This amount secures your
+                    instant booking. The
+                    remaining venue balance is
+                    settled directly with the
+                    venue as per their payment
+                    terms.
                   </small>
 
                 </div>
@@ -2073,6 +2288,102 @@ function BookPageContent() {
                 }}
               >
                 Done
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================
+            PAYMENT SUCCESS MODAL
+        ==================================================== */}
+
+        {paymentSuccess && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="payment-success-title"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 999999,
+              display: 'grid',
+              placeItems: 'center',
+              padding: '24px',
+              background: 'rgba(10, 10, 10, 0.48)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <div
+              style={{
+                width: 'min(520px, 100%)',
+                background: '#ffffff',
+                border: '1px solid rgba(0,0,0,0.08)',
+                borderRadius: '18px',
+                padding: '38px 34px 32px',
+                textAlign: 'center',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.20)',
+              }}
+            >
+              <div
+                style={{
+                  width: '58px',
+                  height: '58px',
+                  margin: '0 auto 20px',
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  background: '#e8f8f3',
+                  color: '#17775b',
+                  fontSize: '28px',
+                  fontWeight: 700,
+                }}
+              >
+                ✓
+              </div>
+
+              <span
+                className="kicker"
+                style={{ display: 'block' }}
+              >
+                BOOKING CONFIRMED
+              </span>
+
+              <h2
+                id="payment-success-title"
+                style={{
+                  margin: '10px 0 12px',
+                  fontSize: '26px',
+                }}
+              >
+                You're all booked.
+              </h2>
+
+              <p
+                style={{
+                  margin: 0,
+                  color: '#666666',
+                  lineHeight: 1.7,
+                  fontSize: '15px',
+                }}
+              >
+                Your venue is confirmed for the
+                date(s) you selected. You can view
+                the full details anytime from your
+                profile.
+              </p>
+
+              <button
+                type="button"
+                className="primaryBtn large"
+                onClick={() =>
+                  router.push('/profile')
+                }
+                style={{
+                  marginTop: '26px',
+                  minWidth: '120px',
+                }}
+              >
+                View my bookings
               </button>
             </div>
           </div>

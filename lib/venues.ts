@@ -1,0 +1,132 @@
+import type { Venue, VenueSpace } from './data';
+
+export type { Venue, VenueSpace };
+
+/*
+ * ============================================================
+ * DB ROW SHAPES
+ * ============================================================
+ *
+ * These match the columns selected in /app/api/venues/route.ts
+ * and /app/api/venues/[slug]/route.ts.
+ */
+
+type DbVenueSpace = {
+  id: string;
+  slug: string | null;
+  name: string;
+  capacity: number | null;
+  image_url: string | null;
+  description: string | null;
+  tags: string[] | null;
+};
+
+type DbVenue = {
+  id: string;
+  slug: string;
+  name: string;
+  destination: string | null;
+  city: string | null;
+  country: string | null;
+  type: string | null;
+  capacity_max: number | null;
+  indicative_price: number | null;
+  hold_fee: number | null;
+  rating: number | null;
+  verified: boolean | null;
+  hero_image: string | null;
+  tags: string[] | null;
+  description: string | null;
+  venue_spaces: DbVenueSpace[] | null;
+};
+
+/*
+ * ============================================================
+ * NORMALIZATION
+ * ============================================================
+ *
+ * Converts a raw Supabase row into the same `Venue` shape the
+ * app has always used, so existing pages/components didn't need
+ * to be rewritten -- only their data source changed.
+ *
+ * `id` stays the human-readable slug (e.g. "hyderabad-1") so
+ * every existing /venues/[id], /book?venue=, /enquiry?venue=
+ * link keeps working unchanged. `dbId` carries the real
+ * Supabase UUID for anywhere that needs a foreign key
+ * (booking_requests.venue_id, enquiries.venue_id, etc.).
+ */
+
+function normalizeSpace(space: DbVenueSpace): VenueSpace {
+  return {
+    id: space.slug || space.id,
+    name: space.name,
+    capacity: space.capacity || 0,
+    image: space.image_url || '',
+    description: space.description || '',
+    tags: space.tags || [],
+  };
+}
+
+function normalizeVenue(row: DbVenue): Venue {
+  return {
+    id: row.slug,
+    dbId: row.id,
+    name: row.name,
+    destination: row.destination || row.city || '',
+    city: row.city || '',
+    country: row.country || 'India',
+    type: row.type || '',
+    capacity: row.capacity_max || 0,
+    price: row.indicative_price || 0,
+    hold: row.hold_fee ?? null,
+    rating: row.rating ?? null,
+    verified: row.verified ?? true,
+    image: row.hero_image || '',
+    tags: row.tags || [],
+    desc: row.description || '',
+    venueSpaces: (row.venue_spaces || []).map(normalizeSpace),
+  };
+}
+
+/*
+ * ============================================================
+ * FETCH HELPERS
+ * ============================================================
+ */
+
+export async function fetchVenues(): Promise<Venue[]> {
+  const response = await fetch('/api/venues', {
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error('Unable to load venues.');
+  }
+
+  const { data } = await response.json();
+
+  return ((data || []) as DbVenue[]).map(normalizeVenue);
+}
+
+export async function fetchVenueBySlug(
+  slug: string
+): Promise<Venue | null> {
+  if (!slug) return null;
+
+  const response = await fetch(
+    `/api/venues/${encodeURIComponent(slug)}`,
+    { cache: 'no-store' }
+  );
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error('Unable to load venue.');
+  }
+
+  const { data } = await response.json();
+
+  return data ? normalizeVenue(data as DbVenue) : null;
+}

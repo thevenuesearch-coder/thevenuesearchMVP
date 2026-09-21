@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
-import { getVenueById } from '../../../lib/data';
+import { fetchVenueBySlug } from '../../../lib/venues';
+import type { Venue } from '../../../lib/data';
 
 export default function VenuePage() {
   const params = useParams();
@@ -16,14 +17,99 @@ export default function VenuePage() {
         ? params.id[0]
         : '';
 
-  const venue = useMemo(
-    () => getVenueById(venueId),
-    [venueId]
-  );
+  const [venue, setVenue] = useState<Venue | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+
+    setLoading(true);
+    setLoadError('');
+
+    fetchVenueBySlug(venueId)
+      .then((data) => {
+        if (mounted) setVenue(data);
+      })
+      .catch((err) => {
+        console.error('Failed to load venue:', err);
+        if (mounted) {
+          setLoadError(
+            'We could not load this venue right now. Please refresh the page.'
+          );
+        }
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [venueId]);
 
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSpace, setSelectedSpace] = useState(0);
   const [saved, setSaved] = useState(false);
+
+  if (loading) {
+    return (
+      <main className="not-found">
+        <div>
+          <p>Loading venue…</p>
+        </div>
+
+        <style jsx>{`
+          .not-found {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: #f7f5f0;
+            color: #111;
+            text-align: center;
+          }
+        `}</style>
+      </main>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <main className="not-found">
+        <div>
+          <h1>Something went wrong</h1>
+          <p>{loadError}</p>
+
+          <Link href="/explore">
+            ← Back to venues
+          </Link>
+        </div>
+
+        <style jsx>{`
+          .not-found {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: #f7f5f0;
+            color: #111;
+            text-align: center;
+          }
+
+          .not-found h1 {
+            font-family: Georgia, serif;
+            font-size: 48px;
+            font-weight: 400;
+            margin-bottom: 20px;
+          }
+
+          .not-found a {
+            color: #168fc1;
+            text-decoration: none;
+          }
+        `}</style>
+      </main>
+    );
+  }
 
   if (!venue) {
     return (

@@ -2,15 +2,50 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { venues } from '../lib/data';
+import { fetchVenues } from '../lib/venues';
+import type { Venue } from '../lib/data';
 import { VenueCard } from '../components/VenueCard';
 
 export default function Home() {
   const [destination, setDestination] = useState('');
   const [venue, setVenue] = useState('');
   const [guests, setGuests] = useState('');
+
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [venuesLoading, setVenuesLoading] = useState(true);
+  const [venuesError, setVenuesError] = useState('');
+
+  /*
+   * =====================================================
+   * LOAD VENUES FROM SUPABASE
+   * =====================================================
+   */
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetchVenues()
+      .then((data) => {
+        if (mounted) setVenues(data);
+      })
+      .catch((err) => {
+        console.error('Failed to load venues:', err);
+        if (mounted) {
+          setVenuesError(
+            'We could not load venues right now. Please refresh the page.'
+          );
+        }
+      })
+      .finally(() => {
+        if (mounted) setVenuesLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   /*
    * =====================================================
@@ -361,23 +396,37 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="venueGrid">
-          {venues
-            .slice(0, 3)
-            .map((v) => (
-              <VenueCard
-                key={v.id}
-                v={{
-                  ...v,
-                  slug: v.id,
-                  capacityMin:
-                    v.capacity,
-                  description:
-                    v.desc,
-                }}
-              />
-            ))}
-        </div>
+        {venuesLoading ? (
+          <div className="emptyState">
+            <p>Loading venues…</p>
+          </div>
+        ) : venuesError ? (
+          <div className="emptyState">
+            <p>{venuesError}</p>
+          </div>
+        ) : venues.length === 0 ? (
+          <div className="emptyState">
+            <p>No venues are published yet — check back soon.</p>
+          </div>
+        ) : (
+          <div className="venueGrid">
+            {venues
+              .slice(0, 3)
+              .map((v) => (
+                <VenueCard
+                  key={v.id}
+                  v={{
+                    ...v,
+                    slug: v.id,
+                    capacityMin:
+                      v.capacity,
+                    description:
+                      v.desc,
+                  }}
+                />
+              ))}
+          </div>
+        )}
       </section>
 
       {/* =====================================================
