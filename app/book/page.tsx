@@ -179,6 +179,12 @@ function BookPageContent() {
   const [error, setError] =
     useState('');
 
+  const [documentRequestSubmitting, setDocumentRequestSubmitting] =
+    useState(false);
+
+  const [documentRequestSuccess, setDocumentRequestSuccess] =
+    useState(false);
+
   /* ==========================================================
      LOAD AUTHENTICATED USER
   ========================================================== */
@@ -243,6 +249,7 @@ function BookPageContent() {
   }, [
     router,
     venueId,
+    selectedSpaceId,
     mode,
   ]);
 
@@ -272,8 +279,7 @@ function BookPageContent() {
   function handleEventCountChange(
     value: string
   ) {
-    const count =
-      Number(value);
+    const count = Number(value);
 
     if (!count) {
       setForm((current) => ({
@@ -283,7 +289,6 @@ function BookPageContent() {
       }));
 
       setError('');
-
       return;
     }
 
@@ -300,8 +305,6 @@ function BookPageContent() {
 
           const newEvent = createEmptyEvent();
 
-          // If the customer arrived from a specific venue space,
-          // pre-select that space for Event 1.
           if (
             index === 0 &&
             selectedSpaceId &&
@@ -488,7 +491,7 @@ function BookPageContent() {
         return;
       }
 
-      /* Meal */
+      /* Meal timing */
 
       if (!currentEvent.mealTiming) {
         setError(
@@ -498,7 +501,7 @@ function BookPageContent() {
         return;
       }
 
-      /* Type of meal */
+      /* Meal category */
 
       if (!currentEvent.mealCategory) {
         setError(
@@ -567,24 +570,8 @@ function BookPageContent() {
             numberOfEvents:
               form.numberOfEvents,
 
-            events: form.events.map((event) => {
-              const selectedSpace =
-                venue.venueSpaces?.find(
-                  (space) =>
-                    space.id === event.venueSpace
-                );
-
-              return {
-                ...event,
-                // Send the readable venue-space name to the API while
-                // preserving the selected ID separately.
-                venueSpaceId: event.venueSpace,
-                venueSpace: selectedSpace?.name || event.venueSpace,
-                // Backward-compatible names expected by the current API.
-                meal: event.mealTiming,
-                mealType: event.mealCategory,
-              };
-            }),
+            events:
+              form.events,
 
             bookingFee:
               TEMP_BOOKING_FEE,
@@ -605,6 +592,76 @@ function BookPageContent() {
     }
 
     return result;
+  }
+
+  /* ==========================================================
+     REQUEST VENUE BOOKING DOCUMENT
+  ========================================================== */
+
+  async function handleDocumentRequest() {
+    if (!userId || !venue) {
+      setError(
+        'Your session or venue information is unavailable.'
+      );
+      return;
+    }
+
+    setDocumentRequestSubmitting(true);
+    setError('');
+
+    try {
+      const response = await fetch(
+        '/api/venue-booking-document-request',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            venueName: venue.name,
+            venueId,
+            venueCity: venue.city,
+            venueDestination: venue.destination,
+            mode,
+            fullName: form.fullName,
+            email: form.email,
+            mobile: form.mobile,
+            numberOfEvents: form.numberOfEvents,
+            events: form.events.map((event) => ({
+              ...event,
+              venueSpaceName:
+                venue.venueSpaces?.find(
+                  (space) => space.id === event.venueSpace
+                )?.name || event.venueSpace,
+            })),
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+            'Unable to submit the document request.'
+        );
+      }
+
+      setDocumentRequestSuccess(true);
+    } catch (err) {
+      console.error(
+        'Venue booking document request error:',
+        err
+      );
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong. Please try again.'
+      );
+    } finally {
+      setDocumentRequestSubmitting(false);
+    }
   }
 
   /* ==========================================================
@@ -1255,11 +1312,11 @@ function BookPageContent() {
                                 Engagement
                               </option>
 
-                              <option value="Sangeeth">
+                              <option value="Wedding">
                                 Sangeeth
                               </option>
 
-                              <option value="Haldi">
+                              <option value="Reception">
                                 Haldi
                               </option>                              
 
@@ -1267,11 +1324,11 @@ function BookPageContent() {
                                 Mehendi
                               </option>
 
-                              <option value="Wedding">
+                              <option value="Sangeet">
                                 Wedding
                               </option>
 
-                              <option value="Reception">
+                              <option value="Haldi">
                                 Reception
                               </option>
 
@@ -1334,7 +1391,7 @@ function BookPageContent() {
                                 300–350
                               </option>
 
-                              <option value="350+">
+                              <option value="900+">
                                 350+
                               </option>
 
@@ -1746,12 +1803,12 @@ function BookPageContent() {
 
                             </div>
 
-                            {/* MEAL */}
+                            {/* MEAL TIMING */}
 
                             <div>
 
                               <span>
-                                Meal
+                                Meal Timing
                               </span>
 
                               <strong>
@@ -1866,15 +1923,31 @@ function BookPageContent() {
 
                       window.scrollTo({
                         top: 0,
-                        behavior:
-                          'smooth',
+                        behavior: 'smooth',
                       });
                     }}
                     disabled={
-                      submitting
+                      submitting ||
+                      documentRequestSubmitting
                     }
                   >
                     ← Edit details
+                  </button>
+
+                  <button
+                    type="button"
+                    className="secondaryBtn documentRequestBtn"
+                    onClick={
+                      handleDocumentRequest
+                    }
+                    disabled={
+                      submitting ||
+                      documentRequestSubmitting
+                    }
+                  >
+                    {documentRequestSubmitting
+                      ? 'Requesting document...'
+                      : 'Request Venue Booking Document'}
                   </button>
 
                   <button
@@ -1884,7 +1957,8 @@ function BookPageContent() {
                       handlePayment
                     }
                     disabled={
-                      submitting
+                      submitting ||
+                      documentRequestSubmitting
                     }
                   >
 
@@ -1903,6 +1977,106 @@ function BookPageContent() {
           </div>
 
         </div>
+
+
+        {/* ====================================================
+            DOCUMENT REQUEST SUCCESS MODAL
+        ==================================================== */}
+
+        {documentRequestSuccess && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="document-request-title"
+            onClick={() =>
+              setDocumentRequestSuccess(false)
+            }
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 999999,
+              display: 'grid',
+              placeItems: 'center',
+              padding: '24px',
+              background: 'rgba(10, 10, 10, 0.48)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <div
+              onClick={(event) =>
+                event.stopPropagation()
+              }
+              style={{
+                width: 'min(520px, 100%)',
+                background: '#ffffff',
+                border: '1px solid rgba(0,0,0,0.08)',
+                borderRadius: '18px',
+                padding: '38px 34px 32px',
+                textAlign: 'center',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.20)',
+              }}
+            >
+              <div
+                style={{
+                  width: '58px',
+                  height: '58px',
+                  margin: '0 auto 20px',
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  background: '#eef9ff',
+                  color: '#1496ff',
+                  fontSize: '28px',
+                  fontWeight: 700,
+                }}
+              >
+                ✓
+              </div>
+
+              <span
+                className="kicker"
+                style={{ display: 'block' }}
+              >
+                REQUEST RECEIVED
+              </span>
+
+              <h2
+                id="document-request-title"
+                style={{
+                  margin: '10px 0 12px',
+                  fontSize: '26px',
+                }}
+              >
+                Request Submitted Successfully
+              </h2>
+
+              <p
+                style={{
+                  margin: 0,
+                  color: '#666666',
+                  lineHeight: 1.7,
+                  fontSize: '15px',
+                }}
+              >
+                You'll get the Venue Booking Document via email.
+              </p>
+
+              <button
+                type="button"
+                className="primaryBtn large"
+                onClick={() =>
+                  setDocumentRequestSuccess(false)
+                }
+                style={{
+                  marginTop: '26px',
+                  minWidth: '120px',
+                }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
 
       </section>
 
