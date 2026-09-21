@@ -123,17 +123,6 @@ const initialForm: BookingForm = {
 const TEMP_BOOKING_FEE = 1;
 
 /* ============================================================
-   ITC KOHENUR VENUE SPACES
-============================================================ */
-
-const ITC_KOHENUR_SPACES = [
-  'Deccan Stateroom',
-  'Dresden Green',
-  'Golconda Greens',
-  'Pearl Deck',
-];
-
-/* ============================================================
    BOOKING PAGE CONTENT
 ============================================================ */
 
@@ -147,6 +136,9 @@ function BookPageContent() {
 
   const venueId =
     searchParams.get('venue') || '';
+
+  const selectedSpaceId =
+    searchParams.get('space') || '';
 
   const mode =
     searchParams.get('mode');
@@ -162,15 +154,6 @@ function BookPageContent() {
       ),
     [venueId]
   );
-
-  /* ==========================================================
-     CHECK ITC KOHENUR
-  ========================================================== */
-
-  const isITCKohenur =
-    venue?.name
-      ?.toLowerCase()
-      .includes('itc kohenur');
 
   /* ==========================================================
      STATE
@@ -310,9 +293,27 @@ function BookPageContent() {
 
       events: Array.from(
         { length: count },
-        (_, index) =>
-          current.events[index] ||
-          createEmptyEvent()
+        (_, index) => {
+          if (current.events[index]) {
+            return current.events[index];
+          }
+
+          const newEvent = createEmptyEvent();
+
+          // If the customer arrived from a specific venue space,
+          // pre-select that space for Event 1.
+          if (
+            index === 0 &&
+            selectedSpaceId &&
+            venue?.venueSpaces?.some(
+              (space) => space.id === selectedSpaceId
+            )
+          ) {
+            newEvent.venueSpace = selectedSpaceId;
+          }
+
+          return newEvent;
+        }
       ),
     }));
 
@@ -447,12 +448,9 @@ function BookPageContent() {
       const currentEvent =
         form.events[index];
 
-      /* Venue space — ITC Kohenur */
+      /* Venue space */
 
-      if (
-        isITCKohenur &&
-        !currentEvent.venueSpace
-      ) {
+      if (!currentEvent.venueSpace) {
         setError(
           `Please select the venue space for Event ${index + 1}.`
         );
@@ -569,12 +567,24 @@ function BookPageContent() {
             numberOfEvents:
               form.numberOfEvents,
 
-            events: form.events.map((event) => ({
-              ...event,
-              // Backward-compatible names expected by the current API.
-              meal: event.mealTiming,
-              mealType: event.mealCategory,
-            })),
+            events: form.events.map((event) => {
+              const selectedSpace =
+                venue.venueSpaces?.find(
+                  (space) =>
+                    space.id === event.venueSpace
+                );
+
+              return {
+                ...event,
+                // Send the readable venue-space name to the API while
+                // preserving the selected ID separately.
+                venueSpaceId: event.venueSpace,
+                venueSpace: selectedSpace?.name || event.venueSpace,
+                // Backward-compatible names expected by the current API.
+                meal: event.mealTiming,
+                mealType: event.mealCategory,
+              };
+            }),
 
             bookingFee:
               TEMP_BOOKING_FEE,
@@ -1143,49 +1153,43 @@ function BookPageContent() {
                               VENUE SPACE
                           ================================================= */}
 
-                          {isITCKohenur && (
-                            <label>
+                          <label>
 
-                              <span>
-                                Venue space *
-                              </span>
+                            <span>
+                              Venue space *
+                            </span>
 
-                              <select
-                                value={
-                                  currentEvent.venueSpace
-                                }
-                                onChange={(e) =>
-                                  updateEventField(
-                                    index,
-                                    'venueSpace',
-                                    e.target.value
-                                  )
-                                }
-                              >
+                            <select
+                              value={
+                                currentEvent.venueSpace
+                              }
+                              onChange={(e) =>
+                                updateEventField(
+                                  index,
+                                  'venueSpace',
+                                  e.target.value
+                                )
+                              }
+                            >
 
-                                <option value="">
-                                  Select venue space
-                                </option>
+                              <option value="">
+                                Select venue space
+                              </option>
 
-                                {ITC_KOHENUR_SPACES.map(
-                                  (space) => (
-                                    <option
-                                      key={
-                                        space
-                                      }
-                                      value={
-                                        space
-                                      }
-                                    >
-                                      {space}
-                                    </option>
-                                  )
-                                )}
+                              {venue.venueSpaces?.map(
+                                (space) => (
+                                  <option
+                                    key={space.id}
+                                    value={space.id}
+                                  >
+                                    {space.name}
+                                  </option>
+                                )
+                              )}
 
-                              </select>
+                            </select>
 
-                            </label>
-                          )}
+                          </label>
 
                           {/* =================================================
                               EVENT DATE
@@ -1385,38 +1389,41 @@ function BookPageContent() {
                               TYPE OF MEAL
                           ================================================= */}
 
-                          {/* =================================================
-    MEAL CATEGORY
-================================================= */}
+                          <label>
 
-<label>
-  <span>
-    Meal Category *
-  </span>
+                            <span>
+                              Meal Category *
+                            </span>
 
-  <select
-    value={currentEvent.mealCategory}
-    onChange={(e) =>
-      updateEventField(
-        index,
-        'mealCategory',
-        e.target.value
-      )
-    }
-  >
-    <option value="">
-      Select Meal Category
-    </option>
+                            <select
+                              value={
+                                currentEvent.mealCategory
+                              }
+                              onChange={(e) =>
+                                updateEventField(
+                                  index,
+                                  'mealCategory',
+                                  e.target.value
+                                )
+                              }
+                            >
 
-    <option value="Premium">
-      Premium
-    </option>
+                              <option value="">
+                                Select Meal Category
+                              </option>
 
-    <option value="Luxury">
-      Luxury
-    </option>
-  </select>
-</label>
+                              <option value="Premium">
+                                Premium
+                              </option>
+
+                              <option value="Luxury">
+                                Luxury
+                              </option>
+
+                            </select>
+
+                          </label>
+
                         </div>
 
                         {/* =================================================
@@ -1674,21 +1681,22 @@ function BookPageContent() {
 
                             {/* VENUE SPACE */}
 
-                            {isITCKohenur && (
-                              <div>
+                            <div>
 
-                                <span>
-                                  Venue space
-                                </span>
+                              <span>
+                                Venue space
+                              </span>
 
-                                <strong>
-                                  {
+                              <strong>
+                                {venue.venueSpaces?.find(
+                                  (space) =>
+                                    space.id ===
                                     currentEvent.venueSpace
-                                  }
-                                </strong>
+                                )?.name ||
+                                  currentEvent.venueSpace}
+                              </strong>
 
-                              </div>
-                            )}
+                            </div>
 
                             {/* DATE */}
 
