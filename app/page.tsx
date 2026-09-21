@@ -470,11 +470,11 @@ export default function Home() {
               venues[0]?.image,
             ],
             [
-              'Hilton Resort',
+              'Novotel Hyderabad',
               venues[2]?.image,
             ],
             [
-              'Trident Hyderabad',
+              'Radisson Hyderabad',
               venues[4]?.image,
             ],
             [
