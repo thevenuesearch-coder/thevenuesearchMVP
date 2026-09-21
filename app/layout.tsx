@@ -1,7 +1,7 @@
 import '../styles/globals.css';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
-import { Cursor } from '../components/Cursor';
+import Cursor from '../components/Cursor';
 
 export const metadata = {
   title: 'The Venue Search — Destination Wedding Venues',

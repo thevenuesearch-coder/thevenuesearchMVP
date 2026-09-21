@@ -1516,3 +1516,136 @@
     width: 100%;
   }
 }
+
+/* ============================================================
+   VENUE SEARCH — LUXURY CUSTOM CURSOR
+============================================================ */
+
+.custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  width: 40px;
+  height: 40px;
+
+  margin-left: -20px;
+  margin-top: -20px;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  z-index: 2147483646;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Clean blue outline */
+  border: 1.5px solid rgba(20, 150, 255, 0.95);
+
+  /* Very subtle glass fill */
+  background: rgba(20, 150, 255, 0.025);
+
+  /*
+     Soft controlled glow
+     — intentionally much weaker than before
+  */
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.55),
+    0 0 10px rgba(20, 150, 255, 0.28),
+    0 0 20px rgba(20, 150, 255, 0.12);
+
+  will-change: transform;
+
+  transition:
+    width 0.25s ease,
+    height 0.25s ease,
+    margin 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+
+/* ============================================================
+   CENTER POINT
+============================================================ */
+
+.custom-cursor-ring {
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: #1496ff;
+
+  box-shadow:
+    0 0 5px rgba(20, 150, 255, 0.75),
+    0 0 10px rgba(20, 150, 255, 0.35);
+
+  display: block;
+}
+
+
+/* ============================================================
+   EXACT MOUSE POSITION
+============================================================ */
+
+.custom-cursor-dot {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  width: 4px;
+  height: 4px;
+
+  margin-left: -2px;
+  margin-top: -2px;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  border: 1px solid #1496ff;
+
+  pointer-events: none;
+
+  z-index: 2147483647;
+
+  box-shadow:
+    0 0 5px rgba(20, 150, 255, 0.75);
+
+  will-change: transform;
+}
+
+
+/* ============================================================
+   HIDE DEFAULT CURSOR
+============================================================ */
+
+@media (pointer: fine) {
+  html,
+  body,
+  a,
+  button,
+  input,
+  textarea,
+  select,
+  [role='button'] {
+    cursor: none !important;
+  }
+}
+
+
+/* ============================================================
+   TOUCH DEVICES
+============================================================ */
+
+@media (pointer: coarse) {
+  .custom-cursor,
+  .custom-cursor-dot {
+    display: none !important;
+  }
+}

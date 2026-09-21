@@ -71,8 +71,8 @@ type EventDetails = {
   eventDate: string;
   eventType: string;
   guestCount: string;
-  meal: string;
-  mealType: string;
+  mealTiming: string;
+  mealCategory: string;
   notes: string;
 };
 
@@ -98,8 +98,8 @@ function createEmptyEvent(): EventDetails {
     eventDate: '',
     eventType: '',
     guestCount: '',
-    meal: '',
-    mealType: '',
+    mealTiming: '',
+    mealCategory: '',
     notes: '',
   };
 }
@@ -492,9 +492,9 @@ function BookPageContent() {
 
       /* Meal */
 
-      if (!currentEvent.meal) {
+      if (!currentEvent.mealTiming) {
         setError(
-          `Please select the meal preference for Event ${index + 1}.`
+          `Please select the meal timing for Event ${index + 1}.`
         );
 
         return;
@@ -502,9 +502,9 @@ function BookPageContent() {
 
       /* Type of meal */
 
-      if (!currentEvent.mealType) {
+      if (!currentEvent.mealCategory) {
         setError(
-          `Please select the meal type for Event ${index + 1}.`
+          `Please select the meal category for Event ${index + 1}.`
         );
 
         return;
@@ -569,8 +569,12 @@ function BookPageContent() {
             numberOfEvents:
               form.numberOfEvents,
 
-            events:
-              form.events,
+            events: form.events.map((event) => ({
+              ...event,
+              // Backward-compatible names expected by the current API.
+              meal: event.mealTiming,
+              mealType: event.mealCategory,
+            })),
 
             bookingFee:
               TEMP_BOOKING_FEE,
@@ -1247,11 +1251,11 @@ function BookPageContent() {
                                 Engagement
                               </option>
 
-                              <option value="Wedding">
+                              <option value="Sangeeth">
                                 Sangeeth
                               </option>
 
-                              <option value="Reception">
+                              <option value="Haldi">
                                 Haldi
                               </option>                              
 
@@ -1259,11 +1263,11 @@ function BookPageContent() {
                                 Mehendi
                               </option>
 
-                              <option value="Sangeet">
+                              <option value="Wedding">
                                 Wedding
                               </option>
 
-                              <option value="Haldi">
+                              <option value="Reception">
                                 Reception
                               </option>
 
@@ -1326,7 +1330,7 @@ function BookPageContent() {
                                 300–350
                               </option>
 
-                              <option value="900+">
+                              <option value="350+">
                                 350+
                               </option>
 
@@ -1341,17 +1345,17 @@ function BookPageContent() {
                           <label>
 
                             <span>
-                              Meal Plan*
+                              Meal Timing*
                             </span>
 
                             <select
                               value={
-                                currentEvent.meal
+                                currentEvent.mealTiming
                               }
                               onChange={(e) =>
                                 updateEventField(
                                   index,
-                                  'meal',
+                                  'mealTiming',
                                   e.target.value
                                 )
                               }
@@ -1361,16 +1365,16 @@ function BookPageContent() {
                                 Select meal
                               </option>
 
-                              <option value="Veg">
-                                Veg
+                              <option value="Lunch">
+                                Lunch
                               </option>
 
-                              <option value="Non-Veg">
-                                Non-Veg
+                              <option value="HiTea">
+                                HiTea
                               </option>
 
-                              <option value="Mix">
-                                Mix
+                              <option value="Dinner">
+                                Dinner
                               </option>
 
                             </select>
@@ -1381,45 +1385,38 @@ function BookPageContent() {
                               TYPE OF MEAL
                           ================================================= */}
 
-                          <label>
+                          {/* =================================================
+    MEAL CATEGORY
+================================================= */}
 
-                            <span>
-                              Type of meal *
-                            </span>
+<label>
+  <span>
+    Meal Category *
+  </span>
 
-                            <select
-                              value={
-                                currentEvent.mealType
-                              }
-                              onChange={(e) =>
-                                updateEventField(
-                                  index,
-                                  'mealType',
-                                  e.target.value
-                                )
-                              }
-                            >
+  <select
+    value={currentEvent.mealCategory}
+    onChange={(e) =>
+      updateEventField(
+        index,
+        'mealCategory',
+        e.target.value
+      )
+    }
+  >
+    <option value="">
+      Select Meal Category
+    </option>
 
-                              <option value="">
-                                Select type of meal
-                              </option>
+    <option value="Premium">
+      Premium
+    </option>
 
-                              <option value="Normal">
-                                Normal
-                              </option>
-
-                              <option value="Breakfast">
-                                Breakfast
-                              </option>
-
-                              <option value="Premium">
-                                Premium
-                              </option>
-
-                            </select>
-
-                          </label>
-
+    <option value="Luxury">
+      Luxury
+    </option>
+  </select>
+</label>
                         </div>
 
                         {/* =================================================
@@ -1751,23 +1748,23 @@ function BookPageContent() {
 
                               <strong>
                                 {
-                                  currentEvent.meal
+                                  currentEvent.mealTiming
                                 }
                               </strong>
 
                             </div>
 
-                            {/* MEAL TYPE */}
+                            {/* MEAL CATEGORY */}
 
                             <div>
 
                               <span>
-                                Type of meal
+                                Meal Category
                               </span>
 
                               <strong>
                                 {
-                                  currentEvent.mealType
+                                  currentEvent.mealCategory
                                 }
                               </strong>
 
