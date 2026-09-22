@@ -26,11 +26,22 @@ const BLOCKING_STATUSES = [
 
 type IncomingEvent = {
   venueSpace?: string;
+  venueSpaceName?: string;
   eventDate?: string;
   eventType?: string;
   guestCount?: string;
   notes?: string;
 };
+
+function buildVenueBookingNotes(event: IncomingEvent) {
+  const metadata = {
+    venueSpaceId: event.venueSpace || null,
+    venueSpaceName: event.venueSpaceName || event.venueSpace || null,
+    notes: event.notes || null,
+  };
+
+  return `TVS_BOOKING_META:${JSON.stringify(metadata)}`;
+}
 
 type BookingType = 'venue' | 'room' | 'venue_room';
 
@@ -345,7 +356,7 @@ export async function POST(request: Request) {
           guest_count: parseGuestCount(event.guestCount),
           event_type: event.eventType || null,
           mode: 'instant_book',
-          notes: event.notes || null,
+          notes: buildVenueBookingNotes(event),
           status: 'payment_pending',
           payment_order_id: order.id,
         });
