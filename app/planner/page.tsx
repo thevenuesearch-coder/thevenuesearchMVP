@@ -59,11 +59,11 @@ type BookingRequest = {
   room_guest_count: number | null;
   room_type: string | null;
   guest_details: unknown;
-  full_name: string | null;
-  email: string | null;
-  mobile: string | null;
-  venue_space_id: string | null;
-  venue_space_name: string | null;
+  customer: {
+    full_name: string | null;
+    email: string | null;
+    mobile: string | null;
+  } | null;
   venue: BookingVenue | null;
 };
 
@@ -341,11 +341,7 @@ export default function Planner() {
               room_guest_count: item.room_guest_count || null,
               room_type: item.room_type || null,
               guest_details: item.guest_details ?? null,
-              full_name: item.full_name || null,
-              email: item.email || null,
-              mobile: item.mobile || null,
-              venue_space_id: item.venue_space_id || null,
-              venue_space_name: item.venue_space_name || null,
+              customer: item.customer || null,
 
               venue: Array.isArray(item.venue)
                 ? item.venue[0] || null
@@ -1170,21 +1166,21 @@ export default function Planner() {
                         <div>
                           <small>Customer</small>
                           <strong style={{ display: 'block', marginTop: '5px' }}>
-                            {request.full_name || '—'}
+                            {request.customer?.full_name || '—'}
                           </strong>
                         </div>
 
                         <div>
                           <small>Email</small>
                           <strong style={{ display: 'block', marginTop: '5px' }}>
-                            {request.email || '—'}
+                            {request.customer?.email || '—'}
                           </strong>
                         </div>
 
                         <div>
                           <small>Mobile</small>
                           <strong style={{ display: 'block', marginTop: '5px' }}>
-                            {request.mobile || '—'}
+                            {request.customer?.mobile || '—'}
                           </strong>
                         </div>
 
