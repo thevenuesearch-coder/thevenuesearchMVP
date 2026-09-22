@@ -228,23 +228,16 @@ function BookPageContent() {
       createEmptyRoomDetails()
     );
 
-  const [enquirySubmitting, setEnquirySubmitting] =
-    useState(false);
+  const [bookingReference, setBookingReference] =
+    useState('');
 
-  const [enquirySuccess, setEnquirySuccess] =
-    useState(false);
+  const includesVenue =
+    bookingType === 'venue' ||
+    bookingType === 'venue_room';
 
-  /*
-   * Only the classic "Venue only" + instant-book flow uses
-   * Razorpay/step-2 payment. Every other combination (Room
-   * only, Venue + Room, or a venue booking made via mode=hold
-   * or mode=enquiry) is a single-step enquiry submission --
-   * there's no room pricing/payment infrastructure to charge
-   * against yet.
-   */
-  const isInstantBookFlow =
-    bookingType === 'venue' &&
-    (mode === 'instant_book' || !mode);
+  const includesRoom =
+    bookingType === 'room' ||
+    bookingType === 'venue_room';
 
   function updateRoomField(
     field: keyof RoomBookingDetails,
@@ -495,194 +488,110 @@ function BookPageContent() {
     }
 
     /* --------------------------------------------------------
-       NUMBER OF EVENTS
+       NUMBER OF EVENTS (venue booking only)
     -------------------------------------------------------- */
-
-    if (!form.numberOfEvents) {
-      setError(
-        'Please select the number of events.'
-      );
-
-      return;
-    }
-
-    /* --------------------------------------------------------
-       EVENT ARRAY
-    -------------------------------------------------------- */
-
-    if (
-      form.events.length !==
-      Number(form.numberOfEvents)
-    ) {
-      setError(
-        'Please select the number of events again.'
-      );
-
-      return;
-    }
-
-    /* --------------------------------------------------------
-       VALIDATE EVERY EVENT
-    -------------------------------------------------------- */
-
-    for (
-      let index = 0;
-      index < form.events.length;
-      index++
-    ) {
-      const currentEvent =
-        form.events[index];
-
-      /* Venue space */
-
-      if (!currentEvent.venueSpace) {
-        setError(
-          `Please select the venue space for Event ${index + 1}.`
-        );
-
-        return;
-      }
-
-      /* Event date */
-
-      if (!currentEvent.eventDate) {
-        setError(
-          `Please select the date for Event ${index + 1}.`
-        );
-
-        return;
-      }
-
-      /* Event type */
-
-      if (!currentEvent.eventType) {
-        setError(
-          `Please select the event type for Event ${index + 1}.`
-        );
-
-        return;
-      }
-
-      /* Guest count */
-
-      if (!currentEvent.guestCount) {
-        setError(
-          `Please select the guest count for Event ${index + 1}.`
-        );
-
-        return;
-      }
-
-      /* Meal timing */
-
-      if (!currentEvent.mealTiming) {
-        setError(
-          `Please select the meal timing for Event ${index + 1}.`
-        );
-
-        return;
-      }
-
-      /* Meal category */
-
-      if (!currentEvent.mealCategory) {
-        setError(
-          `Please select the meal category for Event ${index + 1}.`
-        );
-
-        return;
-      }
-    }
-
-    /* --------------------------------------------------------
-       EVERYTHING VALID
-    -------------------------------------------------------- */
-
-    setStep(2);
-
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
-  }
-
-  /* ==========================================================
-     SUBMIT AS AN ENQUIRY
-     (Room only, Venue + Room, or a venue enquiry/hold request
-     -- anything that isn't the instant-book payment flow)
-  ========================================================== */
-
-  async function submitEnquiry(
-    event: FormEvent
-  ) {
-    event.preventDefault();
-
-    setError('');
-
-    if (!venue) {
-      setError(
-        'The selected venue could not be found.'
-      );
-      return;
-    }
-
-    if (!form.fullName.trim()) {
-      setError('Please enter your full name.');
-      return;
-    }
-
-    if (!form.email.trim()) {
-      setError('Please enter your email address.');
-      return;
-    }
-
-    if (!form.mobile.trim()) {
-      setError('Please enter your mobile number.');
-      return;
-    }
-
-    /* ------------------------------------------------------
-       VENUE FIELDS (required when booking type includes venue)
-    ------------------------------------------------------ */
-
-    const includesVenue =
-      bookingType === 'venue' ||
-      bookingType === 'venue_room';
-
-    const includesRoom =
-      bookingType === 'room' ||
-      bookingType === 'venue_room';
-
-    const primaryEvent = form.events[0];
 
     if (includesVenue) {
+      if (!form.numberOfEvents) {
+        setError(
+          'Please select the number of events.'
+        );
+
+        return;
+      }
+
+      /* ------------------------------------------------------
+         EVENT ARRAY
+      ------------------------------------------------------ */
+
       if (
-        !primaryEvent?.eventDate
+        form.events.length !==
+        Number(form.numberOfEvents)
       ) {
         setError(
-          'Please select an event date.'
+          'Please select the number of events again.'
         );
+
         return;
       }
 
-      if (!primaryEvent?.eventType) {
-        setError(
-          'Please select an event type.'
-        );
-        return;
-      }
+      /* ------------------------------------------------------
+         VALIDATE EVERY EVENT
+      ------------------------------------------------------ */
 
-      if (!primaryEvent?.guestCount) {
-        setError(
-          'Please select the guest count.'
-        );
-        return;
+      for (
+        let index = 0;
+        index < form.events.length;
+        index++
+      ) {
+        const currentEvent =
+          form.events[index];
+
+        /* Venue space */
+
+        if (!currentEvent.venueSpace) {
+          setError(
+            `Please select the venue space for Event ${index + 1}.`
+          );
+
+          return;
+        }
+
+        /* Event date */
+
+        if (!currentEvent.eventDate) {
+          setError(
+            `Please select the date for Event ${index + 1}.`
+          );
+
+          return;
+        }
+
+        /* Event type */
+
+        if (!currentEvent.eventType) {
+          setError(
+            `Please select the event type for Event ${index + 1}.`
+          );
+
+          return;
+        }
+
+        /* Guest count */
+
+        if (!currentEvent.guestCount) {
+          setError(
+            `Please select the guest count for Event ${index + 1}.`
+          );
+
+          return;
+        }
+
+        /* Meal timing */
+
+        if (!currentEvent.mealTiming) {
+          setError(
+            `Please select the meal timing for Event ${index + 1}.`
+          );
+
+          return;
+        }
+
+        /* Meal category */
+
+        if (!currentEvent.mealCategory) {
+          setError(
+            `Please select the meal category for Event ${index + 1}.`
+          );
+
+          return;
+        }
       }
     }
 
-    /* ------------------------------------------------------
-       ROOM FIELDS (required when booking type includes rooms)
-    ------------------------------------------------------ */
+    /* --------------------------------------------------------
+       ROOM DETAILS (room booking only)
+    -------------------------------------------------------- */
 
     if (includesRoom) {
       if (!roomDetails.checkInDate) {
@@ -724,110 +633,16 @@ function BookPageContent() {
       }
     }
 
-    setEnquirySubmitting(true);
+    /* --------------------------------------------------------
+       EVERYTHING VALID
+    -------------------------------------------------------- */
 
-    try {
-      const response = await fetch(
-        '/api/enquiry',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type':
-              'application/json',
-          },
-          body: JSON.stringify({
-            venueId: venue.dbId,
-            venueName: venue.name,
-            userId,
-            fullName: form.fullName,
-            email: form.email,
-            mobile: form.mobile,
-            bookingType,
+    setStep(2);
 
-            /* Venue fields */
-            eventDate:
-              includesVenue
-                ? primaryEvent?.eventDate
-                : undefined,
-            eventType:
-              includesVenue
-                ? primaryEvent?.eventType
-                : undefined,
-            guestCount:
-              includesVenue
-                ? primaryEvent?.guestCount
-                : undefined,
-            notes:
-              includesVenue
-                ? primaryEvent?.notes
-                : undefined,
-
-            /* Room fields */
-            checkinDate:
-              includesRoom
-                ? roomDetails.checkInDate
-                : undefined,
-            checkoutDate:
-              includesRoom
-                ? roomDetails.checkOutDate
-                : undefined,
-            numRooms:
-              includesRoom
-                ? roomDetails.numRooms
-                : undefined,
-            roomGuestCount:
-              includesRoom
-                ? roomDetails.roomGuestCount
-                : undefined,
-            roomType:
-              includesRoom
-                ? roomDetails.roomType
-                : undefined,
-            guestDetails:
-              includesRoom
-                ? roomDetails.guestDetails
-                : undefined,
-            roomNotes:
-              includesRoom
-                ? roomDetails.notes
-                : undefined,
-          }),
-        }
-      );
-
-      const result =
-        await response.json();
-
-      if (
-        !response.ok ||
-        !result.success
-      ) {
-        throw new Error(
-          result.error ||
-            'Unable to submit your enquiry. Please try again.'
-        );
-      }
-
-      setEnquirySuccess(true);
-
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-      });
-    } catch (err) {
-      console.error(
-        'Enquiry submission error:',
-        err
-      );
-
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Something went wrong. Please try again.'
-      );
-    } finally {
-      setEnquirySubmitting(false);
-    }
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
   }
 
   /* ==========================================================
@@ -1021,9 +836,9 @@ function BookPageContent() {
     try {
       /* ------------------------------------------------------
          1. CREATE THE RAZORPAY ORDER
-         The server checks venue-date availability here and
-         rejects before any money moves if a date is already
-         held/booked.
+         The server checks venue-date availability here, and
+         creates the booking as 'payment_pending' immediately
+         -- rejecting first if a date is already held/booked.
       ------------------------------------------------------ */
 
       const orderResponse =
@@ -1038,12 +853,45 @@ function BookPageContent() {
             body: JSON.stringify({
               venueId: venue.dbId,
               venueName: venue.name,
+              venueCity: venue.city,
+              userId,
               fullName: form.fullName,
               email: form.email,
               mobile: form.mobile,
-              eventDate:
-                form.events[0]?.eventDate,
-              events: form.events,
+              bookingType,
+              events:
+                includesVenue
+                  ? form.events
+                  : [],
+
+              checkinDate:
+                includesRoom
+                  ? roomDetails.checkInDate
+                  : undefined,
+              checkoutDate:
+                includesRoom
+                  ? roomDetails.checkOutDate
+                  : undefined,
+              numRooms:
+                includesRoom
+                  ? roomDetails.numRooms
+                  : undefined,
+              roomGuestCount:
+                includesRoom
+                  ? roomDetails.roomGuestCount
+                  : undefined,
+              roomType:
+                includesRoom
+                  ? roomDetails.roomType
+                  : undefined,
+              guestDetails:
+                includesRoom
+                  ? roomDetails.guestDetails
+                  : undefined,
+              roomNotes:
+                includesRoom
+                  ? roomDetails.notes
+                  : undefined,
             }),
           }
         );
@@ -1060,6 +908,9 @@ function BookPageContent() {
             'Unable to start payment. Please try again.'
         );
       }
+
+      const bookingIds: string[] =
+        orderResult.bookingIds || [];
 
       /* ------------------------------------------------------
          2. NOTIFY ADMIN (best-effort — booking still proceeds
@@ -1097,7 +948,7 @@ function BookPageContent() {
         amount: orderResult.amount,
         currency: orderResult.currency,
         name: 'The Venue Search',
-        description: `Instant booking — ${venue.name}`,
+        description: `Booking — ${venue.name}`,
         order_id: orderResult.orderId,
 
         prefill: {
@@ -1114,7 +965,8 @@ function BookPageContent() {
           response: RazorpayResponse
         ) => {
           await handlePaymentSuccess(
-            response
+            response,
+            bookingIds
           );
         },
 
@@ -1125,6 +977,27 @@ function BookPageContent() {
             setError(
               'Payment was cancelled before it completed. You can try again whenever you are ready.'
             );
+
+            /*
+             * Best-effort — free the reserved date rather than
+             * leaving it payment_pending until the 45-minute
+             * expiry job catches it.
+             */
+            fetch('/api/razorpay/cancel-order', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                orderId: orderResult.orderId,
+                bookingIds,
+              }),
+            }).catch((cancelError) => {
+              console.error(
+                'Cancel-order notification failed:',
+                cancelError
+              );
+            });
           },
         },
       });
@@ -1147,11 +1020,12 @@ function BookPageContent() {
   }
 
   /* ==========================================================
-     PAYMENT SUCCEEDED — VERIFY + CREATE THE BOOKING
+     PAYMENT SUCCEEDED — CONFIRM THE BOOKING
   ========================================================== */
 
   async function handlePaymentSuccess(
-    response: RazorpayResponse
+    response: RazorpayResponse,
+    bookingIds: string[]
   ) {
     if (!venue || !userId) {
       setError(
@@ -1179,16 +1053,10 @@ function BookPageContent() {
                 response.razorpay_payment_id,
               razorpay_signature:
                 response.razorpay_signature,
-
-              venueId: venue.dbId,
-              venueName: venue.name,
-              venueCity: venue.city,
-              userId,
-              mode: mode || 'instant_book',
+              bookingIds,
               fullName: form.fullName,
               email: form.email,
               mobile: form.mobile,
-              events: form.events,
             }),
           }
         );
@@ -1206,6 +1074,16 @@ function BookPageContent() {
               response.razorpay_payment_id
         );
       }
+
+      const reference =
+        (verifyResult.weddingId || bookingIds[0] || '')
+          .replace(/-/g, '')
+          .slice(0, 8)
+          .toUpperCase();
+
+      setBookingReference(
+        reference ? `VS-${reference}` : ''
+      );
 
       setPaymentSuccess(true);
     } catch (err) {
@@ -1502,9 +1380,7 @@ function BookPageContent() {
 
               <form
                 onSubmit={
-                  isInstantBookFlow
-                    ? handleContinue
-                    : submitEnquiry
+                  handleContinue
                 }
               >
 
@@ -2334,15 +2210,10 @@ function BookPageContent() {
                     type="submit"
                     className="primaryBtn large"
                     disabled={
-                      submitting ||
-                      enquirySubmitting
+                      submitting
                     }
                   >
-                    {isInstantBookFlow
-                      ? 'Review booking →'
-                      : enquirySubmitting
-                        ? 'Submitting…'
-                        : 'Submit enquiry →'}
+                    Review Booking →
                   </button>
 
                 </div>
@@ -2372,6 +2243,22 @@ function BookPageContent() {
                   </h2>
 
                   <div className="reviewRows">
+
+                    <div>
+
+                      <span>
+                        Booking Type
+                      </span>
+
+                      <strong>
+                        {bookingType === 'room'
+                          ? 'Rooms Only'
+                          : bookingType === 'venue_room'
+                            ? 'Venue + Rooms'
+                            : 'Venue'}
+                      </strong>
+
+                    </div>
 
                     <div>
 
@@ -2437,25 +2324,29 @@ function BookPageContent() {
 
                     </div>
 
-                    <div>
+                    {includesVenue && (
+                      <div>
 
-                      <span>
-                        Number of events
-                      </span>
+                        <span>
+                          Number of events
+                        </span>
 
-                      <strong>
-                        {form.numberOfEvents}
-                      </strong>
+                        <strong>
+                          {form.numberOfEvents}
+                        </strong>
 
-                    </div>
+                      </div>
+                    )}
 
                   </div>
 
                 </div>
 
                 {/* =================================================
-                    EVENT SCHEDULE
+                    EVENT SCHEDULE (venue booking)
                 ================================================= */}
+
+                {includesVenue && (
 
                 <div className="formSection">
 
@@ -2657,6 +2548,92 @@ function BookPageContent() {
 
                 </div>
 
+                )}
+
+                {/* =================================================
+                    ROOM DETAILS (room booking)
+                ================================================= */}
+
+                {includesRoom && (
+
+                  <div className="formSection">
+
+                    <span className="kicker">
+                      ROOM DETAILS
+                    </span>
+
+                    <h2>
+                      Your stay details
+                    </h2>
+
+                    <div className="reviewRows">
+
+                      <div>
+                        <span>Check-in</span>
+                        <strong>
+                          {formatDate(
+                            roomDetails.checkInDate
+                          )}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>Check-out</span>
+                        <strong>
+                          {formatDate(
+                            roomDetails.checkOutDate
+                          )}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>Number of rooms</span>
+                        <strong>
+                          {roomDetails.numRooms}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>Guests</span>
+                        <strong>
+                          {roomDetails.roomGuestCount}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>Room type</span>
+                        <strong>
+                          {roomDetails.roomType ||
+                            'No preference'}
+                        </strong>
+                      </div>
+
+                      {roomDetails.guestDetails && (
+                        <div>
+                          <span>Guest details</span>
+                          <strong>
+                            {roomDetails.guestDetails}
+                          </strong>
+                        </div>
+                      )}
+
+                      {roomDetails.notes && (
+                        <div>
+                          <span>
+                            Additional requirements
+                          </span>
+                          <strong>
+                            {roomDetails.notes}
+                          </strong>
+                        </div>
+                      )}
+
+                    </div>
+
+                  </div>
+
+                )}
+
                 {/* =================================================
                     PAYMENT SUMMARY
                 ================================================= */}
@@ -2666,7 +2643,7 @@ function BookPageContent() {
                   <div>
 
                     <span>
-                      Instant booking fee
+                      Total Payable Now
                     </span>
 
                     <strong>
@@ -2679,12 +2656,11 @@ function BookPageContent() {
                   </div>
 
                   <small>
-                    This amount secures your
-                    instant booking. The
-                    remaining venue balance is
-                    settled directly with the
-                    venue as per their payment
-                    terms.
+                    {includesRoom && !includesVenue
+                      ? 'This amount confirms your room booking. The remaining stay balance is settled directly with the hotel as per their payment terms.'
+                      : includesRoom
+                        ? 'This amount confirms your venue and room booking. The remaining balance is settled directly with the venue/hotel as per their payment terms.'
+                        : 'This amount secures your instant booking. The remaining venue balance is settled directly with the venue as per their payment terms.'}
                   </small>
 
                 </div>
@@ -2757,7 +2733,7 @@ function BookPageContent() {
 
                     {submitting
                       ? 'Preparing payment...'
-                      : 'Proceed to payment →'}
+                      : 'Proceed to Pay →'}
 
                   </button>
 
@@ -2933,8 +2909,21 @@ function BookPageContent() {
                   fontSize: '26px',
                 }}
               >
-                You're all booked.
+                Booking Confirmed!
               </h2>
+
+              {bookingReference && (
+                <p
+                  style={{
+                    margin: '0 0 12px',
+                    fontSize: '15px',
+                    color: '#151515',
+                  }}
+                >
+                  Your booking ID:{' '}
+                  <strong>{bookingReference}</strong>
+                </p>
+              )}
 
               <p
                 style={{
@@ -2944,10 +2933,14 @@ function BookPageContent() {
                   fontSize: '15px',
                 }}
               >
-                Your venue is confirmed for the
-                date(s) you selected. You can view
-                the full details anytime from your
-                profile.
+                {bookingType === 'room'
+                  ? 'Your room booking is confirmed for the dates you selected.'
+                  : bookingType === 'venue_room'
+                    ? 'Your venue and room booking are both confirmed for the dates you selected.'
+                    : 'Your venue is confirmed for the date(s) you selected.'}
+                {' '}
+                You can view the full details anytime
+                from your profile.
               </p>
 
               <button
@@ -2967,102 +2960,6 @@ function BookPageContent() {
           </div>
         )}
 
-        {/* ====================================================
-            ENQUIRY SUCCESS MODAL
-        ==================================================== */}
-
-        {enquirySuccess && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="enquiry-success-title"
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 999999,
-              display: 'grid',
-              placeItems: 'center',
-              padding: '24px',
-              background: 'rgba(10, 10, 10, 0.48)',
-              backdropFilter: 'blur(8px)',
-            }}
-          >
-            <div
-              style={{
-                width: 'min(520px, 100%)',
-                background: '#ffffff',
-                border: '1px solid rgba(0,0,0,0.08)',
-                borderRadius: '18px',
-                padding: '38px 34px 32px',
-                textAlign: 'center',
-                boxShadow: '0 24px 80px rgba(0,0,0,0.20)',
-              }}
-            >
-              <div
-                style={{
-                  width: '58px',
-                  height: '58px',
-                  margin: '0 auto 20px',
-                  borderRadius: '50%',
-                  display: 'grid',
-                  placeItems: 'center',
-                  background: '#e8f8f3',
-                  color: '#17775b',
-                  fontSize: '28px',
-                  fontWeight: 700,
-                }}
-              >
-                ✓
-              </div>
-
-              <span
-                className="kicker"
-                style={{ display: 'block' }}
-              >
-                ENQUIRY RECEIVED
-              </span>
-
-              <h2
-                id="enquiry-success-title"
-                style={{
-                  margin: '10px 0 12px',
-                  fontSize: '26px',
-                }}
-              >
-                Thank you, {form.fullName.split(' ')[0] || 'there'}.
-              </h2>
-
-              <p
-                style={{
-                  margin: 0,
-                  color: '#666666',
-                  lineHeight: 1.7,
-                  fontSize: '15px',
-                }}
-              >
-                {bookingType === 'room'
-                  ? 'We have your room request and will confirm availability with you shortly.'
-                  : bookingType === 'venue_room'
-                    ? 'We have your venue and room details and will get back to you with availability shortly.'
-                    : 'We have your enquiry and will get back to you shortly with next steps.'}
-              </p>
-
-              <button
-                type="button"
-                className="primaryBtn large"
-                onClick={() =>
-                  router.push('/profile')
-                }
-                style={{
-                  marginTop: '26px',
-                  minWidth: '120px',
-                }}
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        )}
 
       </section>
 
