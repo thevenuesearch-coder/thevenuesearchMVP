@@ -42,6 +42,7 @@ type BookingVenue = {
 
 type BookingRequest = {
   id: string;
+  user_id: string | null;
   venue_id: string;
   created_at: string;
   event_date: string | null;
@@ -49,6 +50,20 @@ type BookingRequest = {
   guest_count: number | null;
   notes: string | null;
   status: string | null;
+  payment_order_id: string | null;
+  payment_id: string | null;
+  booking_type: string | null;
+  checkin_date: string | null;
+  checkout_date: string | null;
+  num_rooms: number | null;
+  room_guest_count: number | null;
+  room_type: string | null;
+  guest_details: unknown;
+  full_name: string | null;
+  email: string | null;
+  mobile: string | null;
+  venue_space_id: string | null;
+  venue_space_name: string | null;
   venue: BookingVenue | null;
 };
 
@@ -306,6 +321,7 @@ export default function Planner() {
             )
             .map((item: any) => ({
               id: item.id,
+              user_id: item.user_id || null,
               venue_id: item.venue_id,
               created_at: item.created_at,
               event_date: item.event_date,
@@ -313,6 +329,20 @@ export default function Planner() {
               guest_count: item.guest_count,
               notes: item.notes,
               status: item.status,
+              payment_order_id: item.payment_order_id || null,
+              payment_id: item.payment_id || null,
+              booking_type: item.booking_type || null,
+              checkin_date: item.checkin_date || null,
+              checkout_date: item.checkout_date || null,
+              num_rooms: item.num_rooms || null,
+              room_guest_count: item.room_guest_count || null,
+              room_type: item.room_type || null,
+              guest_details: item.guest_details ?? null,
+              full_name: item.full_name || null,
+              email: item.email || null,
+              mobile: item.mobile || null,
+              venue_space_id: item.venue_space_id || null,
+              venue_space_name: item.venue_space_name || null,
 
               venue: Array.isArray(item.venue)
                 ? item.venue[0] || null
@@ -867,8 +897,7 @@ export default function Planner() {
                 </h3>
 
                 <p>
-                  Track venue enquiries
-                  and booking requests.
+                  Review paid venue and room bookings before confirming them.
                 </p>
               </div>
 
@@ -884,48 +913,288 @@ export default function Planner() {
                 </h3>
 
                 <p>
-                  Your venue enquiries
-                  will appear here.
+                  Paid customer bookings will appear here.
                 </p>
               </div>
             ) : (
-              requests.map(
-                (request) => (
-                  <div
-                    className="row"
-                    key={request.id}
-                  >
-                    <span>
-                      <b>
-                        {request.venue?.name ||
-                          'Venue'}
-                      </b>
+              <div
+                style={{
+                  display: 'grid',
+                  gap: '16px',
+                }}
+              >
+                {requests.map((request) => {
+                  const isRoomBooking =
+                    request.booking_type === 'room' ||
+                    Boolean(request.checkin_date) ||
+                    Boolean(request.checkout_date) ||
+                    Boolean(request.num_rooms);
 
-                      <small>
-                        {request.event_type ||
-                          'Event'}
-                        {' · '}
-                        {request.guest_count ||
-                          'Guest count on request'}{' '}
-                        guests
-                      </small>
-                    </span>
+                  const displayStatus =
+                    String(request.status || '').toLowerCase() === 'confirmed'
+                      ? 'Under Review'
+                      : request.status || 'Under Review';
 
-                    <em>
-                      {request.event_date
-                        ? new Date(
-                            request.event_date
-                          ).toLocaleDateString()
-                        : 'Date on request'}
-                    </em>
+                  return (
+                    <article
+                      key={request.id}
+                      style={{
+                        border: '1px solid #e7e2da',
+                        borderRadius: '18px',
+                        padding: '24px',
+                        background: '#fff',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          gap: '18px',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <div>
+                          <span className="kicker">
+                            {isRoomBooking
+                              ? 'ROOM BOOKING'
+                              : 'VENUE BOOKING'}
+                          </span>
 
-                    <span>
-                      {request.status ||
-                        'Submitted'}
-                    </span>
-                  </div>
-                )
-              )
+                          <h3
+                            style={{
+                              margin: '7px 0 5px',
+                              fontSize: '24px',
+                            }}
+                          >
+                            {request.venue?.name || 'Venue'}
+                          </h3>
+
+                          <p
+                            style={{
+                              margin: 0,
+                              color: '#6b6b6b',
+                            }}
+                          >
+                            {request.venue?.city || 'India'}
+                          </p>
+                        </div>
+
+                        <span
+                          style={{
+                            padding: '8px 13px',
+                            borderRadius: '999px',
+                            background: '#fff7e6',
+                            color: '#9a6700',
+                            fontWeight: 600,
+                            fontSize: '13px',
+                          }}
+                        >
+                          {displayStatus}
+                        </span>
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: '20px',
+                          display: 'grid',
+                          gridTemplateColumns:
+                            'repeat(auto-fit, minmax(180px, 1fr))',
+                          gap: '1px',
+                          background: '#e7e2da',
+                          border: '1px solid #e7e2da',
+                        }}
+                      >
+                        {!isRoomBooking ? (
+                          <>
+                            <div style={{ background: '#fff', padding: '15px' }}>
+                              <small>Event date</small>
+                              <strong style={{ display: 'block', marginTop: '5px' }}>
+                                {request.event_date
+                                  ? new Date(request.event_date + 'T00:00:00').toLocaleDateString(
+                                      'en-IN',
+                                      { day: 'numeric', month: 'short', year: 'numeric' }
+                                    )
+                                  : '—'}
+                              </strong>
+                            </div>
+
+                            <div style={{ background: '#fff', padding: '15px' }}>
+                              <small>Event type</small>
+                              <strong style={{ display: 'block', marginTop: '5px' }}>
+                                {request.event_type || '—'}
+                              </strong>
+                            </div>
+
+                            <div style={{ background: '#fff', padding: '15px' }}>
+                              <small>Guests</small>
+                              <strong style={{ display: 'block', marginTop: '5px' }}>
+                                {request.guest_count || '—'}
+                              </strong>
+                            </div>
+
+                            <div style={{ background: '#fff', padding: '15px' }}>
+                              <small>Venue space</small>
+                              <strong style={{ display: 'block', marginTop: '5px' }}>
+                                {request.venue_space_name || request.venue_space_id || '—'}
+                              </strong>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ background: '#fff', padding: '15px' }}>
+                              <small>Check-in</small>
+                              <strong style={{ display: 'block', marginTop: '5px' }}>
+                                {request.checkin_date
+                                  ? new Date(request.checkin_date + 'T00:00:00').toLocaleDateString(
+                                      'en-IN',
+                                      { day: 'numeric', month: 'short', year: 'numeric' }
+                                    )
+                                  : '—'}
+                              </strong>
+                            </div>
+
+                            <div style={{ background: '#fff', padding: '15px' }}>
+                              <small>Check-out</small>
+                              <strong style={{ display: 'block', marginTop: '5px' }}>
+                                {request.checkout_date
+                                  ? new Date(request.checkout_date + 'T00:00:00').toLocaleDateString(
+                                      'en-IN',
+                                      { day: 'numeric', month: 'short', year: 'numeric' }
+                                    )
+                                  : '—'}
+                              </strong>
+                            </div>
+
+                            <div style={{ background: '#fff', padding: '15px' }}>
+                              <small>Rooms</small>
+                              <strong style={{ display: 'block', marginTop: '5px' }}>
+                                {request.num_rooms || '—'}
+                              </strong>
+                            </div>
+
+                            <div style={{ background: '#fff', padding: '15px' }}>
+                              <small>Room category</small>
+                              <strong style={{ display: 'block', marginTop: '5px' }}>
+                                {request.room_type || '—'}
+                              </strong>
+                            </div>
+
+                            <div style={{ background: '#fff', padding: '15px' }}>
+                              <small>Guests</small>
+                              <strong style={{ display: 'block', marginTop: '5px' }}>
+                                {request.room_guest_count || '—'}
+                              </strong>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: '18px',
+                          display: 'grid',
+                          gridTemplateColumns:
+                            'repeat(auto-fit, minmax(220px, 1fr))',
+                          gap: '14px 24px',
+                        }}
+                      >
+                        <div>
+                          <small>Customer</small>
+                          <strong style={{ display: 'block', marginTop: '5px' }}>
+                            {request.full_name || '—'}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <small>Email</small>
+                          <strong style={{ display: 'block', marginTop: '5px' }}>
+                            {request.email || '—'}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <small>Mobile</small>
+                          <strong style={{ display: 'block', marginTop: '5px' }}>
+                            {request.mobile || '—'}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <small>Payment</small>
+                          <strong style={{ display: 'block', marginTop: '5px' }}>
+                            {request.payment_id
+                              ? 'Paid'
+                              : request.payment_order_id
+                                ? 'Payment pending'
+                                : '—'}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <small>Booking ID</small>
+                          <strong
+                            style={{
+                              display: 'block',
+                              marginTop: '5px',
+                              fontSize: '13px',
+                              wordBreak: 'break-all',
+                            }}
+                          >
+                            {request.id}
+                          </strong>
+                        </div>
+                      </div>
+
+                      {request.notes && (
+                        <div
+                          style={{
+                            marginTop: '18px',
+                            padding: '14px 16px',
+                            background: '#f8f6f2',
+                            border: '1px solid #ece9e4',
+                            borderRadius: '10px',
+                          }}
+                        >
+                          <small>Notes</small>
+                          <p
+                            style={{
+                              margin: '6px 0 0',
+                              lineHeight: 1.6,
+                            }}
+                          >
+                            {request.notes}
+                          </p>
+                        </div>
+                      )}
+
+                      <div
+                        style={{
+                          marginTop: '22px',
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                        }}
+                      >
+                        <button
+                          type="button"
+                          className="primaryBtn"
+                          onClick={() => {
+                            /*
+                             * Admin confirmation action will be connected
+                             * to the existing booking status flow separately.
+                             */
+                            window.alert(
+                              'Booking confirmation action is ready to be connected.'
+                            );
+                          }}
+                        >
+                          Confirm
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             )}
 
           </div>
