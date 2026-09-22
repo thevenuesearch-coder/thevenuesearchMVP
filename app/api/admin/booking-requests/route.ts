@@ -88,6 +88,12 @@ export async function GET(request: Request) {
           num_rooms,
           room_guest_count,
           room_type,
+          guest_details,
+          full_name,
+          email,
+          mobile,
+          venue_space_id,
+          venue_space_name,
           venue:venues(
             id,
             name,
