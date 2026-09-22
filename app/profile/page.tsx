@@ -106,6 +106,29 @@ function isRoomBooking(booking: BookingRow) {
 }
 
 
+function getVenueSpaceName(booking: BookingRow) {
+  if (!booking.notes) return null;
+
+  const prefix = 'TVS_BOOKING_META:';
+
+  if (!booking.notes.startsWith(prefix)) return null;
+
+  try {
+    const metadata = JSON.parse(
+      booking.notes.slice(prefix.length)
+    );
+
+    return (
+      typeof metadata?.venueSpaceName === 'string' &&
+      metadata.venueSpaceName.trim()
+        ? metadata.venueSpaceName.trim()
+        : null
+    );
+  } catch {
+    return null;
+  }
+}
+
 export default function ProfilePage() {
   const router = useRouter();
 
@@ -1015,7 +1038,10 @@ export default function ProfilePage() {
                             fontSize: '24px',
                           }}
                         >
-                          {booking.venue?.name || 'Venue booking'}
+                          {!roomBooking
+                            ? getVenueSpaceName(booking) ||
+                              'Venue space'
+                            : booking.venue?.name || 'Venue booking'}
                         </h3>
 
                         <p
@@ -1024,6 +1050,8 @@ export default function ProfilePage() {
                             color: '#6b6b6b',
                           }}
                         >
+                          {booking.venue?.name || 'Venue'}
+                          {' · '}
                           {booking.venue?.city || 'India'}
                           {booking.venue?.type
                             ? ' · ' + booking.venue.type
@@ -1104,6 +1132,25 @@ export default function ProfilePage() {
 
                       {!roomBooking && (
                         <>
+                          <div
+                            style={{
+                              background: '#fff',
+                              padding: '16px',
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: 'block',
+                                color: '#8a857d',
+                                marginBottom: '5px',
+                              }}
+                            >
+                              Venue space
+                            </small>
+                            <strong>
+                              {getVenueSpaceName(booking) || '—'}
+                            </strong>
+                          </div>
                           <div
                             style={{
                               background: '#fff',
