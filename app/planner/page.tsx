@@ -235,7 +235,10 @@ export default function Planner() {
             }));
 
         /* ---------------------------------------------
-           BOOKING REQUESTS
+           ALL CUSTOMER BOOKING REQUESTS
+           The planner is the admin workspace, so it must load
+           booking records from all customers rather than only
+           the currently signed-in admin user.
         --------------------------------------------- */
 
         const {
@@ -247,6 +250,7 @@ export default function Planner() {
             .select(
               `
               id,
+              user_id,
               venue_id,
               created_at,
               event_date,
@@ -254,6 +258,14 @@ export default function Planner() {
               guest_count,
               notes,
               status,
+              payment_order_id,
+              payment_id,
+              booking_type,
+              checkin_date,
+              checkout_date,
+              num_rooms,
+              room_guest_count,
+              room_type,
               venue:venues(
                 id,
                 name,
@@ -261,10 +273,6 @@ export default function Planner() {
                 city
               )
               `
-            )
-            .eq(
-              'user_id',
-              currentUser.id
             )
             .order(
               'created_at',
