@@ -369,7 +369,7 @@ export function Header() {
 
                 {/* My Bookings */}
                 <Link
-                  href="/book"
+                  href="/profile#bookings"
                   className="profileMenuItem"
                   onClick={() =>
                     setProfileOpen(false)
@@ -402,7 +402,7 @@ export function Header() {
                     </strong>
 
                     <small>
-                      Enquiries & bookings
+                      View your bookings
                     </small>
                   </span>
                 </Link>
