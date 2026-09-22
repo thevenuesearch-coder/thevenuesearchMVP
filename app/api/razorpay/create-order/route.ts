@@ -45,6 +45,30 @@ function buildVenueBookingNotes(event: IncomingEvent) {
 
 type BookingType = 'venue' | 'room' | 'venue_room';
 
+type IncomingRoomSelection = {
+  roomId?: string;
+  roomName?: string;
+  quantity?: number;
+};
+
+/*
+ * "Less than 10" / "More than 20" aren't plain integers, so we
+ * store both the label the guest picked (room_count_label) and a
+ * best-effort numeric estimate (num_rooms) for reporting/sorting
+ * in the admin dashboard.
+ */
+function estimateRoomCount(label: unknown): number | null {
+  const raw = typeof label === 'string' ? label.trim() : '';
+
+  if (!raw) return null;
+  if (raw === 'Less than 10') return 9;
+  if (raw === 'More than 20') return 21;
+
+  const match = raw.match(/\d+/);
+
+  return match ? Number.parseInt(match[0], 10) : null;
+}
+
 export async function POST(request: Request) {
   try {
     const keyId = process.env.RAZORPAY_KEY_ID;
@@ -96,11 +120,15 @@ export async function POST(request: Request) {
       checkinDate,
       checkoutDate,
       numRooms,
-      roomGuestCount,
-      roomType,
       guestDetails,
       roomNotes,
     } = body;
+
+    const roomSelections: IncomingRoomSelection[] = Array.isArray(
+      body.roomSelections
+    )
+      ? body.roomSelections
+      : [];
 
     /*
      * ==========================================================
@@ -163,8 +191,7 @@ export async function POST(request: Request) {
       if (
         !checkinDate ||
         !checkoutDate ||
-        !numRooms ||
-        !roomGuestCount
+        !numRooms
       ) {
         return NextResponse.json(
           {
@@ -364,6 +391,20 @@ export async function POST(request: Request) {
     }
 
     if (includesRoom) {
+      const cleanSelections = roomSelections
+        .filter(
+          (s) =>
+            s &&
+            s.roomId &&
+            s.roomName &&
+            Number(s.quantity) > 0
+        )
+        .map((s) => ({
+          roomId: String(s.roomId),
+          roomName: String(s.roomName),
+          quantity: Math.round(Number(s.quantity)),
+        }));
+
       bookingRows.push({
         wedding_id: wedding.id,
         venue_id: venueId,
@@ -376,11 +417,13 @@ export async function POST(request: Request) {
         payment_order_id: order.id,
         checkin_date: checkinDate,
         checkout_date: checkoutDate,
-        num_rooms: parseGuestCount(String(numRooms)),
-        room_guest_count: parseGuestCount(
-          String(roomGuestCount)
-        ),
-        room_type: roomType || null,
+        num_rooms:
+          cleanSelections.reduce(
+            (sum, s) => sum + s.quantity,
+            0
+          ) || estimateRoomCount(numRooms),
+        room_count_label: String(numRooms),
+        room_selections: cleanSelections,
         guest_details: guestDetails || null,
       });
     }

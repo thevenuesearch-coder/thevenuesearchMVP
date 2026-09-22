@@ -15,8 +15,10 @@ type AdminEnquiry = {
   checkin_date: string | null;
   checkout_date: string | null;
   num_rooms: number | null;
-  room_guest_count: number | null;
-  room_type: string | null;
+  room_count_label: string | null;
+  room_selections:
+    | { roomId: string; roomName: string; quantity: number }[]
+    | null;
   guest_details: string | null;
   message: string | null;
   status: string | null;
@@ -319,19 +321,22 @@ export default function AdminPage() {
                       </small>
                       <small>
                         Rooms:{' '}
-                        {enquiry.num_rooms ??
-                          'Not specified'}
-                        {' · '}
-                        Guests:{' '}
-                        {enquiry.room_guest_count ??
+                        {enquiry.room_count_label ??
+                          enquiry.num_rooms ??
                           'Not specified'}
                       </small>
-                      {enquiry.room_type && (
-                        <small>
-                          Room type:{' '}
-                          {enquiry.room_type}
-                        </small>
-                      )}
+                      {enquiry.room_selections &&
+                        enquiry.room_selections.length > 0 && (
+                          <small>
+                            Categories:{' '}
+                            {enquiry.room_selections
+                              .map(
+                                (s) =>
+                                  `${s.roomName} × ${s.quantity}`
+                              )
+                              .join(', ')}
+                          </small>
+                        )}
                       {enquiry.guest_details && (
                         <small>
                           Guest details:{' '}
