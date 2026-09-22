@@ -1099,8 +1099,6 @@ export default function Planner() {
                                 {request.guest_count || '—'}
                               </strong>
                             </div>
-
-                            </div>
                           </>
                         ) : (
                           <>
