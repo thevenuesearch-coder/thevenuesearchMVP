@@ -110,6 +110,9 @@ export default function Planner() {
   const [creatingWedding, setCreatingWedding] =
     useState(false);
 
+  const [confirmingBookingId, setConfirmingBookingId] =
+    useState<string | null>(null);
+
   /* =====================================================
      LOAD PLANNER DATA
   ===================================================== */
@@ -391,6 +394,71 @@ export default function Planner() {
       mounted = false;
     };
   }, []);
+
+  /* =====================================================
+     CONFIRM BOOKING
+  ===================================================== */
+
+  async function confirmBooking(bookingId: string) {
+    try {
+      setConfirmingBookingId(bookingId);
+      setError('');
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error('Admin session is unavailable.');
+      }
+
+      const response = await fetch(
+        '/api/admin/booking-requests/confirm',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            bookingId,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+            'Unable to confirm the booking.'
+        );
+      }
+
+      setRequests((current) =>
+        current.map((request) =>
+          request.id === bookingId
+            ? {
+                ...request,
+                status: 'confirmed',
+              }
+            : request
+        )
+      );
+    } catch (err: any) {
+      console.error(
+        'Confirm booking error:',
+        err
+      );
+
+      setError(
+        err?.message ||
+          'Unable to confirm the booking.'
+      );
+    } finally {
+      setConfirmingBookingId(null);
+    }
+  }
 
   /* =====================================================
      CREATE WEDDING
@@ -1178,17 +1246,16 @@ export default function Planner() {
                         <button
                           type="button"
                           className="primaryBtn"
-                          onClick={() => {
-                            /*
-                             * Admin confirmation action will be connected
-                             * to the existing booking status flow separately.
-                             */
-                            window.alert(
-                              'Booking confirmation action is ready to be connected.'
-                            );
-                          }}
+                          disabled={
+                            confirmingBookingId === request.id
+                          }
+                          onClick={() =>
+                            confirmBooking(request.id)
+                          }
                         >
-                          Confirm
+                          {confirmingBookingId === request.id
+                            ? 'Confirming...'
+                            : 'Confirm'}
                         </button>
                       </div>
                     </article>
