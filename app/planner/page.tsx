@@ -994,10 +994,18 @@ export default function Planner() {
                     Boolean(request.checkout_date) ||
                     Boolean(request.num_rooms);
 
+                  const normalizedStatus =
+                    String(request.status || '')
+                      .replace(/_/g, ' ')
+                      .trim()
+                      .toLowerCase();
+
                   const displayStatus =
-                    String(request.status || '').toLowerCase() === 'confirmed'
-                      ? 'Under Review'
-                      : request.status || 'Under Review';
+                    normalizedStatus === 'confirmed'
+                      ? 'Confirmed'
+                      : normalizedStatus === 'under review'
+                        ? 'Under Review'
+                        : request.status || 'Under Review';
 
                   return (
                     <article
