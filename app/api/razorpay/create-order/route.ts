@@ -20,6 +20,7 @@ const BOOKING_AMOUNT =
 const BLOCKING_STATUSES = [
   'held',
   'payment_pending',
+  'under_review',
   'confirmed',
 ];
 
