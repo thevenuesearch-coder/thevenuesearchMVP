@@ -513,34 +513,17 @@ export default function Home() {
         </h2>
 
         <div className="collectionRow">
-          {[
-            [
-              'Taj Falaknuma',
-              venues[0]?.image,
-            ],
-            [
-              'Hilton Resort',
-              venues[2]?.image,
-            ],
-            [
-              'Trident Hyderabad',
-              venues[4]?.image,
-            ],
-            [
-              'ITC Kohenur',
-              venues[5]?.image,
-            ],
-          ].map(
-            ([name, image], index) => (
+          {venues.slice(0, 4).map(
+            (v, index) => (
               <Link
-                href="/collections"
+                href={`/venues/${v.id}`}
                 className="collection"
-                key={String(name)}
+                key={v.id}
               >
-                {image && (
+                {v.image && (
                   <img
-                    src={String(image)}
-                    alt={String(name)}
+                    src={v.image}
+                    alt={v.name}
                   />
                 )}
 
@@ -550,7 +533,7 @@ export default function Home() {
                   </small>
 
                   <h3>
-                    {String(name)}
+                    {v.name}
                   </h3>
                 </div>
               </Link>
