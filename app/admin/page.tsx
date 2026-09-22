@@ -1,1 +1,373 @@
-'use client';import {useState} from 'react';export default function Admin(){const [email,setEmail]=useState('');const [ok,setOk]=useState(false);return <main className="auth"><div className="authCard"><span className="kicker">PRIVATE ADMIN ACCESS</span><h1>Venue Search operations.</h1><p>Admin access is restricted to the approved operations email.</p>{ok?<div className="success compact"><span>✓</span><h3>Access request received.</h3><p>Use the secure magic-link flow to enter the operations console.</p></div>:<form onSubmit={e=>{e.preventDefault();if(email.toLowerCase()==='thevenuesearch@gmail.com')setOk(true)}}><label>Admin email<input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="thevenuesearch@gmail.com" required/></label><button data-cursor="open" className="primaryBtn full">Request secure access</button>{email&&email.toLowerCase()!=='thevenuesearch@gmail.com'&&<small className="error">This email is not on the admin allowlist.</small>}</form>}<small>Use Supabase Auth + role-based policies for production access control.</small></div></main>}
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+
+type AdminEnquiry = {
+  id: string;
+  booking_type: 'venue' | 'room' | 'venue_room';
+  full_name: string | null;
+  email: string | null;
+  mobile: string | null;
+  event_date: string | null;
+  event_type: string | null;
+  guest_count: number | null;
+  budget: string | null;
+  checkin_date: string | null;
+  checkout_date: string | null;
+  num_rooms: number | null;
+  room_guest_count: number | null;
+  room_type: string | null;
+  guest_details: string | null;
+  message: string | null;
+  status: string | null;
+  created_at: string;
+  venues: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+};
+
+type FilterType = 'all' | 'venue' | 'room' | 'venue_room';
+
+const FILTERS: { value: FilterType; label: string }[] = [
+  { value: 'all', label: 'All Enquiries' },
+  { value: 'venue', label: 'Venue' },
+  { value: 'room', label: 'Rooms' },
+  { value: 'venue_room', label: 'Venue + Rooms' },
+];
+
+function bookingTypeLabel(type: AdminEnquiry['booking_type']) {
+  if (type === 'room') return 'Rooms Only';
+  if (type === 'venue_room') return 'Venue + Rooms';
+  return 'Venue';
+}
+
+function bookingTypeColor(type: AdminEnquiry['booking_type']) {
+  if (type === 'room') return '#8e6bea';
+  if (type === 'venue_room') return '#28b9d3';
+  return '#2854b8';
+}
+
+function formatDate(value: string | null) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+export default function AdminPage() {
+  const [enquiries, setEnquiries] = useState<AdminEnquiry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [filter, setFilter] = useState<FilterType>('all');
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetch('/api/admin/enquiries')
+      .then(async (response) => {
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            result.error || 'Unable to load enquiries.'
+          );
+        }
+
+        if (mounted) setEnquiries(result.data || []);
+      })
+      .catch((err) => {
+        console.error('Admin enquiries load error:', err);
+        if (mounted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Unable to load enquiries.'
+          );
+        }
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const counts = useMemo(() => {
+    return {
+      all: enquiries.length,
+      venue: enquiries.filter(
+        (e) => e.booking_type === 'venue'
+      ).length,
+      room: enquiries.filter(
+        (e) => e.booking_type === 'room'
+      ).length,
+      venue_room: enquiries.filter(
+        (e) => e.booking_type === 'venue_room'
+      ).length,
+    };
+  }, [enquiries]);
+
+  const filtered = useMemo(() => {
+    if (filter === 'all') return enquiries;
+    return enquiries.filter(
+      (e) => e.booking_type === filter
+    );
+  }, [enquiries, filter]);
+
+  return (
+    <main className="dashboard">
+
+      {/* =================================================
+          SIDEBAR
+      ================================================= */}
+
+      <aside className="side">
+
+        <img src="/logo.png" alt="The Venue Search" />
+
+        <b>Admin Console</b>
+
+        {FILTERS.map((item) => (
+          <button
+            key={item.value}
+            type="button"
+            className={
+              filter === item.value ? 'active' : ''
+            }
+            onClick={() => setFilter(item.value)}
+          >
+            {item.label}
+            {' '}
+            ({counts[item.value]})
+          </button>
+        ))}
+
+      </aside>
+
+      {/* =================================================
+          MAIN
+      ================================================= */}
+
+      <section className="dashMain">
+
+        <div className="dashHead">
+          <div>
+            <span className="kicker">
+              ADMIN CONSOLE
+            </span>
+            <h1>
+              {
+                FILTERS.find(
+                  (f) => f.value === filter
+                )?.label
+              }
+            </h1>
+          </div>
+        </div>
+
+        {error && (
+          <div className="plannerError">{error}</div>
+        )}
+
+        <div className="dashCards">
+          <div>
+            <span>Total enquiries</span>
+            <strong>{counts.all}</strong>
+          </div>
+          <div>
+            <span>Venue only</span>
+            <strong>{counts.venue}</strong>
+          </div>
+          <div>
+            <span>Rooms only</span>
+            <strong>{counts.room}</strong>
+          </div>
+          <div>
+            <span>Venue + Rooms</span>
+            <strong>{counts.venue_room}</strong>
+          </div>
+        </div>
+
+        <div className="tableCard">
+
+          <div className="plannerSectionHeader">
+            <div>
+              <h3>Submitted Enquiries</h3>
+              <p>
+                Every enquiry submitted through the
+                venue page, the enquiry form, and the
+                booking flow.
+              </p>
+            </div>
+            <span>
+              {filtered.length}{' '}
+              {filtered.length === 1
+                ? 'enquiry'
+                : 'enquiries'}
+            </span>
+          </div>
+
+          {loading ? (
+            <div className="plannerEmpty">
+              <h3>Loading enquiries…</h3>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="plannerEmpty">
+              <h3>No enquiries yet</h3>
+              <p>
+                {filter === 'all'
+                  ? 'Submitted enquiries will appear here.'
+                  : 'No enquiries of this type yet.'}
+              </p>
+            </div>
+          ) : (
+            filtered.map((enquiry) => (
+              <div
+                className="adminEnquiryCard"
+                key={enquiry.id}
+              >
+
+                <div className="adminEnquiryHead">
+                  <span
+                    className="adminBadge"
+                    style={{
+                      background: bookingTypeColor(
+                        enquiry.booking_type
+                      ),
+                    }}
+                  >
+                    {bookingTypeLabel(
+                      enquiry.booking_type
+                    )}
+                  </span>
+
+                  <span className="adminEnquiryDate">
+                    {formatDate(enquiry.created_at) ||
+                      '—'}
+                  </span>
+                </div>
+
+                <div className="adminEnquiryBody">
+
+                  <div className="adminEnquiryCol">
+                    <b>{enquiry.full_name || '—'}</b>
+                    <small>{enquiry.email || '—'}</small>
+                    <small>{enquiry.mobile || '—'}</small>
+                    <small>
+                      Venue:{' '}
+                      {enquiry.venues?.name || '—'}
+                    </small>
+                  </div>
+
+                  {(enquiry.booking_type === 'venue' ||
+                    enquiry.booking_type ===
+                      'venue_room') && (
+                    <div className="adminEnquiryCol">
+                      <span className="adminColLabel">
+                        VENUE DETAILS
+                      </span>
+                      <small>
+                        Date:{' '}
+                        {formatDate(
+                          enquiry.event_date
+                        ) || 'Not specified'}
+                      </small>
+                      <small>
+                        Type:{' '}
+                        {enquiry.event_type ||
+                          'Not specified'}
+                      </small>
+                      <small>
+                        Guests:{' '}
+                        {enquiry.guest_count ??
+                          'Not specified'}
+                      </small>
+                      {enquiry.budget && (
+                        <small>
+                          Budget: {enquiry.budget}
+                        </small>
+                      )}
+                    </div>
+                  )}
+
+                  {(enquiry.booking_type === 'room' ||
+                    enquiry.booking_type ===
+                      'venue_room') && (
+                    <div className="adminEnquiryCol">
+                      <span className="adminColLabel">
+                        ROOM DETAILS
+                      </span>
+                      <small>
+                        Check-in:{' '}
+                        {formatDate(
+                          enquiry.checkin_date
+                        ) || 'Not specified'}
+                      </small>
+                      <small>
+                        Check-out:{' '}
+                        {formatDate(
+                          enquiry.checkout_date
+                        ) || 'Not specified'}
+                      </small>
+                      <small>
+                        Rooms:{' '}
+                        {enquiry.num_rooms ??
+                          'Not specified'}
+                        {' · '}
+                        Guests:{' '}
+                        {enquiry.room_guest_count ??
+                          'Not specified'}
+                      </small>
+                      {enquiry.room_type && (
+                        <small>
+                          Room type:{' '}
+                          {enquiry.room_type}
+                        </small>
+                      )}
+                      {enquiry.guest_details && (
+                        <small>
+                          Guest details:{' '}
+                          {enquiry.guest_details}
+                        </small>
+                      )}
+                    </div>
+                  )}
+
+                </div>
+
+                {enquiry.message && (
+                  <p className="adminEnquiryNotes">
+                    "{enquiry.message}"
+                  </p>
+                )}
+
+                <div className="adminEnquiryFoot">
+                  <span>
+                    Status: {enquiry.status || 'new'}
+                  </span>
+                  <a
+                    href={`mailto:${enquiry.email}`}
+                  >
+                    Reply by email →
+                  </a>
+                </div>
+
+              </div>
+            ))
+          )}
+
+        </div>
+
+      </section>
+
+    </main>
+  );
+}

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { parseGuestCount } from '../../../lib/parse-guest-count';
 
 const ADMIN_EMAIL = 'thevenuesearch@gmail.com';
 
@@ -119,6 +120,64 @@ export async function POST(
 
     /*
      * ==========================================
+     * BOOKING TYPE
+     * ==========================================
+     *
+     * Existing callers (the standalone /enquiry page)
+     * never send this field, so it defaults to 'venue'
+     * -- preserving their exact previous behavior.
+     */
+
+    const bookingType: 'venue' | 'room' | 'venue_room' =
+      body.bookingType === 'room' ||
+      body.bookingType === 'venue_room'
+        ? body.bookingType
+        : 'venue';
+
+    const includesVenue =
+      bookingType === 'venue' ||
+      bookingType === 'venue_room';
+
+    const includesRoom =
+      bookingType === 'room' ||
+      bookingType === 'venue_room';
+
+    /*
+     * ==========================================
+     * ROOM DETAILS
+     * ==========================================
+     */
+
+    const checkinDate = clean(
+      body.checkinDate
+    );
+
+    const checkoutDate = clean(
+      body.checkoutDate
+    );
+
+    const numRoomsRaw = clean(
+      body.numRooms
+    );
+
+    const roomGuestCountRaw = clean(
+      body.roomGuestCount
+    );
+
+    const roomType = clean(
+      body.roomType
+    );
+
+    const guestDetails = clean(
+      body.guestDetails
+    );
+
+    const roomNotes = clean(
+      body.roomNotes
+    );
+
+    /*
+     * ==========================================
      * REQUIRED FIELD VALIDATION
      * ==========================================
      */
@@ -126,12 +185,7 @@ export async function POST(
     if (
       !fullName ||
       !email ||
-      !mobile ||
-      !eventDate ||
-      !eventType ||
-      !guestCount ||
-      !budget ||
-      !venueName
+      !mobile
     ) {
       return NextResponse.json(
         {
@@ -142,6 +196,57 @@ export async function POST(
           status: 400,
         }
       );
+    }
+
+    if (includesVenue) {
+      if (
+        !eventDate ||
+        !eventType ||
+        !guestCount ||
+        !venueName
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              'Please complete all required fields.',
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+    }
+
+    if (includesRoom) {
+      if (
+        !checkinDate ||
+        !checkoutDate ||
+        !numRoomsRaw ||
+        !roomGuestCountRaw ||
+        !venueName
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              'Please complete all required room booking fields.',
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      if (checkoutDate <= checkinDate) {
+        return NextResponse.json(
+          {
+            error:
+              'Check-out date must be after the check-in date.',
+          },
+          {
+            status: 400,
+          }
+        );
+      }
     }
 
     /*
@@ -360,6 +465,9 @@ export async function POST(
           venue_id:
             resolvedVenueId,
 
+          user_id:
+            clean(body.userId) || null,
+
           full_name:
             fullName,
 
@@ -369,20 +477,59 @@ export async function POST(
           mobile:
             mobile,
 
+          booking_type:
+            bookingType,
+
           event_date:
-            eventDate,
+            includesVenue
+              ? eventDate
+              : null,
 
           guest_count:
-            parsedGuestCount,
+            includesVenue
+              ? parsedGuestCount
+              : null,
 
           event_type:
-            eventType,
+            includesVenue
+              ? eventType
+              : null,
 
           budget:
-            budget,
+            budget || null,
 
           message:
-            notes || null,
+            notes || roomNotes || null,
+
+          checkin_date:
+            includesRoom
+              ? checkinDate
+              : null,
+
+          checkout_date:
+            includesRoom
+              ? checkoutDate
+              : null,
+
+          num_rooms:
+            includesRoom
+              ? parseGuestCount(numRoomsRaw)
+              : null,
+
+          room_guest_count:
+            includesRoom
+              ? parseGuestCount(roomGuestCountRaw)
+              : null,
+
+          room_type:
+            includesRoom
+              ? roomType || null
+              : null,
+
+          guest_details:
+            includesRoom
+              ? guestDetails || null
+              : null,
 
           status:
             'new',
@@ -457,25 +604,30 @@ export async function POST(
      * ==========================================
      */
 
+    const bookingTypeLabel =
+      bookingType === 'room'
+        ? 'Rooms Only'
+        : bookingType === 'venue_room'
+          ? 'Venue + Rooms'
+          : 'Venue';
+
+    const displayCheckin = checkinDate
+      ? formatDate(checkinDate)
+      : '—';
+
+    const displayCheckout = checkoutDate
+      ? formatDate(checkoutDate)
+      : '—';
+
     const emailRows = [
+      [
+        'Booking Type',
+        bookingTypeLabel,
+      ],
+
       [
         'Venue',
         venueName,
-      ],
-
-      [
-        'Venue ID',
-        venueId || '—',
-      ],
-
-      [
-        'Venue Space',
-        venueSpace || '—',
-      ],
-
-      [
-        'Venue Space ID',
-        venueSpaceId || '—',
       ],
 
       [
@@ -493,29 +645,63 @@ export async function POST(
         mobile,
       ],
 
-      [
-        'Event Date',
-        displayEventDate,
-      ],
+      ...(includesVenue
+        ? [
+            [
+              'Venue Space',
+              venueSpace || '—',
+            ],
+            [
+              'Event Date',
+              displayEventDate,
+            ],
+            [
+              'Event Type',
+              eventType,
+            ],
+            [
+              'Guest Count',
+              guestCount,
+            ],
+            [
+              'Budget',
+              budget || '—',
+            ],
+          ]
+        : []),
 
-      [
-        'Event Type',
-        eventType,
-      ],
-
-      [
-        'Guest Count',
-        guestCount,
-      ],
-
-      [
-        'Budget',
-        budget,
-      ],
+      ...(includesRoom
+        ? [
+            [
+              'Check-in Date',
+              displayCheckin,
+            ],
+            [
+              'Check-out Date',
+              displayCheckout,
+            ],
+            [
+              'Number of Rooms',
+              numRoomsRaw || '—',
+            ],
+            [
+              'Room Guests',
+              roomGuestCountRaw || '—',
+            ],
+            [
+              'Room Type Preference',
+              roomType || 'No preference',
+            ],
+            [
+              'Guest Details',
+              guestDetails || '—',
+            ],
+          ]
+        : []),
 
       [
         'Additional Requirements',
-        notes || '—',
+        notes || roomNotes || '—',
       ],
 
       [
@@ -603,7 +789,7 @@ export async function POST(
           font-weight:500;
         "
       >
-        New Venue Enquiry
+        New ${bookingTypeLabel} Enquiry
       </h1>
 
       <p
@@ -778,7 +964,11 @@ export async function POST(
             reply_to: email,
 
             subject:
-              `New Venue Search enquiry — ${venueName} — ${displayEventDate}`,
+              `New ${bookingTypeLabel} enquiry — ${venueName}${
+                includesVenue
+                  ? ` — ${displayEventDate}`
+                  : ''
+              }`,
 
             html,
           }),

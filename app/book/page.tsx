@@ -77,6 +77,34 @@ type EventDetails = {
 };
 
 /* ============================================================
+   ROOM BOOKING DETAILS
+============================================================ */
+
+type RoomBookingDetails = {
+  checkInDate: string;
+  checkOutDate: string;
+  numRooms: string;
+  roomGuestCount: string;
+  roomType: string;
+  guestDetails: string;
+  notes: string;
+};
+
+function createEmptyRoomDetails(): RoomBookingDetails {
+  return {
+    checkInDate: '',
+    checkOutDate: '',
+    numRooms: '',
+    roomGuestCount: '',
+    roomType: '',
+    guestDetails: '',
+    notes: '',
+  };
+}
+
+type BookingType = 'venue' | 'room' | 'venue_room';
+
+/* ============================================================
    BOOKING FORM
 ============================================================ */
 
@@ -187,6 +215,46 @@ function BookPageContent() {
 
   const [paymentSuccess, setPaymentSuccess] =
     useState(false);
+
+  /* ==========================================================
+     BOOKING TYPE (Venue / Room / Venue + Room)
+  ========================================================== */
+
+  const [bookingType, setBookingType] =
+    useState<BookingType>('venue');
+
+  const [roomDetails, setRoomDetails] =
+    useState<RoomBookingDetails>(
+      createEmptyRoomDetails()
+    );
+
+  const [enquirySubmitting, setEnquirySubmitting] =
+    useState(false);
+
+  const [enquirySuccess, setEnquirySuccess] =
+    useState(false);
+
+  /*
+   * Only the classic "Venue only" + instant-book flow uses
+   * Razorpay/step-2 payment. Every other combination (Room
+   * only, Venue + Room, or a venue booking made via mode=hold
+   * or mode=enquiry) is a single-step enquiry submission --
+   * there's no room pricing/payment infrastructure to charge
+   * against yet.
+   */
+  const isInstantBookFlow =
+    bookingType === 'venue' &&
+    (mode === 'instant_book' || !mode);
+
+  function updateRoomField(
+    field: keyof RoomBookingDetails,
+    value: string
+  ) {
+    setRoomDetails((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
 
   /* ==========================================================
      LOAD AUTHENTICATED USER
@@ -536,6 +604,230 @@ function BookPageContent() {
       top: 0,
       behavior: 'smooth',
     });
+  }
+
+  /* ==========================================================
+     SUBMIT AS AN ENQUIRY
+     (Room only, Venue + Room, or a venue enquiry/hold request
+     -- anything that isn't the instant-book payment flow)
+  ========================================================== */
+
+  async function submitEnquiry(
+    event: FormEvent
+  ) {
+    event.preventDefault();
+
+    setError('');
+
+    if (!venue) {
+      setError(
+        'The selected venue could not be found.'
+      );
+      return;
+    }
+
+    if (!form.fullName.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
+
+    if (!form.email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
+
+    if (!form.mobile.trim()) {
+      setError('Please enter your mobile number.');
+      return;
+    }
+
+    /* ------------------------------------------------------
+       VENUE FIELDS (required when booking type includes venue)
+    ------------------------------------------------------ */
+
+    const includesVenue =
+      bookingType === 'venue' ||
+      bookingType === 'venue_room';
+
+    const includesRoom =
+      bookingType === 'room' ||
+      bookingType === 'venue_room';
+
+    const primaryEvent = form.events[0];
+
+    if (includesVenue) {
+      if (
+        !primaryEvent?.eventDate
+      ) {
+        setError(
+          'Please select an event date.'
+        );
+        return;
+      }
+
+      if (!primaryEvent?.eventType) {
+        setError(
+          'Please select an event type.'
+        );
+        return;
+      }
+
+      if (!primaryEvent?.guestCount) {
+        setError(
+          'Please select the guest count.'
+        );
+        return;
+      }
+    }
+
+    /* ------------------------------------------------------
+       ROOM FIELDS (required when booking type includes rooms)
+    ------------------------------------------------------ */
+
+    if (includesRoom) {
+      if (!roomDetails.checkInDate) {
+        setError(
+          'Please select a check-in date.'
+        );
+        return;
+      }
+
+      if (!roomDetails.checkOutDate) {
+        setError(
+          'Please select a check-out date.'
+        );
+        return;
+      }
+
+      if (
+        roomDetails.checkOutDate <=
+        roomDetails.checkInDate
+      ) {
+        setError(
+          'Check-out date must be after the check-in date.'
+        );
+        return;
+      }
+
+      if (!roomDetails.numRooms) {
+        setError(
+          'Please select the number of rooms.'
+        );
+        return;
+      }
+
+      if (!roomDetails.roomGuestCount) {
+        setError(
+          'Please select the number of guests.'
+        );
+        return;
+      }
+    }
+
+    setEnquirySubmitting(true);
+
+    try {
+      const response = await fetch(
+        '/api/enquiry',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+          body: JSON.stringify({
+            venueId: venue.dbId,
+            venueName: venue.name,
+            userId,
+            fullName: form.fullName,
+            email: form.email,
+            mobile: form.mobile,
+            bookingType,
+
+            /* Venue fields */
+            eventDate:
+              includesVenue
+                ? primaryEvent?.eventDate
+                : undefined,
+            eventType:
+              includesVenue
+                ? primaryEvent?.eventType
+                : undefined,
+            guestCount:
+              includesVenue
+                ? primaryEvent?.guestCount
+                : undefined,
+            notes:
+              includesVenue
+                ? primaryEvent?.notes
+                : undefined,
+
+            /* Room fields */
+            checkinDate:
+              includesRoom
+                ? roomDetails.checkInDate
+                : undefined,
+            checkoutDate:
+              includesRoom
+                ? roomDetails.checkOutDate
+                : undefined,
+            numRooms:
+              includesRoom
+                ? roomDetails.numRooms
+                : undefined,
+            roomGuestCount:
+              includesRoom
+                ? roomDetails.roomGuestCount
+                : undefined,
+            roomType:
+              includesRoom
+                ? roomDetails.roomType
+                : undefined,
+            guestDetails:
+              includesRoom
+                ? roomDetails.guestDetails
+                : undefined,
+            roomNotes:
+              includesRoom
+                ? roomDetails.notes
+                : undefined,
+          }),
+        }
+      );
+
+      const result =
+        await response.json();
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
+        throw new Error(
+          result.error ||
+            'Unable to submit your enquiry. Please try again.'
+        );
+      }
+
+      setEnquirySuccess(true);
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+    } catch (err) {
+      console.error(
+        'Enquiry submission error:',
+        err
+      );
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong. Please try again.'
+      );
+    } finally {
+      setEnquirySubmitting(false);
+    }
   }
 
   /* ==========================================================
@@ -1210,9 +1502,74 @@ function BookPageContent() {
 
               <form
                 onSubmit={
-                  handleContinue
+                  isInstantBookFlow
+                    ? handleContinue
+                    : submitEnquiry
                 }
               >
+
+                {/* =================================================
+                    BOOKING TYPE
+                ================================================= */}
+
+                <div className="formSection">
+
+                  <span className="kicker">
+                    WHAT ARE YOU BOOKING?
+                  </span>
+
+                  <h2>
+                    Choose what you need
+                  </h2>
+
+                  <div className="bookingTypeRow">
+
+                    {(
+                      [
+                        {
+                          value: 'venue' as const,
+                          label: 'Venue Only',
+                          desc: 'Book the venue for your event.',
+                        },
+                        {
+                          value: 'room' as const,
+                          label: 'Rooms Only',
+                          desc: 'Reserve guest rooms for your stay.',
+                        },
+                        {
+                          value: 'venue_room' as const,
+                          label: 'Venue + Rooms',
+                          desc: 'Book the venue and accommodation together.',
+                        },
+                      ]
+                    ).map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={
+                          bookingType ===
+                          option.value
+                            ? 'bookingTypeCard active'
+                            : 'bookingTypeCard'
+                        }
+                        onClick={() =>
+                          setBookingType(
+                            option.value
+                          )
+                        }
+                      >
+                        <strong>
+                          {option.label}
+                        </strong>
+                        <span>
+                          {option.desc}
+                        </span>
+                      </button>
+                    ))}
+
+                  </div>
+
+                </div>
 
                 {/* =================================================
                     CUSTOMER DETAILS
@@ -1310,8 +1667,11 @@ function BookPageContent() {
                 </div>
 
                 {/* =================================================
-                    EVENT DETAILS
+                    EVENT DETAILS (venue booking)
                 ================================================= */}
+
+                {(bookingType === 'venue' ||
+                  bookingType === 'venue_room') && (
 
                 <div className="formSection">
 
@@ -1741,6 +2101,219 @@ function BookPageContent() {
 
                 </div>
 
+                )}
+
+                {/* =================================================
+                    ROOM DETAILS (room booking)
+                ================================================= */}
+
+                {(bookingType === 'room' ||
+                  bookingType === 'venue_room') && (
+
+                  <div className="formSection">
+
+                    <span className="kicker">
+                      ROOM DETAILS
+                    </span>
+
+                    <h2>
+                      Plan your stay
+                    </h2>
+
+                    <div className="formGrid">
+
+                      {/* CHECK-IN DATE */}
+
+                      <label>
+                        <span>
+                          Check-in date *
+                        </span>
+                        <input
+                          type="date"
+                          value={
+                            roomDetails.checkInDate
+                          }
+                          onChange={(e) =>
+                            updateRoomField(
+                              'checkInDate',
+                              e.target.value
+                            )
+                          }
+                        />
+                      </label>
+
+                      {/* CHECK-OUT DATE */}
+
+                      <label>
+                        <span>
+                          Check-out date *
+                        </span>
+                        <input
+                          type="date"
+                          value={
+                            roomDetails.checkOutDate
+                          }
+                          onChange={(e) =>
+                            updateRoomField(
+                              'checkOutDate',
+                              e.target.value
+                            )
+                          }
+                        />
+                      </label>
+
+                      {/* NUMBER OF ROOMS */}
+
+                      <label>
+                        <span>
+                          Number of rooms *
+                        </span>
+                        <select
+                          value={
+                            roomDetails.numRooms
+                          }
+                          onChange={(e) =>
+                            updateRoomField(
+                              'numRooms',
+                              e.target.value
+                            )
+                          }
+                        >
+                          <option value="">
+                            Select
+                          </option>
+                          {[
+                            '1', '2', '3', '4',
+                            '5', '6+',
+                          ].map((n) => (
+                            <option
+                              key={n}
+                              value={n}
+                            >
+                              {n}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      {/* NUMBER OF GUESTS */}
+
+                      <label>
+                        <span>
+                          Number of guests *
+                        </span>
+                        <select
+                          value={
+                            roomDetails.roomGuestCount
+                          }
+                          onChange={(e) =>
+                            updateRoomField(
+                              'roomGuestCount',
+                              e.target.value
+                            )
+                          }
+                        >
+                          <option value="">
+                            Select
+                          </option>
+                          {[
+                            '1', '2', '3', '4',
+                            '5-10', '10+',
+                          ].map((n) => (
+                            <option
+                              key={n}
+                              value={n}
+                            >
+                              {n}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      {/* ROOM TYPE */}
+
+                      <label>
+                        <span>
+                          Room type preference
+                        </span>
+                        <select
+                          value={
+                            roomDetails.roomType
+                          }
+                          onChange={(e) =>
+                            updateRoomField(
+                              'roomType',
+                              e.target.value
+                            )
+                          }
+                        >
+                          <option value="">
+                            No preference
+                          </option>
+                          {(venue?.rooms || []).map(
+                            (room) => (
+                              <option
+                                key={room.id}
+                                value={room.name}
+                              >
+                                {room.name}
+                              </option>
+                            )
+                          )}
+                          <option value="Not sure / need recommendation">
+                            Not sure / need a recommendation
+                          </option>
+                        </select>
+                      </label>
+
+                    </div>
+
+                    {/* GUEST DETAILS */}
+
+                    <label className="fullWidthField">
+                      <span>
+                        Guest details (optional)
+                      </span>
+                      <textarea
+                        value={
+                          roomDetails.guestDetails
+                        }
+                        onChange={(e) =>
+                          updateRoomField(
+                            'guestDetails',
+                            e.target.value
+                          )
+                        }
+                        placeholder="Names, ages, or any specific guest arrangements..."
+                        rows={3}
+                      />
+                    </label>
+
+                    {/* ADDITIONAL REQUIREMENTS */}
+
+                    <label className="fullWidthField">
+                      <span>
+                        Additional requirements (optional)
+                      </span>
+                      <textarea
+                        value={
+                          roomDetails.notes
+                        }
+                        onChange={(e) =>
+                          updateRoomField(
+                            'notes',
+                            e.target.value
+                          )
+                        }
+                        placeholder="Early check-in, connecting rooms, accessibility needs..."
+                        rows={3}
+                      />
+                    </label>
+
+                  </div>
+
+                )}
+
                 {/* =================================================
                     ERROR
                 ================================================= */}
@@ -1761,10 +2334,15 @@ function BookPageContent() {
                     type="submit"
                     className="primaryBtn large"
                     disabled={
-                      submitting
+                      submitting ||
+                      enquirySubmitting
                     }
                   >
-                    Review booking →
+                    {isInstantBookFlow
+                      ? 'Review booking →'
+                      : enquirySubmitting
+                        ? 'Submitting…'
+                        : 'Submit enquiry →'}
                   </button>
 
                 </div>
@@ -2384,6 +2962,103 @@ function BookPageContent() {
                 }}
               >
                 View my bookings
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================
+            ENQUIRY SUCCESS MODAL
+        ==================================================== */}
+
+        {enquirySuccess && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="enquiry-success-title"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 999999,
+              display: 'grid',
+              placeItems: 'center',
+              padding: '24px',
+              background: 'rgba(10, 10, 10, 0.48)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <div
+              style={{
+                width: 'min(520px, 100%)',
+                background: '#ffffff',
+                border: '1px solid rgba(0,0,0,0.08)',
+                borderRadius: '18px',
+                padding: '38px 34px 32px',
+                textAlign: 'center',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.20)',
+              }}
+            >
+              <div
+                style={{
+                  width: '58px',
+                  height: '58px',
+                  margin: '0 auto 20px',
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  background: '#e8f8f3',
+                  color: '#17775b',
+                  fontSize: '28px',
+                  fontWeight: 700,
+                }}
+              >
+                ✓
+              </div>
+
+              <span
+                className="kicker"
+                style={{ display: 'block' }}
+              >
+                ENQUIRY RECEIVED
+              </span>
+
+              <h2
+                id="enquiry-success-title"
+                style={{
+                  margin: '10px 0 12px',
+                  fontSize: '26px',
+                }}
+              >
+                Thank you, {form.fullName.split(' ')[0] || 'there'}.
+              </h2>
+
+              <p
+                style={{
+                  margin: 0,
+                  color: '#666666',
+                  lineHeight: 1.7,
+                  fontSize: '15px',
+                }}
+              >
+                {bookingType === 'room'
+                  ? 'We have your room request and will confirm availability with you shortly.'
+                  : bookingType === 'venue_room'
+                    ? 'We have your venue and room details and will get back to you with availability shortly.'
+                    : 'We have your enquiry and will get back to you shortly with next steps.'}
+              </p>
+
+              <button
+                type="button"
+                className="primaryBtn large"
+                onClick={() =>
+                  router.push('/profile')
+                }
+                style={{
+                  marginTop: '26px',
+                  minWidth: '120px',
+                }}
+              >
+                Done
               </button>
             </div>
           </div>
