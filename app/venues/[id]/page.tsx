@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 import { fetchVenueBySlug } from '../../../lib/venues';
-import type { Venue } from '../../../lib/data';
+import type { Venue, RoomCategory } from '../../../lib/data';
+import { RoomCard } from '../../../components/RoomCard';
+import { RoomDetailsModal } from '../../../components/RoomDetailsModal';
 
 export default function VenuePage() {
   const params = useParams();
@@ -51,6 +53,8 @@ export default function VenuePage() {
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSpace, setSelectedSpace] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [activeRoom, setActiveRoom] =
+    useState<RoomCategory | null>(null);
 
   if (loading) {
     return (
@@ -523,6 +527,51 @@ export default function VenuePage() {
             )}
 
           </section>
+
+          {/* =================================================
+              ROOMS & ACCOMMODATION
+              ================================================= */}
+
+          {venue.rooms.length > 0 && (
+            <section className="rooms-section">
+
+              <div className="section-heading">
+
+                <div>
+
+                  <span className="section-kicker">
+                    ROOMS & ACCOMMODATION
+                  </span>
+
+                  <h3>
+                    Rooms & Suites
+                  </h3>
+
+                </div>
+
+                <span className="space-count">
+                  {venue.rooms.length}{' '}
+                  {venue.rooms.length === 1
+                    ? 'category'
+                    : 'categories'}
+                </span>
+
+              </div>
+
+              <div className="room-grid">
+                {venue.rooms.map((room) => (
+                  <RoomCard
+                    key={room.id}
+                    room={room}
+                    onViewDetails={() =>
+                      setActiveRoom(room)
+                    }
+                  />
+                ))}
+              </div>
+
+            </section>
+          )}
 
         </div>
 
@@ -1174,6 +1223,33 @@ export default function VenuePage() {
           color: #555;
 
           font-size: 11px;
+        }
+
+
+        /* ===================================================
+           ROOMS & ACCOMMODATION
+           =================================================== */
+
+        .rooms-section {
+          margin-top: 100px;
+        }
+
+        .room-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 24px;
+        }
+
+        @media (max-width: 1000px) {
+          .room-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 700px) {
+          .room-grid {
+            grid-template-columns: 1fr;
+          }
         }
 
 
@@ -1845,6 +1921,13 @@ export default function VenuePage() {
         }
 
       `}</style>
+
+      {activeRoom && (
+        <RoomDetailsModal
+          room={activeRoom}
+          onClose={() => setActiveRoom(null)}
+        />
+      )}
 
     </main>
   );

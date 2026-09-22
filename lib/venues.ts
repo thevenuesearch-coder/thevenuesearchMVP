@@ -1,6 +1,6 @@
-import type { Venue, VenueSpace } from './data';
+import type { Venue, VenueSpace, RoomCategory } from './data';
 
-export type { Venue, VenueSpace };
+export type { Venue, VenueSpace, RoomCategory };
 
 /*
  * ============================================================
@@ -21,6 +21,31 @@ type DbVenueSpace = {
   tags: string[] | null;
 };
 
+type DbVenueRoom = {
+  id: string;
+  slug: string;
+  name: string;
+  image_url: string | null;
+  gallery_urls: string[] | null;
+  bed_type: string | null;
+  max_occupancy: number | null;
+  occupancy_note: string | null;
+  size_sqm: number | null;
+  size_sqft: number | null;
+  view_type: string | null;
+  description: string | null;
+  features: string[] | null;
+  bathroom_details: string | null;
+  amenities: string[] | null;
+  technology: string[] | null;
+  dining_details: string | null;
+  services: string[] | null;
+  special_inclusions: string[] | null;
+  has_balcony: boolean | null;
+  floor_location: string | null;
+  source_url: string | null;
+};
+
 type DbVenue = {
   id: string;
   slug: string;
@@ -38,6 +63,7 @@ type DbVenue = {
   tags: string[] | null;
   description: string | null;
   venue_spaces: DbVenueSpace[] | null;
+  venue_rooms: DbVenueRoom[] | null;
 };
 
 /*
@@ -67,6 +93,32 @@ function normalizeSpace(space: DbVenueSpace): VenueSpace {
   };
 }
 
+function normalizeRoom(room: DbVenueRoom): RoomCategory {
+  return {
+    id: room.slug || room.id,
+    name: room.name,
+    image: room.image_url || '',
+    gallery: room.gallery_urls || [],
+    bedType: room.bed_type,
+    maxOccupancy: room.max_occupancy,
+    occupancyNote: room.occupancy_note,
+    sizeSqm: room.size_sqm,
+    sizeSqft: room.size_sqft,
+    view: room.view_type,
+    description: room.description,
+    features: room.features || [],
+    bathroomDetails: room.bathroom_details,
+    amenities: room.amenities || [],
+    technology: room.technology || [],
+    diningDetails: room.dining_details,
+    services: room.services || [],
+    specialInclusions: room.special_inclusions || [],
+    hasBalcony: room.has_balcony ?? false,
+    floorLocation: room.floor_location,
+    sourceUrl: room.source_url,
+  };
+}
+
 function normalizeVenue(row: DbVenue): Venue {
   return {
     id: row.slug,
@@ -85,6 +137,7 @@ function normalizeVenue(row: DbVenue): Venue {
     tags: row.tags || [],
     desc: row.description || '',
     venueSpaces: (row.venue_spaces || []).map(normalizeSpace),
+    rooms: (row.venue_rooms || []).map(normalizeRoom),
   };
 }
 

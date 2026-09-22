@@ -20,6 +20,30 @@ export type VenueSpace = {
   tags: string[];
 };
 
+export type RoomCategory = {
+  id: string;
+  name: string;
+  image: string;
+  gallery: string[];
+  bedType: string | null;
+  maxOccupancy: number | null;
+  occupancyNote: string | null;
+  sizeSqm: number | null;
+  sizeSqft: number | null;
+  view: string | null;
+  description: string | null;
+  features: string[];
+  bathroomDetails: string | null;
+  amenities: string[];
+  technology: string[];
+  diningDetails: string | null;
+  services: string[];
+  specialInclusions: string[];
+  hasBalcony: boolean;
+  floorLocation: string | null;
+  sourceUrl: string | null;
+};
+
 export type Venue = {
   id: string;
   dbId: string;
@@ -37,4 +61,5 @@ export type Venue = {
   tags: string[];
   desc: string;
   venueSpaces: VenueSpace[];
+  rooms: RoomCategory[];
 };
