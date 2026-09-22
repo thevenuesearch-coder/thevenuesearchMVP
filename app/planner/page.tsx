@@ -40,6 +40,29 @@ type BookingVenue = {
   city: string | null;
 };
 
+function getVenueSpaceName(request: BookingRequest) {
+  if (!request.notes) return null;
+
+  const prefix = 'TVS_BOOKING_META:';
+
+  if (!request.notes.startsWith(prefix)) return null;
+
+  try {
+    const metadata = JSON.parse(
+      request.notes.slice(prefix.length)
+    );
+
+    return (
+      typeof metadata?.venueSpaceName === 'string' &&
+      metadata.venueSpaceName.trim()
+        ? metadata.venueSpaceName.trim()
+        : null
+    );
+  } catch {
+    return null;
+  }
+}
+
 type BookingRequest = {
   id: string;
   user_id: string | null;
@@ -1034,7 +1057,10 @@ export default function Planner() {
                               fontSize: '24px',
                             }}
                           >
-                            {request.venue?.name || 'Venue'}
+                            {!isRoomBooking
+                              ? getVenueSpaceName(request) ||
+                                'Venue space'
+                              : request.venue?.name || 'Venue'}
                           </h3>
 
                           <p
@@ -1043,6 +1069,8 @@ export default function Planner() {
                               color: '#6b6b6b',
                             }}
                           >
+                            {request.venue?.name || 'Venue'}
+                            {' · '}
                             {request.venue?.city || 'India'}
                           </p>
                         </div>
@@ -1074,6 +1102,13 @@ export default function Planner() {
                       >
                         {!isRoomBooking ? (
                           <>
+                            <div style={{ background: '#fff', padding: '15px' }}>
+                              <small>Venue space</small>
+                              <strong style={{ display: 'block', marginTop: '5px' }}>
+                                {getVenueSpaceName(request) || '—'}
+                              </strong>
+                            </div>
+
                             <div style={{ background: '#fff', padding: '15px' }}>
                               <small>Event date</small>
                               <strong style={{ display: 'block', marginTop: '5px' }}>
