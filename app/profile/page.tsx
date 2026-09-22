@@ -906,6 +906,7 @@ export default function ProfilePage() {
           className="profileShortlistSection"
           style={{
             marginTop: '36px',
+            scrollMarginTop: '120px',
           }}
         >
 
@@ -1055,6 +1056,39 @@ export default function ProfilePage() {
 
                     </div>
 
+
+                    <div
+                      style={{
+                        marginTop: '18px',
+                        display: 'grid',
+                        gridTemplateColumns:
+                          'repeat(auto-fit, minmax(180px, 1fr))',
+                        gap: '1px',
+                        background: '#ece9e4',
+                        border: '1px solid #ece9e4',
+                      }}
+                    >
+                      <div style={{ background: '#fff', padding: '16px' }}>
+                        <small style={{ display: 'block', color: '#8a857d', marginBottom: '5px' }}>
+                          Venue
+                        </small>
+                        <strong>{booking.venue?.name || '—'}</strong>
+                      </div>
+
+                      <div style={{ background: '#fff', padding: '16px' }}>
+                        <small style={{ display: 'block', color: '#8a857d', marginBottom: '5px' }}>
+                          Customer
+                        </small>
+                        <strong>{profile?.full_name || user?.user_metadata?.full_name || '—'}</strong>
+                      </div>
+
+                      <div style={{ background: '#fff', padding: '16px' }}>
+                        <small style={{ display: 'block', color: '#8a857d', marginBottom: '5px' }}>
+                          Mobile
+                        </small>
+                        <strong>{profile?.mobile || '—'}</strong>
+                      </div>
+                    </div>
 
                     <div
                       style={{
