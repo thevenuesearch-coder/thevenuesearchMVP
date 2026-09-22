@@ -994,18 +994,13 @@ export default function Planner() {
                     Boolean(request.checkout_date) ||
                     Boolean(request.num_rooms);
 
-                  const normalizedStatus =
+                  const displayStatus =
                     String(request.status || '')
                       .replace(/_/g, ' ')
                       .trim()
-                      .toLowerCase();
-
-                  const displayStatus =
-                    normalizedStatus === 'confirmed'
+                      .toLowerCase() === 'confirmed'
                       ? 'Confirmed'
-                      : normalizedStatus === 'under review'
-                        ? 'Under Review'
-                        : request.status || 'Under Review';
+                      : request.status || 'Confirmed';
 
                   return (
                     <article
@@ -1245,16 +1240,10 @@ export default function Planner() {
                         <button
                           type="button"
                           className="primaryBtn"
-                          disabled={
-                            confirmingBookingId === request.id
-                          }
-                          onClick={() =>
-                            confirmBooking(request.id)
-                          }
+                          disabled
+                          title="This booking is already confirmed after verified payment."
                         >
-                          {confirmingBookingId === request.id
-                            ? 'Confirming...'
-                            : 'Confirm'}
+                          Confirmed
                         </button>
                       </div>
                     </article>
