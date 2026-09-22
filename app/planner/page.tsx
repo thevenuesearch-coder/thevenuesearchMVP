@@ -241,45 +241,50 @@ export default function Planner() {
            the currently signed-in admin user.
         --------------------------------------------- */
 
+        /*
+         * Admin bookings are loaded through a server-side endpoint.
+         * The browser's Supabase RLS policies intentionally protect
+         * customer booking rows, so the admin page must not try to
+         * bypass RLS from the browser.
+         */
         const {
-          data: requestData,
-          error: requestError,
-        } =
-          await supabase
-            .from('booking_requests')
-            .select(
-              `
-              id,
-              user_id,
-              venue_id,
-              created_at,
-              event_date,
-              event_type,
-              guest_count,
-              notes,
-              status,
-              payment_order_id,
-              payment_id,
-              booking_type,
-              checkin_date,
-              checkout_date,
-              num_rooms,
-              room_guest_count,
-              room_type,
-              venue:venues(
-                id,
-                name,
-                slug,
-                city
-              )
-              `
-            )
-            .order(
-              'created_at',
-              {
-                ascending: false,
-              }
+          data: { session: currentSession },
+        } = await supabase.auth.getSession();
+
+        let requestData: any[] = [];
+        let requestError: any = null;
+
+        if (currentSession?.access_token) {
+          const bookingResponse = await fetch(
+            '/api/admin/booking-requests',
+            {
+              method: 'GET',
+              headers: {
+                Authorization: `Bearer ${currentSession.access_token}`,
+              },
+              cache: 'no-store',
+            }
+          );
+
+          const bookingResult = await bookingResponse.json();
+
+          if (!bookingResponse.ok) {
+            requestError = new Error(
+              bookingResult?.error ||
+                'Unable to load booking requests.'
             );
+          } else {
+            requestData = Array.isArray(
+              bookingResult?.bookings
+            )
+              ? bookingResult.bookings
+              : [];
+          }
+        } else {
+          requestError = new Error(
+            'Admin session is unavailable.'
+          );
+        }
 
         if (requestError) {
           console.warn(
