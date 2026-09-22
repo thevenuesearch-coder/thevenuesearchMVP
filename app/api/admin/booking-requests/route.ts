@@ -89,11 +89,6 @@ export async function GET(request: Request) {
           room_guest_count,
           room_type,
           guest_details,
-          full_name,
-          email,
-          mobile,
-          venue_space_id,
-          venue_space_name,
           venue:venues(
             id,
             name,
@@ -113,9 +108,58 @@ export async function GET(request: Request) {
       );
     }
 
+    const bookings = data || [];
+
+    /*
+     * Customer contact details live in profiles, not in the
+     * booking row. Load them server-side so the admin can review
+     * the same customer information without exposing other users'
+     * profiles through the browser.
+     */
+    const userIds = Array.from(
+      new Set(
+        bookings
+          .map((booking: any) => booking.user_id)
+          .filter(Boolean)
+      )
+    ) as string[];
+
+    let profiles: any[] = [];
+
+    if (userIds.length > 0) {
+      const { data: profileData, error: profileError } = await admin
+        .from('profiles')
+        .select('id, full_name, email, mobile')
+        .in('id', userIds);
+
+      if (profileError) {
+        console.error('Admin booking profile query failed:', profileError);
+      } else {
+        profiles = profileData || [];
+      }
+    }
+
+    const profileMap = new Map(
+      profiles.map((profile: any) => [
+        profile.id,
+        {
+          full_name: profile.full_name || null,
+          email: profile.email || null,
+          mobile: profile.mobile || null,
+        },
+      ])
+    );
+
+    const enrichedBookings = bookings.map((booking: any) => ({
+      ...booking,
+      customer: booking.user_id
+        ? profileMap.get(booking.user_id) || null
+        : null,
+    }));
+
     return NextResponse.json({
       success: true,
-      bookings: data || [],
+      bookings: enrichedBookings,
     });
   } catch (error) {
     console.error('Admin booking request API error:', error);
