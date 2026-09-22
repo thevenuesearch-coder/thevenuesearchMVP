@@ -84,8 +84,10 @@ async function sendAdminBookingEmail(details: {
     checkinDate: string | null;
     checkoutDate: string | null;
     numRooms: number | null;
-    roomType: string | null;
-    roomGuestCount: number | null;
+    roomCountLabel: string | null;
+    roomSelections:
+      | { roomId: string; roomName: string; quantity: number }[]
+      | null;
   }>;
 }) {
   const resendApiKey = process.env.RESEND_API_KEY;
@@ -119,6 +121,13 @@ async function sendAdminBookingEmail(details: {
         Boolean(booking.numRooms);
 
       if (isRoom) {
+        const categoryLine =
+          booking.roomSelections && booking.roomSelections.length > 0
+            ? booking.roomSelections
+                .map((s) => `${s.roomName} × ${s.quantity}`)
+                .join(', ')
+            : `${booking.roomCountLabel || booking.numRooms || '—'} rooms`;
+
         return `
           <tr>
             <td style="padding:10px;border:1px solid #ddd;">Room booking ${index + 1}</td>
@@ -126,7 +135,7 @@ async function sendAdminBookingEmail(details: {
               ${formatDate(booking.checkinDate)} to ${formatDate(booking.checkoutDate)}
             </td>
             <td style="padding:10px;border:1px solid #ddd;">
-              ${booking.roomType || 'Room'} · ${booking.numRooms || '—'} rooms · ${booking.roomGuestCount || '—'} guests
+              ${categoryLine}
             </td>
           </tr>
         `;
@@ -388,7 +397,7 @@ export async function POST(request: Request) {
         await admin
           .from('booking_requests')
           .select(
-            'id, venue_id, event_date, event_type, guest_count, booking_type, checkin_date, checkout_date, num_rooms, room_type, room_guest_count'
+            'id, venue_id, event_date, event_type, guest_count, booking_type, checkin_date, checkout_date, num_rooms, room_count_label, room_selections'
           )
           .in('id', bookingIdsForEmail);
 
@@ -422,8 +431,8 @@ export async function POST(request: Request) {
             checkinDate: booking.checkin_date || null,
             checkoutDate: booking.checkout_date || null,
             numRooms: booking.num_rooms || null,
-            roomType: booking.room_type || null,
-            roomGuestCount: booking.room_guest_count || null,
+            roomCountLabel: booking.room_count_label || null,
+            roomSelections: booking.room_selections || null,
           })),
         });
       }

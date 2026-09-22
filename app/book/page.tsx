@@ -16,6 +16,10 @@ import {
 import { createClient } from '../../lib/supabase-browser';
 import { fetchVenueBySlug } from '../../lib/venues';
 import type { Venue } from '../../lib/data';
+import {
+  RoomQuantitySelector,
+  type RoomSelection,
+} from '../../components/RoomQuantitySelector';
 
 /* ============================================================
    RAZORPAY TYPES
@@ -84,19 +88,31 @@ type RoomBookingDetails = {
   checkInDate: string;
   checkOutDate: string;
   numRooms: string;
-  roomGuestCount: string;
-  roomType: string;
+  roomSelections: RoomSelection[];
   guestDetails: string;
   notes: string;
 };
+
+/*
+ * "Number of rooms" is a quick overall estimate -- shown for
+ * every venue, including ones without individual room-category
+ * data yet. Where a venue does have room categories, the
+ * RoomQuantitySelector below lets the guest break that estimate
+ * down by category.
+ */
+const ROOM_COUNT_OPTIONS = [
+  'Less than 10',
+  '11', '12', '13', '14', '15',
+  '16', '17', '18', '19', '20',
+  'More than 20',
+];
 
 function createEmptyRoomDetails(): RoomBookingDetails {
   return {
     checkInDate: '',
     checkOutDate: '',
     numRooms: '',
-    roomGuestCount: '',
-    roomType: '',
+    roomSelections: [],
     guestDetails: '',
     notes: '',
   };
@@ -559,9 +575,13 @@ function BookPageContent() {
 
         /* Guest count */
 
-        if (!currentEvent.guestCount) {
+        if (
+          !currentEvent.guestCount ||
+          !/^\d+$/.test(currentEvent.guestCount) ||
+          Number(currentEvent.guestCount) < 1
+        ) {
           setError(
-            `Please select the guest count for Event ${index + 1}.`
+            `Please enter a valid number of guests for Event ${index + 1}.`
           );
 
           return;
@@ -625,9 +645,12 @@ function BookPageContent() {
         return;
       }
 
-      if (!roomDetails.roomGuestCount) {
+      if (
+        (venue?.rooms?.length || 0) > 0 &&
+        roomDetails.roomSelections.length === 0
+      ) {
         setError(
-          'Please select the number of guests.'
+          'Please select at least one room category.'
         );
         return;
       }
@@ -882,13 +905,9 @@ function BookPageContent() {
                 includesRoom
                   ? roomDetails.numRooms
                   : undefined,
-              roomGuestCount:
+              roomSelections:
                 includesRoom
-                  ? roomDetails.roomGuestCount
-                  : undefined,
-              roomType:
-                includesRoom
-                  ? roomDetails.roomType
+                  ? roomDetails.roomSelections
                   : undefined,
               guestDetails:
                 includesRoom
@@ -1765,32 +1784,32 @@ function BookPageContent() {
                                 Select event type
                               </option>
 
-                              <option value="Engagement">
-                                Engagement
+                              <option value="Pre-Wedding Ritual">
+                                Pre-Wedding Ritual
                               </option>
 
-                              <option value="Wedding">
+                              <option value="Arrival Meal">
+                                Arrival Meal
+                              </option>
+
+                              <option value="Haldi">
+                                Haldi
+                              </option>
+
+                              <option value="Sangeeth">
                                 Sangeeth
                               </option>
-
-                              <option value="Reception">
-                                Haldi
-                              </option>                              
 
                               <option value="Mehendi">
                                 Mehendi
                               </option>
 
-                              <option value="Sangeet">
+                              <option value="Wedding">
                                 Wedding
                               </option>
 
-                              <option value="Haldi">
-                                Reception
-                              </option>
-
-                              <option value="Other">
-                                Other
+                              <option value="Others">
+                                Others
                               </option>
 
                             </select>
@@ -1804,55 +1823,45 @@ function BookPageContent() {
                           <label>
 
                             <span>
-                              Guest count *
+                              Number of Guests *
                             </span>
 
-                            <select
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              min={1}
+                              step={1}
+                              placeholder="Enter number"
                               value={
                                 currentEvent.guestCount
                               }
-                              onChange={(e) =>
-                                updateEventField(
-                                  index,
-                                  'guestCount',
-                                  e.target.value
-                                )
-                              }
-                            >
+                              onChange={(e) => {
+                                const raw = e.target.value;
 
-                              <option value="">
-                                Select guest count
-                              </option>
-
-                              <option value="50–100">
-                                50–100
-                              </option>
-
-                              <option value="100–150">
-                                100–150
-                              </option>
-
-                              <option value="150–200">
-                                150–200
-                              </option>
-
-                              <option value="200–250">
-                                200–250
-                              </option>
-
-                              <option value="250–300">
-                                250–300
-                              </option>
-
-                              <option value="300–350">
-                                300–350
-                              </option>
-
-                              <option value="900+">
-                                350+
-                              </option>
-
-                            </select>
+                                // Allow clearing the field, and
+                                // reject anything that isn't a
+                                // positive whole number.
+                                if (
+                                  raw === '' ||
+                                  /^\d+$/.test(raw)
+                                ) {
+                                  updateEventField(
+                                    index,
+                                    'guestCount',
+                                    raw
+                                  );
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (
+                                  ['-', '+', 'e', 'E', '.'].includes(
+                                    e.key
+                                  )
+                                ) {
+                                  e.preventDefault();
+                                }
+                              }}
+                            />
 
                           </label>
 
@@ -2064,10 +2073,7 @@ function BookPageContent() {
                           <option value="">
                             Select
                           </option>
-                          {[
-                            '1', '2', '3', '4',
-                            '5', '6+',
-                          ].map((n) => (
+                          {ROOM_COUNT_OPTIONS.map((n) => (
                             <option
                               key={n}
                               value={n}
@@ -2075,80 +2081,29 @@ function BookPageContent() {
                               {n}
                             </option>
                           ))}
-                        </select>
-                      </label>
-
-                      {/* NUMBER OF GUESTS */}
-
-                      <label>
-                        <span>
-                          Number of guests *
-                        </span>
-                        <select
-                          value={
-                            roomDetails.roomGuestCount
-                          }
-                          onChange={(e) =>
-                            updateRoomField(
-                              'roomGuestCount',
-                              e.target.value
-                            )
-                          }
-                        >
-                          <option value="">
-                            Select
-                          </option>
-                          {[
-                            '1', '2', '3', '4',
-                            '5-10', '10+',
-                          ].map((n) => (
-                            <option
-                              key={n}
-                              value={n}
-                            >
-                              {n}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      {/* ROOM TYPE */}
-
-                      <label>
-                        <span>
-                          Room type preference
-                        </span>
-                        <select
-                          value={
-                            roomDetails.roomType
-                          }
-                          onChange={(e) =>
-                            updateRoomField(
-                              'roomType',
-                              e.target.value
-                            )
-                          }
-                        >
-                          <option value="">
-                            No preference
-                          </option>
-                          {(venue?.rooms || []).map(
-                            (room) => (
-                              <option
-                                key={room.id}
-                                value={room.name}
-                              >
-                                {room.name}
-                              </option>
-                            )
-                          )}
-                          <option value="Not sure / need recommendation">
-                            Not sure / need a recommendation
-                          </option>
                         </select>
                       </label>
 
                     </div>
+
+                    {/* ROOM CATEGORY SELECTION */}
+
+                    {(venue?.rooms?.length || 0) > 0 && (
+                      <div style={{ marginTop: '18px' }}>
+                        <RoomQuantitySelector
+                          rooms={venue?.rooms || []}
+                          selections={
+                            roomDetails.roomSelections
+                          }
+                          onChange={(selections) =>
+                            setRoomDetails((current) => ({
+                              ...current,
+                              roomSelections: selections,
+                            }))
+                          }
+                        />
+                      </div>
+                    )}
 
                     {/* GUEST DETAILS */}
 
@@ -2599,20 +2554,21 @@ function BookPageContent() {
                         </strong>
                       </div>
 
-                      <div>
-                        <span>Guests</span>
-                        <strong>
-                          {roomDetails.roomGuestCount}
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>Room type</span>
-                        <strong>
-                          {roomDetails.roomType ||
-                            'No preference'}
-                        </strong>
-                      </div>
+                      {roomDetails.roomSelections.length > 0 && (
+                        <div>
+                          <span>Room categories</span>
+                          <strong>
+                            {roomDetails.roomSelections
+                              .map(
+                                (s) =>
+                                  `${s.roomName} — ${s.quantity} room${
+                                    s.quantity === 1 ? '' : 's'
+                                  }`
+                              )
+                              .join(', ')}
+                          </strong>
+                        </div>
+                      )}
 
                       {roomDetails.guestDetails && (
                         <div>
