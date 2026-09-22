@@ -195,18 +195,19 @@ export async function POST(request: Request) {
 
     /*
      * ==========================================================
-     * CONFIRM THE BOOKING
+     * MOVE THE BOOKING TO ADMIN REVIEW
      *
-     * The row(s) already exist as 'payment_pending' from
-     * create-order. This just promotes them to 'confirmed' now
-     * that payment is verified.
+     * Payment verification does not mean the venue has approved
+     * the booking. The booking remains blocking for availability,
+     * but its customer-facing/admin-review status is now
+     * 'under_review'. The admin must explicitly confirm it.
      * ==========================================================
      */
 
     const { data: updated, error: updateError } = await admin
       .from('booking_requests')
       .update({
-        status: 'confirmed',
+        status: 'under_review',
         payment_id: razorpay_payment_id,
       })
       .in('id', bookingIds)
@@ -249,7 +250,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Payment verified and booking confirmed.',
+      message: 'Payment verified and booking is under admin review.',
       orderId: razorpay_order_id,
       paymentId: razorpay_payment_id,
       weddingId: updated[0]?.wedding_id,
