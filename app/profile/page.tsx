@@ -85,7 +85,20 @@ function formatBookingDate(date: string | null | undefined) {
 function formatBookingStatus(status: string | null | undefined) {
   const normalized = (status || '').replace(/_/g, ' ').trim();
 
-  if (!normalized) return 'Pending';
+  if (!normalized) return 'Under Review';
+
+  /*
+   * A successful payment currently moves the booking row to
+   * "confirmed" in the existing payment workflow. The customer
+   * dashboard must not present that as final venue confirmation,
+   * because the venue/admin still needs to review the booking.
+   *
+   * This is display-only: it does not change the booking,
+   * payment, availability, or admin workflow.
+   */
+  if (normalized.toLowerCase() === 'confirmed') {
+    return 'Under Review';
+  }
 
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
@@ -1033,11 +1046,11 @@ export default function ProfilePage() {
                           borderRadius: '999px',
                           background:
                             booking.status === 'confirmed'
-                              ? '#eef8f1'
+                              ? '#fff7e6'
                               : '#f6f3ed',
                           color:
                             booking.status === 'confirmed'
-                              ? '#267345'
+                              ? '#9a6700'
                               : '#5f574d',
                           fontSize: '13px',
                           fontWeight: 600,
