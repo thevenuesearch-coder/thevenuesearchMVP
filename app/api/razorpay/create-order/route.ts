@@ -51,24 +51,6 @@ type IncomingRoomSelection = {
   quantity?: number;
 };
 
-/*
- * "Less than 10" / "More than 20" aren't plain integers, so we
- * store both the label the guest picked (room_count_label) and a
- * best-effort numeric estimate (num_rooms) for reporting/sorting
- * in the admin dashboard.
- */
-function estimateRoomCount(label: unknown): number | null {
-  const raw = typeof label === 'string' ? label.trim() : '';
-
-  if (!raw) return null;
-  if (raw === 'Less than 10') return 9;
-  if (raw === 'More than 20') return 21;
-
-  const match = raw.match(/\d+/);
-
-  return match ? Number.parseInt(match[0], 10) : null;
-}
-
 export async function POST(request: Request) {
   try {
     const keyId = process.env.RAZORPAY_KEY_ID;
@@ -119,7 +101,6 @@ export async function POST(request: Request) {
     const {
       checkinDate,
       checkoutDate,
-      numRooms,
       guestDetails,
       roomNotes,
     } = body;
@@ -190,8 +171,7 @@ export async function POST(request: Request) {
     if (includesRoom) {
       if (
         !checkinDate ||
-        !checkoutDate ||
-        !numRooms
+        !checkoutDate
       ) {
         return NextResponse.json(
           {
@@ -421,8 +401,7 @@ export async function POST(request: Request) {
           cleanSelections.reduce(
             (sum, s) => sum + s.quantity,
             0
-          ) || estimateRoomCount(numRooms),
-        room_count_label: String(numRooms),
+          ) || null,
         room_selections: cleanSelections,
         guest_details: guestDetails || null,
       });

@@ -1517,15 +1517,22 @@ export default function VenuePage() {
 
 
         .action-card {
-          background: #111;
+          background:
+            linear-gradient(
+              160deg,
+              #1c1710,
+              #100d09
+            );
 
           color: white;
 
           padding: 38px;
 
+          border-radius: 18px;
+
           box-shadow:
             0 25px 60px
-            rgba(0,0,0,.12);
+            rgba(0,0,0,.18);
         }
 
 
@@ -1539,7 +1546,7 @@ export default function VenuePage() {
 
 
         .action-top > span {
-          color: #26b9d7;
+          color: #c9a15f;
 
           font-size: 10px;
 
@@ -1614,7 +1621,7 @@ export default function VenuePage() {
           justify-content: space-between;
 
           padding:
-            0 20px;
+            0 22px;
 
           text-decoration: none;
 
@@ -1622,29 +1629,42 @@ export default function VenuePage() {
 
           font-weight: 700;
 
-          transition: .2s ease;
+          letter-spacing: .02em;
+
+          border-radius: 10px;
+
+          transition: .25s ease;
         }
 
 
         .book-button {
           background:
             linear-gradient(
-              135deg,
-              #2861d4,
-              #20b9d2
+              120deg,
+              #8a6530,
+              #c9a15f
             );
 
-          color: white;
+          color: #1b140c;
+
+          box-shadow:
+            0 16px 34px
+            rgba(201, 161, 95, .22);
+        }
+
+
+        .book-button span:last-child {
+          font-size: 15px;
         }
 
 
         .enquiry-button {
           border:
-            1px solid #3c3c3c;
+            1px solid #4a4436;
 
-          color: white;
+          color: #f1e6d0;
 
-          background: #171717;
+          background: transparent;
         }
 
 
@@ -1655,10 +1675,17 @@ export default function VenuePage() {
         }
 
 
-        .enquiry-button:hover {
-          border-color: #27b9d7;
+        .book-button:hover {
+          box-shadow:
+            0 20px 40px
+            rgba(201, 161, 95, .32);
+        }
 
-          background: #1c1c1c;
+
+        .enquiry-button:hover {
+          border-color: #c9a15f;
+
+          background: rgba(201, 161, 95, .08);
         }
 
 

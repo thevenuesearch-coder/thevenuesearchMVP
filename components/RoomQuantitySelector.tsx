@@ -182,10 +182,11 @@ export function RoomQuantitySelector({
 
       <style jsx>{`
         .roomQtySelector {
-          border: 1px solid #e7e3db;
+          border: 1px solid rgba(138, 101, 48, 0.22);
           border-radius: 16px;
           padding: 18px 18px 6px;
           margin-top: 8px;
+          background: #fffefb;
         }
 
         .roomQtySelectorHeader {
@@ -206,7 +207,7 @@ export function RoomQuantitySelector({
           font-weight: 500;
           text-transform: none;
           letter-spacing: normal;
-          color: #666;
+          color: #8a6530;
           font-size: 13px;
         }
 
@@ -273,7 +274,7 @@ export function RoomQuantitySelector({
           border: none;
           background: none;
           padding: 0;
-          color: #8e6bea;
+          color: #8a6530;
           font-size: 12px;
           font-weight: 600;
           letter-spacing: 0.02em;

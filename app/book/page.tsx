@@ -87,31 +87,15 @@ type EventDetails = {
 type RoomBookingDetails = {
   checkInDate: string;
   checkOutDate: string;
-  numRooms: string;
   roomSelections: RoomSelection[];
   guestDetails: string;
   notes: string;
 };
 
-/*
- * "Number of rooms" is a quick overall estimate -- shown for
- * every venue, including ones without individual room-category
- * data yet. Where a venue does have room categories, the
- * RoomQuantitySelector below lets the guest break that estimate
- * down by category.
- */
-const ROOM_COUNT_OPTIONS = [
-  'Less than 10',
-  '11', '12', '13', '14', '15',
-  '16', '17', '18', '19', '20',
-  'More than 20',
-];
-
 function createEmptyRoomDetails(): RoomBookingDetails {
   return {
     checkInDate: '',
     checkOutDate: '',
-    numRooms: '',
     roomSelections: [],
     guestDetails: '',
     notes: '',
@@ -638,13 +622,6 @@ function BookPageContent() {
         return;
       }
 
-      if (!roomDetails.numRooms) {
-        setError(
-          'Please select the number of rooms.'
-        );
-        return;
-      }
-
       if (
         (venue?.rooms?.length || 0) > 0 &&
         roomDetails.roomSelections.length === 0
@@ -900,10 +877,6 @@ function BookPageContent() {
               checkoutDate:
                 includesRoom
                   ? roomDetails.checkOutDate
-                  : undefined,
-              numRooms:
-                includesRoom
-                  ? roomDetails.numRooms
                   : undefined,
               roomSelections:
                 includesRoom
@@ -2053,37 +2026,6 @@ function BookPageContent() {
                         />
                       </label>
 
-                      {/* NUMBER OF ROOMS */}
-
-                      <label>
-                        <span>
-                          Number of rooms *
-                        </span>
-                        <select
-                          value={
-                            roomDetails.numRooms
-                          }
-                          onChange={(e) =>
-                            updateRoomField(
-                              'numRooms',
-                              e.target.value
-                            )
-                          }
-                        >
-                          <option value="">
-                            Select
-                          </option>
-                          {ROOM_COUNT_OPTIONS.map((n) => (
-                            <option
-                              key={n}
-                              value={n}
-                            >
-                              {n}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
                     </div>
 
                     {/* ROOM CATEGORY SELECTION */}
@@ -2547,27 +2489,32 @@ function BookPageContent() {
                         </strong>
                       </div>
 
-                      <div>
-                        <span>Number of rooms</span>
-                        <strong>
-                          {roomDetails.numRooms}
-                        </strong>
-                      </div>
-
                       {roomDetails.roomSelections.length > 0 && (
-                        <div>
-                          <span>Room categories</span>
-                          <strong>
-                            {roomDetails.roomSelections
-                              .map(
-                                (s) =>
-                                  `${s.roomName} — ${s.quantity} room${
-                                    s.quantity === 1 ? '' : 's'
-                                  }`
-                              )
-                              .join(', ')}
-                          </strong>
-                        </div>
+                        <>
+                          <div>
+                            <span>Total rooms</span>
+                            <strong>
+                              {roomDetails.roomSelections.reduce(
+                                (sum, s) => sum + s.quantity,
+                                0
+                              )}
+                            </strong>
+                          </div>
+
+                          <div>
+                            <span>Room categories</span>
+                            <strong>
+                              {roomDetails.roomSelections
+                                .map(
+                                  (s) =>
+                                    `${s.roomName} — ${s.quantity} room${
+                                      s.quantity === 1 ? '' : 's'
+                                    }`
+                                )
+                                .join(', ')}
+                            </strong>
+                          </div>
+                        </>
                       )}
 
                       {roomDetails.guestDetails && (

@@ -15,7 +15,6 @@ type AdminEnquiry = {
   checkin_date: string | null;
   checkout_date: string | null;
   num_rooms: number | null;
-  room_count_label: string | null;
   room_selections:
     | { roomId: string; roomName: string; quantity: number }[]
     | null;
@@ -321,8 +320,7 @@ export default function AdminPage() {
                       </small>
                       <small>
                         Rooms:{' '}
-                        {enquiry.room_count_label ??
-                          enquiry.num_rooms ??
+                        {enquiry.num_rooms ??
                           'Not specified'}
                       </small>
                       {enquiry.room_selections &&
