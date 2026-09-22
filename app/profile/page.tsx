@@ -38,6 +38,68 @@ type WishlistItem = {
   venue: DisplayVenue | null;
 };
 
+type BookingRow = {
+  id: string;
+  wedding_id: string | null;
+  venue_id: string | null;
+  user_id: string | null;
+  event_date: string | null;
+  guest_count: number | null;
+  event_type: string | null;
+  mode: string | null;
+  notes: string | null;
+  status: string | null;
+  payment_order_id: string | null;
+  payment_id: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  booking_type?: string | null;
+  checkin_date?: string | null;
+  checkout_date?: string | null;
+  num_rooms?: number | null;
+  room_guest_count?: number | null;
+  room_type?: string | null;
+  guest_details?: unknown;
+};
+
+type BookingDisplay = BookingRow & {
+  venue: DisplayVenue | null;
+};
+
+function formatBookingDate(date: string | null | undefined) {
+  if (!date) return '—';
+
+  const parsed = new Date(date + 'T00:00:00');
+
+  if (Number.isNaN(parsed.getTime())) {
+    return date;
+  }
+
+  return parsed.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function formatBookingStatus(status: string | null | undefined) {
+  const normalized = (status || '').replace(/_/g, ' ').trim();
+
+  if (!normalized) return 'Pending';
+
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
+function isRoomBooking(booking: BookingRow) {
+  return (
+    booking.booking_type === 'room' ||
+    Boolean(booking.checkin_date) ||
+    Boolean(booking.checkout_date) ||
+    Boolean(booking.num_rooms)
+  );
+}
+
+
 export default function ProfilePage() {
   const router = useRouter();
 
@@ -45,9 +107,11 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
 
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const [bookings, setBookings] = useState<BookingDisplay[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [wishlistLoading, setWishlistLoading] = useState(true);
+  const [bookingsLoading, setBookingsLoading] = useState(true);
 
   const [removingId, setRemovingId] = useState<string | null>(null);
 
@@ -100,6 +164,132 @@ export default function ProfilePage() {
         if (!mounted) return;
 
         setProfile(profileData || null);
+
+
+        /*
+         * ====================================================
+         * LOAD MY BOOKINGS
+         * ====================================================
+         *
+         * The existing payment flow already creates rows in
+         * booking_requests with the authenticated user's
+         * user_id. This section only reads those rows for the
+         * dashboard. It does not change payment, availability,
+         * duplicate-booking, venue, or room-booking workflows.
+         */
+
+        const {
+          data: bookingData,
+          error: bookingError,
+        } = await supabase
+          .from('booking_requests')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', {
+            ascending: false,
+          });
+
+        if (bookingError) {
+          console.warn(
+            'Bookings loading warning:',
+            {
+              message: bookingError.message,
+              details: bookingError.details,
+              hint: bookingError.hint,
+              code: bookingError.code,
+            }
+          );
+
+          if (mounted) {
+            setBookings([]);
+            setBookingsLoading(false);
+          }
+        } else {
+          const bookingRows = (bookingData || []) as BookingRow[];
+
+          const bookingVenueIds = Array.from(
+            new Set(
+              bookingRows
+                .map((booking) => booking.venue_id)
+                .filter(Boolean)
+            )
+          ) as string[];
+
+          let bookingVenues: DbVenue[] = [];
+
+          if (bookingVenueIds.length > 0) {
+            const {
+              data: venueData,
+              error: bookingVenueError,
+            } = await supabase
+              .from('venues')
+              .select(
+                `
+                  id,
+                  name,
+                  slug,
+                  city,
+                  type,
+                  description,
+                  capacity_min,
+                  capacity_max,
+                  hero_image,
+                  rating,
+                  status
+                `
+              )
+              .in('id', bookingVenueIds);
+
+            if (bookingVenueError) {
+              console.warn(
+                'Booking venue loading warning:',
+                {
+                  message: bookingVenueError.message,
+                  details: bookingVenueError.details,
+                  hint: bookingVenueError.hint,
+                  code: bookingVenueError.code,
+                }
+              );
+            } else {
+              bookingVenues = (venueData || []) as DbVenue[];
+            }
+          }
+
+          const bookingVenueMap = new Map<string, DbVenue>();
+
+          bookingVenues.forEach((venue) => {
+            bookingVenueMap.set(venue.id, venue);
+          });
+
+          const combinedBookings: BookingDisplay[] =
+            bookingRows.map((booking) => {
+              const dbVenue = booking.venue_id
+                ? bookingVenueMap.get(booking.venue_id)
+                : undefined;
+
+              return {
+                ...booking,
+                venue: dbVenue
+                  ? {
+                      id: dbVenue.id,
+                      name: dbVenue.name,
+                      city: dbVenue.city || 'India',
+                      type: dbVenue.type || 'Venue',
+                      description: dbVenue.description || '',
+                      capacity_min: dbVenue.capacity_min,
+                      capacity_max: dbVenue.capacity_max,
+                      image: dbVenue.hero_image,
+                      rating: dbVenue.rating,
+                    }
+                  : null,
+              };
+            });
+
+          if (mounted) {
+            setBookings(combinedBookings);
+            setBookingsLoading(false);
+          }
+        }
 
         /*
          * ====================================================
@@ -304,6 +494,7 @@ export default function ProfilePage() {
         if (mounted) {
           setLoading(false);
           setWishlistLoading(false);
+          setBookingsLoading(false);
         }
       }
     }
@@ -697,6 +888,470 @@ export default function ProfilePage() {
           </section>
 
         </div>
+
+
+
+        {/* ==================================================
+            MY BOOKINGS
+        ================================================== */}
+
+        <section
+          id="bookings"
+          className="profileShortlistSection"
+          style={{
+            marginTop: '36px',
+          }}
+        >
+
+          <div className="profileSectionHeader">
+
+            <div>
+
+              <span className="profileCardKicker">
+                BOOKING HISTORY
+              </span>
+
+              <h2>
+                My Bookings
+              </h2>
+
+              <p>
+                Your venue and room bookings, including dates, room details and payment status.
+              </p>
+
+            </div>
+
+            <span className="profileShortlistCount">
+              {bookings.length}
+            </span>
+
+          </div>
+
+
+          {bookingsLoading ? (
+
+            <div className="profileShortlistEmpty">
+              <p>
+                Loading your bookings...
+              </p>
+            </div>
+
+          ) : bookings.length === 0 ? (
+
+            <div className="profileShortlistEmpty">
+
+              <div className="profileEmptyIcon">
+                ◷
+              </div>
+
+              <h3>
+                No bookings yet
+              </h3>
+
+              <p>
+                Your venue and room bookings will appear here after you complete a booking.
+              </p>
+
+              <Link
+                href="/explore"
+                className="primaryBtn"
+              >
+                Explore venues →
+              </Link>
+
+            </div>
+
+          ) : (
+
+            <div
+              style={{
+                display: 'grid',
+                gap: '18px',
+              }}
+            >
+
+              {bookings.map((booking) => {
+
+                const roomBooking = isRoomBooking(booking);
+                const status = formatBookingStatus(booking.status);
+
+                return (
+                  <article
+                    key={booking.id}
+                    className="profileCard"
+                    style={{
+                      padding: '26px',
+                    }}
+                  >
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        gap: '20px',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+
+                      <div>
+
+                        <span className="profileCardKicker">
+                          {roomBooking
+                            ? 'ROOM BOOKING'
+                            : 'VENUE BOOKING'}
+                        </span>
+
+                        <h3
+                          style={{
+                            margin: '7px 0 5px',
+                            fontSize: '24px',
+                          }}
+                        >
+                          {booking.venue?.name || 'Venue booking'}
+                        </h3>
+
+                        <p
+                          style={{
+                            margin: 0,
+                            color: '#6b6b6b',
+                          }}
+                        >
+                          {booking.venue?.city || 'India'}
+                          {booking.venue?.type
+                            ? ' · ' + booking.venue.type
+                            : ''}
+                        </p>
+
+                      </div>
+
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '8px 13px',
+                          borderRadius: '999px',
+                          background:
+                            booking.status === 'confirmed'
+                              ? '#eef8f1'
+                              : '#f6f3ed',
+                          color:
+                            booking.status === 'confirmed'
+                              ? '#267345'
+                              : '#5f574d',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          textTransform: 'capitalize',
+                        }}
+                      >
+                        {status}
+                      </span>
+
+                    </div>
+
+
+                    <div
+                      style={{
+                        marginTop: '22px',
+                        display: 'grid',
+                        gridTemplateColumns:
+                          'repeat(auto-fit, minmax(180px, 1fr))',
+                        gap: '1px',
+                        background: '#ece9e4',
+                        border: '1px solid #ece9e4',
+                      }}
+                    >
+
+                      {!roomBooking && (
+                        <>
+                          <div
+                            style={{
+                              background: '#fff',
+                              padding: '16px',
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: 'block',
+                                color: '#8a857d',
+                                marginBottom: '5px',
+                              }}
+                            >
+                              Event date
+                            </small>
+                            <strong>
+                              {formatBookingDate(booking.event_date)}
+                            </strong>
+                          </div>
+
+                          <div
+                            style={{
+                              background: '#fff',
+                              padding: '16px',
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: 'block',
+                                color: '#8a857d',
+                                marginBottom: '5px',
+                              }}
+                            >
+                              Event type
+                            </small>
+                            <strong>
+                              {booking.event_type || '—'}
+                            </strong>
+                          </div>
+
+                          <div
+                            style={{
+                              background: '#fff',
+                              padding: '16px',
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: 'block',
+                                color: '#8a857d',
+                                marginBottom: '5px',
+                              }}
+                            >
+                              Guests
+                            </small>
+                            <strong>
+                              {booking.guest_count
+                                ? booking.guest_count.toLocaleString()
+                                : '—'}
+                            </strong>
+                          </div>
+                        </>
+                      )}
+
+                      {roomBooking && (
+                        <>
+                          <div
+                            style={{
+                              background: '#fff',
+                              padding: '16px',
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: 'block',
+                                color: '#8a857d',
+                                marginBottom: '5px',
+                              }}
+                            >
+                              Check-in
+                            </small>
+                            <strong>
+                              {formatBookingDate(booking.checkin_date)}
+                            </strong>
+                          </div>
+
+                          <div
+                            style={{
+                              background: '#fff',
+                              padding: '16px',
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: 'block',
+                                color: '#8a857d',
+                                marginBottom: '5px',
+                              }}
+                            >
+                              Check-out
+                            </small>
+                            <strong>
+                              {formatBookingDate(booking.checkout_date)}
+                            </strong>
+                          </div>
+
+                          <div
+                            style={{
+                              background: '#fff',
+                              padding: '16px',
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: 'block',
+                                color: '#8a857d',
+                                marginBottom: '5px',
+                              }}
+                            >
+                              Rooms
+                            </small>
+                            <strong>
+                              {booking.num_rooms || '—'}
+                            </strong>
+                          </div>
+
+                          <div
+                            style={{
+                              background: '#fff',
+                              padding: '16px',
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: 'block',
+                                color: '#8a857d',
+                                marginBottom: '5px',
+                              }}
+                            >
+                              Room category
+                            </small>
+                            <strong>
+                              {booking.room_type || '—'}
+                            </strong>
+                          </div>
+
+                          <div
+                            style={{
+                              background: '#fff',
+                              padding: '16px',
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: 'block',
+                                color: '#8a857d',
+                                marginBottom: '5px',
+                              }}
+                            >
+                              Guests
+                            </small>
+                            <strong>
+                              {booking.room_guest_count || '—'}
+                            </strong>
+                          </div>
+                        </>
+                      )}
+
+                    </div>
+
+
+                    <div
+                      style={{
+                        marginTop: '18px',
+                        display: 'grid',
+                        gridTemplateColumns:
+                          'repeat(auto-fit, minmax(220px, 1fr))',
+                        gap: '14px 24px',
+                      }}
+                    >
+
+                      <div>
+                        <span
+                          style={{
+                            display: 'block',
+                            color: '#8a857d',
+                            fontSize: '12px',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                          }}
+                        >
+                          Booking ID
+                        </span>
+                        <strong
+                          style={{
+                            fontSize: '13px',
+                            wordBreak: 'break-all',
+                          }}
+                        >
+                          {booking.id}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span
+                          style={{
+                            display: 'block',
+                            color: '#8a857d',
+                            fontSize: '12px',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                          }}
+                        >
+                          Payment
+                        </span>
+                        <strong>
+                          {booking.payment_id
+                            ? 'Paid'
+                            : booking.payment_order_id
+                              ? 'Payment pending'
+                              : 'Not available'}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span
+                          style={{
+                            display: 'block',
+                            color: '#8a857d',
+                            fontSize: '12px',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                          }}
+                        >
+                          Booked on
+                        </span>
+                        <strong>
+                          {formatBookingDate(
+                            booking.created_at
+                              ? booking.created_at.slice(0, 10)
+                              : null
+                          )}
+                        </strong>
+                      </div>
+
+                    </div>
+
+
+                    {booking.notes && (
+                      <div
+                        style={{
+                          marginTop: '18px',
+                          padding: '14px 16px',
+                          background: '#f8f6f2',
+                          border: '1px solid #ece9e4',
+                        }}
+                      >
+                        <small
+                          style={{
+                            display: 'block',
+                            color: '#8a857d',
+                            marginBottom: '5px',
+                          }}
+                        >
+                          Notes
+                        </small>
+                        <span
+                          style={{
+                            color: '#4f4b46',
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          {booking.notes}
+                        </span>
+                      </div>
+                    )}
+
+                  </article>
+                );
+              })}
+
+            </div>
+          )}
+
+        </section>
 
 
         {/* ==================================================
