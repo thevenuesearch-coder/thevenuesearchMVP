@@ -861,7 +861,13 @@ function BookPageContent() {
               bookingType,
               events:
                 includesVenue
-                  ? form.events
+                  ? form.events.map((event) => ({
+                      ...event,
+                      venueSpaceName:
+                        venue.venueSpaces?.find(
+                          (space) => space.id === event.venueSpace
+                        )?.name || event.venueSpace,
+                    }))
                   : [],
 
               checkinDate:
