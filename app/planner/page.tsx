@@ -1097,11 +1097,6 @@ export default function Planner() {
                               </strong>
                             </div>
 
-                            <div style={{ background: '#fff', padding: '15px' }}>
-                              <small>Venue space</small>
-                              <strong style={{ display: 'block', marginTop: '5px' }}>
-                                {request.venue_space_name || request.venue_space_id || '—'}
-                              </strong>
                             </div>
                           </>
                         ) : (
