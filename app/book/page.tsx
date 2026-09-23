@@ -123,27 +123,45 @@ function computeNights(
 ): { start: string; end: string }[] {
   if (!checkInDate || !checkOutDate) return [];
 
-  const start = new Date(`${checkInDate}T00:00:00`);
-  const end = new Date(`${checkOutDate}T00:00:00`);
+  /*
+   * Parse and format the dates as plain y/m/d values via
+   * Date.UTC, rather than mixing a locally-constructed Date with
+   * toISOString() (which reads back in UTC) -- that mismatch is
+   * what previously shifted every night a day earlier for anyone
+   * west of UTC... no, ahead of UTC (e.g. IST). Staying in UTC
+   * for both construction and formatting sidesteps the browser's
+   * timezone entirely, so the dates typed into the check-in/
+   * check-out fields are exactly the dates that come back out.
+   */
+  const parseAsUTC = (value: string) => {
+    const [y, m, d] = value.split('-').map(Number);
+    return Date.UTC(y, (m || 1) - 1, d || 1);
+  };
+
+  const formatFromUTC = (ms: number) =>
+    new Date(ms).toISOString().slice(0, 10);
+
+  const start = parseAsUTC(checkInDate);
+  const end = parseAsUTC(checkOutDate);
 
   if (
-    Number.isNaN(start.getTime()) ||
-    Number.isNaN(end.getTime()) ||
+    Number.isNaN(start) ||
+    Number.isNaN(end) ||
     end <= start
   ) {
     return [];
   }
 
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
   const nights: { start: string; end: string }[] = [];
   let cursor = start;
 
   while (cursor < end) {
-    const next = new Date(cursor);
-    next.setDate(next.getDate() + 1);
+    const next = cursor + ONE_DAY_MS;
 
     nights.push({
-      start: cursor.toISOString().slice(0, 10),
-      end: next.toISOString().slice(0, 10),
+      start: formatFromUTC(cursor),
+      end: formatFromUTC(next),
     });
 
     cursor = next;
@@ -325,6 +343,34 @@ function BookPageContent() {
     }));
   }
 
+  /*
+   * "Same rooms every night" is the common case for a stay -- this
+   * lets the guest set it once instead of repeating the same
+   * numbers on every night's card.
+   */
+  const [sameEveryNight, setSameEveryNight] = useState(false);
+
+  function applySelectionsToAllNights(
+    selections: RoomSelection[]
+  ) {
+    setRoomDetails((current) => ({
+      ...current,
+      nightlySelections: current.nightlySelections.map(
+        (night) => ({ ...night, selections })
+      ),
+    }));
+  }
+
+  function toggleSameEveryNight(checked: boolean) {
+    setSameEveryNight(checked);
+
+    if (checked) {
+      applySelectionsToAllNights(
+        roomDetails.nightlySelections[0]?.selections || []
+      );
+    }
+  }
+
   /* ==========================================================
      KEEP THE PER-NIGHT ROOM ROWS IN SYNC WITH THE DATE RANGE
      Regenerates one row per night whenever check-in/check-out
@@ -346,9 +392,14 @@ function BookPageContent() {
         ])
       );
 
+      const fallbackSelections = sameEveryNight
+        ? current.nightlySelections[0]?.selections || []
+        : [];
+
       const nextNightly = nights.map((n) => ({
         date: n.start,
-        selections: existingByDate.get(n.start) || [],
+        selections:
+          existingByDate.get(n.start) || fallbackSelections,
       }));
 
       const unchanged =
@@ -365,7 +416,11 @@ function BookPageContent() {
         ? current
         : { ...current, nightlySelections: nextNightly };
     });
-  }, [roomDetails.checkInDate, roomDetails.checkOutDate]);
+  }, [
+    roomDetails.checkInDate,
+    roomDetails.checkOutDate,
+    sameEveryNight,
+  ]);
 
   /* ==========================================================
      LOAD AUTHENTICATED USER
@@ -2214,51 +2269,105 @@ function BookPageContent() {
                                 .length === 1
                                 ? ''
                                 : 's'}{' '}
-                              -- set the rooms needed for each
+                              of the stay
                             </span>
+
+                            {roomDetails.nightlySelections.length >
+                              1 && (
+                              <label className="nightlySameToggle">
+                                <input
+                                  type="checkbox"
+                                  checked={sameEveryNight}
+                                  onChange={(e) =>
+                                    toggleSameEveryNight(
+                                      e.target.checked
+                                    )
+                                  }
+                                />
+                                Same rooms every night
+                              </label>
+                            )}
                           </div>
 
-                          <div className="nightlyRoomsList">
-                            {computeNights(
-                              roomDetails.checkInDate,
-                              roomDetails.checkOutDate
-                            ).map((night, index) => {
-                              const nightSelection =
-                                roomDetails.nightlySelections[
-                                  index
-                                ];
+                          {sameEveryNight &&
+                          roomDetails.nightlySelections.length >
+                            1 ? (
+                            <RoomQuantitySelector
+                              rooms={venue?.rooms || []}
+                              selections={
+                                roomDetails.nightlySelections[0]
+                                  ?.selections || []
+                              }
+                              onChange={
+                                applySelectionsToAllNights
+                              }
+                            />
+                          ) : (
+                            <div className="nightlyRoomsList">
+                              {computeNights(
+                                roomDetails.checkInDate,
+                                roomDetails.checkOutDate
+                              ).map((night, index) => {
+                                const nightSelection =
+                                  roomDetails.nightlySelections[
+                                    index
+                                  ];
 
-                              if (!nightSelection) return null;
+                                if (!nightSelection) return null;
 
-                              return (
-                                <div
-                                  className="nightlyRoomsNight"
-                                  key={night.start}
-                                >
-                                  <h4>
-                                    {formatShortDate(
-                                      night.start
-                                    )}{' '}
-                                    &rarr;{' '}
-                                    {formatShortDate(night.end)}
-                                  </h4>
+                                return (
+                                  <div
+                                    className="nightlyRoomsNight"
+                                    key={night.start}
+                                  >
+                                    <div className="nightlyRoomsNightHead">
+                                      <h4>
+                                        {formatShortDate(
+                                          night.start
+                                        )}{' '}
+                                        &rarr;{' '}
+                                        {formatShortDate(
+                                          night.end
+                                        )}
+                                      </h4>
 
-                                  <RoomQuantitySelector
-                                    rooms={venue?.rooms || []}
-                                    selections={
-                                      nightSelection.selections
-                                    }
-                                    onChange={(selections) =>
-                                      updateNightSelections(
-                                        nightSelection.date,
-                                        selections
-                                      )
-                                    }
-                                  />
-                                </div>
-                              );
-                            })}
-                          </div>
+                                      {index === 0 &&
+                                        roomDetails
+                                          .nightlySelections
+                                          .length > 1 &&
+                                        nightSelection.selections
+                                          .length > 0 && (
+                                          <button
+                                            type="button"
+                                            className="nightlyCopyBtn"
+                                            onClick={() =>
+                                              applySelectionsToAllNights(
+                                                nightSelection.selections
+                                              )
+                                            }
+                                          >
+                                            Copy to every night
+                                          </button>
+                                        )}
+                                    </div>
+
+                                    <RoomQuantitySelector
+                                      rooms={venue?.rooms || []}
+                                      selections={
+                                        nightSelection.selections
+                                      }
+                                      onChange={(selections) =>
+                                        updateNightSelections(
+                                          nightSelection.date,
+                                          selections
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       )}
 

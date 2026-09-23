@@ -60,7 +60,11 @@ function bookingTypeColor(type: AdminEnquiry['booking_type']) {
 
 function formatDate(value: string | null) {
   if (!value) return null;
-  const date = new Date(value);
+  /* A plain 'yyyy-mm-dd' string parses as UTC midnight per the
+     ES spec, not local midnight -- appending a time forces local
+     parsing so the displayed day can't drift a day off in
+     timezones behind UTC. */
+  const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString('en-IN', {
     day: 'numeric',

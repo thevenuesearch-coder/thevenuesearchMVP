@@ -1220,23 +1220,87 @@
 }
 
 .nightlyRoomsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
   font-size: 13px;
+  font-weight: 600;
+  color: var(--bp-ink, #22190f);
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bp-line, rgba(138, 101, 48, 0.22));
+}
+
+.nightlySameToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
   color: var(--bp-muted, #7c705d);
-  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.nightlySameToggle input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--bp-gold, #b28a4d);
+  cursor: pointer;
 }
 
 .nightlyRoomsList {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
+}
+
+.nightlyRoomsNight {
+  position: relative;
+  padding-left: 18px;
+  border-left: 2px solid var(--bp-line, rgba(138, 101, 48, 0.22));
+}
+
+.nightlyRoomsNight::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bp-gold, #b28a4d);
+}
+
+.nightlyRoomsNightHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .nightlyRoomsNight h4 {
-  margin: 0 0 8px;
+  margin: 0;
   font-family: var(--serif);
   font-weight: 500;
   font-size: 15px;
   color: var(--bp-gold-deep, #8a6530);
+}
+
+.nightlyCopyBtn {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--bp-gold-deep, #8a6530);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .reviewNightlyRooms {
