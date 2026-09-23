@@ -1219,6 +1219,44 @@
   opacity: 0.55;
 }
 
+.nightlyRoomsHeader {
+  font-size: 13px;
+  color: var(--bp-muted, #7c705d);
+  margin-bottom: 10px;
+}
+
+.nightlyRoomsList {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.nightlyRoomsNight h4 {
+  margin: 0 0 8px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--bp-gold-deep, #8a6530);
+}
+
+.reviewNightlyRooms {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: right;
+}
+
+.reviewNightlyRooms div {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.reviewNightlyRooms em {
+  font-style: normal;
+  font-weight: 600;
+}
+
 .bookingError {
   margin-bottom: 22px;
   padding: 14px 16px;

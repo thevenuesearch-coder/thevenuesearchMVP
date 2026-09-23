@@ -86,8 +86,8 @@ export async function GET(request: Request) {
           checkin_date,
           checkout_date,
           num_rooms,
-          room_guest_count,
-          room_type,
+          room_count_label,
+          nightly_room_selections,
           guest_details,
           venue:venues(
             id,

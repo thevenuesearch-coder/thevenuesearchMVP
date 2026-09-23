@@ -84,18 +84,25 @@ type EventDetails = {
    ROOM BOOKING DETAILS
 ============================================================ */
 
+type NightlyRoomSelection = {
+  /* ISO date (yyyy-mm-dd) of the night's start -- e.g. '2026-09-23'
+     for the night of 23 Sep -> 24 Sep. */
+  date: string;
+  selections: RoomSelection[];
+};
+
 type RoomBookingDetails = {
   checkInDate: string;
   checkOutDate: string;
   numRooms: string;
-  roomSelections: RoomSelection[];
+  nightlySelections: NightlyRoomSelection[];
   guestDetails: string;
   notes: string;
 };
 
 /*
- * Kept as a quick overall estimate alongside the per-category
- * RoomQuantitySelector below, per product direction.
+ * Kept as a quick overall estimate alongside the per-night,
+ * per-category RoomQuantitySelector below, per product direction.
  */
 const ROOM_COUNT_OPTIONS = [
   'Less than 10',
@@ -104,12 +111,53 @@ const ROOM_COUNT_OPTIONS = [
   'More than 20',
 ];
 
+/*
+ * Turns a check-in/check-out date pair into one entry per night
+ * stayed. Check-in is the first night; check-out is the morning
+ * the guest leaves and is not itself a night -- so 23rd -> 26th is
+ * 3 nights (23->24, 24->25, 25->26), never 4.
+ */
+function computeNights(
+  checkInDate: string,
+  checkOutDate: string
+): { start: string; end: string }[] {
+  if (!checkInDate || !checkOutDate) return [];
+
+  const start = new Date(`${checkInDate}T00:00:00`);
+  const end = new Date(`${checkOutDate}T00:00:00`);
+
+  if (
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(end.getTime()) ||
+    end <= start
+  ) {
+    return [];
+  }
+
+  const nights: { start: string; end: string }[] = [];
+  let cursor = start;
+
+  while (cursor < end) {
+    const next = new Date(cursor);
+    next.setDate(next.getDate() + 1);
+
+    nights.push({
+      start: cursor.toISOString().slice(0, 10),
+      end: next.toISOString().slice(0, 10),
+    });
+
+    cursor = next;
+  }
+
+  return nights;
+}
+
 function createEmptyRoomDetails(): RoomBookingDetails {
   return {
     checkInDate: '',
     checkOutDate: '',
     numRooms: '',
-    roomSelections: [],
+    nightlySelections: [],
     guestDetails: '',
     notes: '',
   };
@@ -261,6 +309,63 @@ function BookPageContent() {
       [field]: value,
     }));
   }
+
+  function updateNightSelections(
+    nightDate: string,
+    selections: RoomSelection[]
+  ) {
+    setRoomDetails((current) => ({
+      ...current,
+      nightlySelections: current.nightlySelections.map(
+        (night) =>
+          night.date === nightDate
+            ? { ...night, selections }
+            : night
+      ),
+    }));
+  }
+
+  /* ==========================================================
+     KEEP THE PER-NIGHT ROOM ROWS IN SYNC WITH THE DATE RANGE
+     Regenerates one row per night whenever check-in/check-out
+     changes, carrying over any selections already made for a
+     night that's still in range.
+  ========================================================== */
+
+  useEffect(() => {
+    const nights = computeNights(
+      roomDetails.checkInDate,
+      roomDetails.checkOutDate
+    );
+
+    setRoomDetails((current) => {
+      const existingByDate = new Map(
+        current.nightlySelections.map((n) => [
+          n.date,
+          n.selections,
+        ])
+      );
+
+      const nextNightly = nights.map((n) => ({
+        date: n.start,
+        selections: existingByDate.get(n.start) || [],
+      }));
+
+      const unchanged =
+        nextNightly.length ===
+          current.nightlySelections.length &&
+        nextNightly.every(
+          (n, i) =>
+            n.date === current.nightlySelections[i]?.date &&
+            n.selections ===
+              current.nightlySelections[i]?.selections
+        );
+
+      return unchanged
+        ? current
+        : { ...current, nightlySelections: nextNightly };
+    });
+  }, [roomDetails.checkInDate, roomDetails.checkOutDate]);
 
   /* ==========================================================
      LOAD AUTHENTICATED USER
@@ -644,10 +749,12 @@ function BookPageContent() {
 
       if (
         (venue?.rooms?.length || 0) > 0 &&
-        roomDetails.roomSelections.length === 0
+        roomDetails.nightlySelections.some(
+          (night) => night.selections.length === 0
+        )
       ) {
         setError(
-          'Please select at least one room category.'
+          'Please select at least one room category for every night of the stay.'
         );
         return;
       }
@@ -902,9 +1009,9 @@ function BookPageContent() {
                 includesRoom
                   ? roomDetails.numRooms
                   : undefined,
-              roomSelections:
+              nightlySelections:
                 includesRoom
-                  ? roomDetails.roomSelections
+                  ? roomDetails.nightlySelections
                   : undefined,
               guestDetails:
                 includesRoom
@@ -1146,6 +1253,17 @@ function BookPageContent() {
         year: 'numeric',
       }
     );
+  }
+
+  function formatShortDate(date: string) {
+    if (!date) return '';
+
+    return new Date(
+      `${date}T00:00:00`
+    ).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+    });
   }
 
   /* ==========================================================
@@ -2083,24 +2201,66 @@ function BookPageContent() {
 
                     </div>
 
-                    {/* ROOM CATEGORY SELECTION */}
+                    {/* ROOM CATEGORY SELECTION, PER NIGHT */}
 
-                    {(venue?.rooms?.length || 0) > 0 && (
-                      <div style={{ marginTop: '18px' }}>
-                        <RoomQuantitySelector
-                          rooms={venue?.rooms || []}
-                          selections={
-                            roomDetails.roomSelections
-                          }
-                          onChange={(selections) =>
-                            setRoomDetails((current) => ({
-                              ...current,
-                              roomSelections: selections,
-                            }))
-                          }
-                        />
-                      </div>
-                    )}
+                    {(venue?.rooms?.length || 0) > 0 &&
+                      roomDetails.nightlySelections.length > 0 && (
+                        <div style={{ marginTop: '18px' }}>
+                          <div className="nightlyRoomsHeader">
+                            <span>
+                              {roomDetails.nightlySelections.length}{' '}
+                              night
+                              {roomDetails.nightlySelections
+                                .length === 1
+                                ? ''
+                                : 's'}{' '}
+                              -- set the rooms needed for each
+                            </span>
+                          </div>
+
+                          <div className="nightlyRoomsList">
+                            {computeNights(
+                              roomDetails.checkInDate,
+                              roomDetails.checkOutDate
+                            ).map((night, index) => {
+                              const nightSelection =
+                                roomDetails.nightlySelections[
+                                  index
+                                ];
+
+                              if (!nightSelection) return null;
+
+                              return (
+                                <div
+                                  className="nightlyRoomsNight"
+                                  key={night.start}
+                                >
+                                  <h4>
+                                    {formatShortDate(
+                                      night.start
+                                    )}{' '}
+                                    &rarr;{' '}
+                                    {formatShortDate(night.end)}
+                                  </h4>
+
+                                  <RoomQuantitySelector
+                                    rooms={venue?.rooms || []}
+                                    selections={
+                                      nightSelection.selections
+                                    }
+                                    onChange={(selections) =>
+                                      updateNightSelections(
+                                        nightSelection.date,
+                                        selections
+                                      )
+                                    }
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                     {/* GUEST DETAILS */}
 
@@ -2545,24 +2705,60 @@ function BookPageContent() {
                       </div>
 
                       <div>
+                        <span>Nights</span>
+                        <strong>
+                          {roomDetails.nightlySelections.length}
+                        </strong>
+                      </div>
+
+                      <div>
                         <span>Number of rooms</span>
                         <strong>
                           {roomDetails.numRooms}
                         </strong>
                       </div>
 
-                      {roomDetails.roomSelections.length > 0 && (
+                      {roomDetails.nightlySelections.some(
+                        (night) => night.selections.length > 0
+                      ) && (
                         <div>
-                          <span>Room categories</span>
+                          <span>Rooms by night</span>
                           <strong>
-                            {roomDetails.roomSelections
-                              .map(
-                                (s) =>
-                                  `${s.roomName} — ${s.quantity} room${
-                                    s.quantity === 1 ? '' : 's'
-                                  }`
-                              )
-                              .join(', ')}
+                            <div className="reviewNightlyRooms">
+                              {roomDetails.nightlySelections.map(
+                                (night, index) => {
+                                  if (
+                                    night.selections.length === 0
+                                  ) {
+                                    return null;
+                                  }
+
+                                  const nightEnd =
+                                    computeNights(
+                                      roomDetails.checkInDate,
+                                      roomDetails.checkOutDate
+                                    )[index]?.end || '';
+
+                                  return (
+                                    <div key={night.date}>
+                                      <em>
+                                        {formatShortDate(
+                                          night.date
+                                        )}{' '}
+                                        &rarr;{' '}
+                                        {formatShortDate(nightEnd)}:
+                                      </em>{' '}
+                                      {night.selections
+                                        .map(
+                                          (s) =>
+                                            `${s.roomName} — ${s.quantity}`
+                                        )
+                                        .join(', ')}
+                                    </div>
+                                  );
+                                }
+                              )}
+                            </div>
                           </strong>
                         </div>
                       )}

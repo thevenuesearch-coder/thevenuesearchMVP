@@ -16,8 +16,15 @@ type AdminEnquiry = {
   checkout_date: string | null;
   num_rooms: number | null;
   room_count_label: string | null;
-  room_selections:
-    | { roomId: string; roomName: string; quantity: number }[]
+  nightly_room_selections:
+    | {
+        date: string;
+        selections: {
+          roomId: string;
+          roomName: string;
+          quantity: number;
+        }[];
+      }[]
     | null;
   guest_details: string | null;
   message: string | null;
@@ -320,21 +327,36 @@ export default function AdminPage() {
                         ) || 'Not specified'}
                       </small>
                       <small>
-                        Rooms:{' '}
-                        {enquiry.room_count_label ??
-                          enquiry.num_rooms ??
+                        Peak rooms:{' '}
+                        {enquiry.num_rooms ??
                           'Not specified'}
+                        {enquiry.room_count_label
+                          ? ` (selected: ${enquiry.room_count_label})`
+                          : ''}
                       </small>
-                      {enquiry.room_selections &&
-                        enquiry.room_selections.length > 0 && (
+                      {enquiry.nightly_room_selections &&
+                        enquiry.nightly_room_selections.some(
+                          (n) => n.selections.length > 0
+                        ) && (
                           <small>
-                            Categories:{' '}
-                            {enquiry.room_selections
-                              .map(
-                                (s) =>
-                                  `${s.roomName} × ${s.quantity}`
+                            By night:
+                            <br />
+                            {enquiry.nightly_room_selections
+                              .filter(
+                                (n) => n.selections.length > 0
                               )
-                              .join(', ')}
+                              .map((n) => (
+                                <span key={n.date}>
+                                  {formatDate(n.date)}:{' '}
+                                  {n.selections
+                                    .map(
+                                      (s) =>
+                                        `${s.roomName} × ${s.quantity}`
+                                    )
+                                    .join(', ')}
+                                  <br />
+                                </span>
+                              ))}
                           </small>
                         )}
                       {enquiry.guest_details && (

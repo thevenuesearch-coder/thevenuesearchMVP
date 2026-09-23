@@ -51,6 +51,11 @@ type IncomingRoomSelection = {
   quantity?: number;
 };
 
+type IncomingNightlySelection = {
+  date?: string;
+  selections?: IncomingRoomSelection[];
+};
+
 /*
  * "Less than 10" / "More than 20" aren't plain integers, so we
  * store both the label the guest picked (room_count_label) and a
@@ -125,10 +130,10 @@ export async function POST(request: Request) {
       roomNotes,
     } = body;
 
-    const roomSelections: IncomingRoomSelection[] = Array.isArray(
-      body.roomSelections
+    const nightlySelections: IncomingNightlySelection[] = Array.isArray(
+      body.nightlySelections
     )
-      ? body.roomSelections
+      ? body.nightlySelections
       : [];
 
     /*
@@ -392,19 +397,42 @@ export async function POST(request: Request) {
     }
 
     if (includesRoom) {
-      const cleanSelections = roomSelections
-        .filter(
-          (s) =>
-            s &&
-            s.roomId &&
-            s.roomName &&
-            Number(s.quantity) > 0
-        )
-        .map((s) => ({
-          roomId: String(s.roomId),
-          roomName: String(s.roomName),
-          quantity: Math.round(Number(s.quantity)),
+      const cleanNightly = nightlySelections
+        .filter((n) => n && n.date)
+        .map((n) => ({
+          date: String(n.date),
+          selections: (n.selections || [])
+            .filter(
+              (s) =>
+                s &&
+                s.roomId &&
+                s.roomName &&
+                Number(s.quantity) > 0
+            )
+            .map((s) => ({
+              roomId: String(s.roomId),
+              roomName: String(s.roomName),
+              quantity: Math.round(Number(s.quantity)),
+            })),
         }));
+
+      /*
+       * The hotel's peak simultaneous room need across the stay --
+       * the most useful single number for the summary fields and
+       * the admin dashboard. The full night-by-night breakdown is
+       * preserved separately in nightly_room_selections.
+       */
+      const peakRooms = cleanNightly.reduce(
+        (peak, n) =>
+          Math.max(
+            peak,
+            n.selections.reduce(
+              (sum, s) => sum + s.quantity,
+              0
+            )
+          ),
+        0
+      );
 
       bookingRows.push({
         wedding_id: wedding.id,
@@ -418,13 +446,9 @@ export async function POST(request: Request) {
         payment_order_id: order.id,
         checkin_date: checkinDate,
         checkout_date: checkoutDate,
-        num_rooms:
-          cleanSelections.reduce(
-            (sum, s) => sum + s.quantity,
-            0
-          ) || estimateRoomCount(numRooms),
+        num_rooms: peakRooms || estimateRoomCount(numRooms),
         room_count_label: String(numRooms),
-        room_selections: cleanSelections,
+        nightly_room_selections: cleanNightly,
         guest_details: guestDetails || null,
       });
     }
