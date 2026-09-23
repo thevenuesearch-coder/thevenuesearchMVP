@@ -17,6 +17,37 @@ type RoomQuantitySelectorProps = {
 };
 
 /*
+ * Small helper so a broken/missing image falls back to the
+ * text placeholder rather than a broken-image icon -- each row
+ * needs its own error state since they're rendered in a list.
+ */
+function RoomThumb({
+  image,
+  name,
+}: {
+  image: string;
+  name: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (!image || failed) {
+    return (
+      <div className="roomQtyImageFallback">
+        <span>{name}</span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={image}
+      alt={name}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+/*
  * ============================================================
  * ROOM QUANTITY SELECTOR
  *
@@ -113,16 +144,10 @@ export function RoomQuantitySelector({
               key={room.id}
             >
               <div className="roomQtyImage">
-                {room.image ? (
-                  <img
-                    src={room.image}
-                    alt={room.name}
-                  />
-                ) : (
-                  <div className="roomQtyImageFallback">
-                    <span>{room.name}</span>
-                  </div>
-                )}
+                <RoomThumb
+                  image={room.image}
+                  name={room.name}
+                />
               </div>
 
               <div className="roomQtyInfo">
