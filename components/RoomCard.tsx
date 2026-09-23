@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { RoomCategory } from '../lib/data';
 
 type RoomCardProps = {
@@ -11,6 +12,8 @@ export function RoomCard({
   room,
   onViewDetails,
 }: RoomCardProps) {
+  const [imageFailed, setImageFailed] = useState(false);
+
   const specLine = [
     room.bedType,
     room.occupancyNote ||
@@ -31,10 +34,11 @@ export function RoomCard({
   return (
     <article className="room-card">
       <div className="room-card-image">
-        {room.image ? (
+        {room.image && !imageFailed ? (
           <img
             src={room.image}
             alt={room.name}
+            onError={() => setImageFailed(true)}
           />
         ) : (
           <div className="room-card-image-fallback">

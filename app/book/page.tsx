@@ -71,10 +71,10 @@ interface RazorpayResponse {
 ============================================================ */
 
 type EventDetails = {
-  venueSpace: string;
   eventDate: string;
-  eventType: string;
   guestCount: string;
+  venueSpace: string;
+  eventType: string;
   mealTiming: string;
   mealCategory: string;
   notes: string;
@@ -84,35 +84,85 @@ type EventDetails = {
    ROOM BOOKING DETAILS
 ============================================================ */
 
+type NightlyRoomSelection = {
+  /* ISO date (yyyy-mm-dd) of the night's start -- e.g. '2026-09-23'
+     for the night of 23 Sep -> 24 Sep. */
+  date: string;
+  selections: RoomSelection[];
+};
+
 type RoomBookingDetails = {
   checkInDate: string;
   checkOutDate: string;
-  numRooms: string;
-  roomSelections: RoomSelection[];
+  nightlySelections: NightlyRoomSelection[];
   guestDetails: string;
   notes: string;
 };
 
 /*
- * "Number of rooms" is a quick overall estimate -- shown for
- * every venue, including ones without individual room-category
- * data yet. Where a venue does have room categories, the
- * RoomQuantitySelector below lets the guest break that estimate
- * down by category.
+ * Turns a check-in/check-out date pair into one entry per night
+ * stayed. Check-in is the first night; check-out is the morning
+ * the guest leaves and is not itself a night -- so 23rd -> 26th is
+ * 3 nights (23->24, 24->25, 25->26), never 4.
  */
-const ROOM_COUNT_OPTIONS = [
-  'Less than 10',
-  '11', '12', '13', '14', '15',
-  '16', '17', '18', '19', '20',
-  'More than 20',
-];
+function computeNights(
+  checkInDate: string,
+  checkOutDate: string
+): { start: string; end: string }[] {
+  if (!checkInDate || !checkOutDate) return [];
+
+  /*
+   * Parse and format the dates as plain y/m/d values via
+   * Date.UTC, rather than mixing a locally-constructed Date with
+   * toISOString() (which reads back in UTC) -- that mismatch is
+   * what previously shifted every night a day earlier for anyone
+   * west of UTC... no, ahead of UTC (e.g. IST). Staying in UTC
+   * for both construction and formatting sidesteps the browser's
+   * timezone entirely, so the dates typed into the check-in/
+   * check-out fields are exactly the dates that come back out.
+   */
+  const parseAsUTC = (value: string) => {
+    const [y, m, d] = value.split('-').map(Number);
+    return Date.UTC(y, (m || 1) - 1, d || 1);
+  };
+
+  const formatFromUTC = (ms: number) =>
+    new Date(ms).toISOString().slice(0, 10);
+
+  const start = parseAsUTC(checkInDate);
+  const end = parseAsUTC(checkOutDate);
+
+  if (
+    Number.isNaN(start) ||
+    Number.isNaN(end) ||
+    end <= start
+  ) {
+    return [];
+  }
+
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  const nights: { start: string; end: string }[] = [];
+  let cursor = start;
+
+  while (cursor < end) {
+    const next = cursor + ONE_DAY_MS;
+
+    nights.push({
+      start: formatFromUTC(cursor),
+      end: formatFromUTC(next),
+    });
+
+    cursor = next;
+  }
+
+  return nights;
+}
 
 function createEmptyRoomDetails(): RoomBookingDetails {
   return {
     checkInDate: '',
     checkOutDate: '',
-    numRooms: '',
-    roomSelections: [],
+    nightlySelections: [],
     guestDetails: '',
     notes: '',
   };
@@ -138,10 +188,10 @@ type BookingForm = {
 
 function createEmptyEvent(): EventDetails {
   return {
-    venueSpace: '',
     eventDate: '',
-    eventType: '',
     guestCount: '',
+    venueSpace: '',
+    eventType: '',
     mealTiming: '',
     mealCategory: '',
     notes: '',
@@ -264,6 +314,100 @@ function BookPageContent() {
       [field]: value,
     }));
   }
+
+  function updateNightSelections(
+    nightDate: string,
+    selections: RoomSelection[]
+  ) {
+    setRoomDetails((current) => ({
+      ...current,
+      nightlySelections: current.nightlySelections.map(
+        (night) =>
+          night.date === nightDate
+            ? { ...night, selections }
+            : night
+      ),
+    }));
+  }
+
+  /*
+   * "Same rooms every night" is the common case for a stay -- this
+   * lets the guest set it once instead of repeating the same
+   * numbers on every night's card.
+   */
+  const [sameEveryNight, setSameEveryNight] = useState(false);
+
+  function applySelectionsToAllNights(
+    selections: RoomSelection[]
+  ) {
+    setRoomDetails((current) => ({
+      ...current,
+      nightlySelections: current.nightlySelections.map(
+        (night) => ({ ...night, selections })
+      ),
+    }));
+  }
+
+  function toggleSameEveryNight(checked: boolean) {
+    setSameEveryNight(checked);
+
+    if (checked) {
+      applySelectionsToAllNights(
+        roomDetails.nightlySelections[0]?.selections || []
+      );
+    }
+  }
+
+  /* ==========================================================
+     KEEP THE PER-NIGHT ROOM ROWS IN SYNC WITH THE DATE RANGE
+     Regenerates one row per night whenever check-in/check-out
+     changes, carrying over any selections already made for a
+     night that's still in range.
+  ========================================================== */
+
+  useEffect(() => {
+    const nights = computeNights(
+      roomDetails.checkInDate,
+      roomDetails.checkOutDate
+    );
+
+    setRoomDetails((current) => {
+      const existingByDate = new Map(
+        current.nightlySelections.map((n) => [
+          n.date,
+          n.selections,
+        ])
+      );
+
+      const fallbackSelections = sameEveryNight
+        ? current.nightlySelections[0]?.selections || []
+        : [];
+
+      const nextNightly = nights.map((n) => ({
+        date: n.start,
+        selections:
+          existingByDate.get(n.start) || fallbackSelections,
+      }));
+
+      const unchanged =
+        nextNightly.length ===
+          current.nightlySelections.length &&
+        nextNightly.every(
+          (n, i) =>
+            n.date === current.nightlySelections[i]?.date &&
+            n.selections ===
+              current.nightlySelections[i]?.selections
+        );
+
+      return unchanged
+        ? current
+        : { ...current, nightlySelections: nextNightly };
+    });
+  }, [
+    roomDetails.checkInDate,
+    roomDetails.checkOutDate,
+    sameEveryNight,
+  ]);
 
   /* ==========================================================
      LOAD AUTHENTICATED USER
@@ -543,11 +687,11 @@ function BookPageContent() {
         const currentEvent =
           form.events[index];
 
-        /* Venue space */
+        /* Event type */
 
-        if (!currentEvent.venueSpace) {
+        if (!currentEvent.eventType) {
           setError(
-            `Please select the venue space for Event ${index + 1}.`
+            `Please select the event type for Event ${index + 1}.`
           );
 
           return;
@@ -563,16 +707,6 @@ function BookPageContent() {
           return;
         }
 
-        /* Event type */
-
-        if (!currentEvent.eventType) {
-          setError(
-            `Please select the event type for Event ${index + 1}.`
-          );
-
-          return;
-        }
-
         /* Guest count */
 
         if (
@@ -582,6 +716,16 @@ function BookPageContent() {
         ) {
           setError(
             `Please enter a valid number of guests for Event ${index + 1}.`
+          );
+
+          return;
+        }
+
+        /* Venue space */
+
+        if (!currentEvent.venueSpace) {
+          setError(
+            `Please select the venue space for Event ${index + 1}.`
           );
 
           return;
@@ -638,19 +782,14 @@ function BookPageContent() {
         return;
       }
 
-      if (!roomDetails.numRooms) {
-        setError(
-          'Please select the number of rooms.'
-        );
-        return;
-      }
-
       if (
         (venue?.rooms?.length || 0) > 0 &&
-        roomDetails.roomSelections.length === 0
+        roomDetails.nightlySelections.some(
+          (night) => night.selections.length === 0
+        )
       ) {
         setError(
-          'Please select at least one room category.'
+          'Please select at least one room category for every night of the stay.'
         );
         return;
       }
@@ -901,13 +1040,9 @@ function BookPageContent() {
                 includesRoom
                   ? roomDetails.checkOutDate
                   : undefined,
-              numRooms:
+              nightlySelections:
                 includesRoom
-                  ? roomDetails.numRooms
-                  : undefined,
-              roomSelections:
-                includesRoom
-                  ? roomDetails.roomSelections
+                  ? roomDetails.nightlySelections
                   : undefined,
               guestDetails:
                 includesRoom
@@ -1149,6 +1284,17 @@ function BookPageContent() {
         year: 'numeric',
       }
     );
+  }
+
+  function formatShortDate(date: string) {
+    if (!date) return '';
+
+    return new Date(
+      `${date}T00:00:00`
+    ).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+    });
   }
 
   /* ==========================================================
@@ -1683,81 +1829,6 @@ function BookPageContent() {
                         <div className="formGrid">
 
                           {/* =================================================
-                              VENUE SPACE
-                          ================================================= */}
-
-                          <label>
-
-                            <span>
-                              Venue space *
-                            </span>
-
-                            <select
-                              value={
-                                currentEvent.venueSpace
-                              }
-                              onChange={(e) =>
-                                updateEventField(
-                                  index,
-                                  'venueSpace',
-                                  e.target.value
-                                )
-                              }
-                            >
-
-                              <option value="">
-                                Select venue space
-                              </option>
-
-                              {venue.venueSpaces?.map(
-                                (space) => (
-                                  <option
-                                    key={space.id}
-                                    value={space.id}
-                                  >
-                                    {space.name}
-                                  </option>
-                                )
-                              )}
-
-                            </select>
-
-                          </label>
-
-                          {/* =================================================
-                              EVENT DATE
-                          ================================================= */}
-
-                          <label>
-
-                            <span>
-                              Event date *
-                            </span>
-
-                            <input
-                              type="date"
-                              value={
-                                currentEvent.eventDate
-                              }
-                              min={
-                                new Date()
-                                  .toISOString()
-                                  .split(
-                                    'T'
-                                  )[0]
-                              }
-                              onChange={(e) =>
-                                updateEventField(
-                                  index,
-                                  'eventDate',
-                                  e.target.value
-                                )
-                              }
-                            />
-
-                          </label>
-
-                          {/* =================================================
                               EVENT TYPE
                           ================================================= */}
 
@@ -1817,6 +1888,39 @@ function BookPageContent() {
                           </label>
 
                           {/* =================================================
+                              EVENT DATE
+                          ================================================= */}
+
+                          <label>
+
+                            <span>
+                              Event date *
+                            </span>
+
+                            <input
+                              type="date"
+                              value={
+                                currentEvent.eventDate
+                              }
+                              min={
+                                new Date()
+                                  .toISOString()
+                                  .split(
+                                    'T'
+                                  )[0]
+                              }
+                              onChange={(e) =>
+                                updateEventField(
+                                  index,
+                                  'eventDate',
+                                  e.target.value
+                                )
+                              }
+                            />
+
+                          </label>
+
+                          {/* =================================================
                               GUEST COUNT
                           ================================================= */}
 
@@ -1850,6 +1954,36 @@ function BookPageContent() {
                                     'guestCount',
                                     raw
                                   );
+
+                                  // The venue space this event has
+                                  // selected may no longer fit --
+                                  // clear it so the guest re-picks
+                                  // from the filtered list rather
+                                  // than silently keeping a space
+                                  // that's now too small.
+                                  const guests =
+                                    Number(raw);
+
+                                  const stillFits =
+                                    venue?.venueSpaces?.some(
+                                      (space) =>
+                                        space.id ===
+                                          currentEvent.venueSpace &&
+                                        (!space.capacity ||
+                                          space.capacity >=
+                                            guests)
+                                    );
+
+                                  if (
+                                    currentEvent.venueSpace &&
+                                    !stillFits
+                                  ) {
+                                    updateEventField(
+                                      index,
+                                      'venueSpace',
+                                      ''
+                                    );
+                                  }
                                 }
                               }}
                               onKeyDown={(e) => {
@@ -1862,6 +1996,96 @@ function BookPageContent() {
                                 }
                               }}
                             />
+
+                          </label>
+
+                          {/* =================================================
+                              VENUE SPACE
+                              Filtered to spaces that can seat the
+                              guest count already entered above --
+                              only falls back to the full list
+                              before a guest count is entered, or
+                              if nothing on the venue fits it.
+                          ================================================= */}
+
+                          <label>
+
+                            <span>
+                              Venue space *
+                            </span>
+
+                            <select
+                              value={
+                                currentEvent.venueSpace
+                              }
+                              onChange={(e) =>
+                                updateEventField(
+                                  index,
+                                  'venueSpace',
+                                  e.target.value
+                                )
+                              }
+                            >
+
+                              <option value="">
+                                {currentEvent.guestCount &&
+                                (venue.venueSpaces || []).some(
+                                  (space) =>
+                                    space.capacity &&
+                                    space.capacity >=
+                                      Number(
+                                        currentEvent.guestCount
+                                      )
+                                )
+                                  ? 'Select a space that fits your guest count'
+                                  : 'Select venue space'}
+                              </option>
+
+                              {(venue.venueSpaces || [])
+                                .filter((space) => {
+                                  if (!currentEvent.guestCount)
+                                    return true;
+
+                                  const fitsAny = (
+                                    venue.venueSpaces || []
+                                  ).some(
+                                    (s) =>
+                                      s.capacity &&
+                                      s.capacity >=
+                                        Number(
+                                          currentEvent.guestCount
+                                        )
+                                  );
+
+                                  // If nothing on the venue can
+                                  // actually seat this many guests,
+                                  // show every space rather than an
+                                  // empty dropdown -- the guest can
+                                  // still pick and discuss with the
+                                  // venue directly.
+                                  if (!fitsAny) return true;
+
+                                  return (
+                                    !space.capacity ||
+                                    space.capacity >=
+                                      Number(
+                                        currentEvent.guestCount
+                                      )
+                                  );
+                                })
+                                .map((space) => (
+                                  <option
+                                    key={space.id}
+                                    value={space.id}
+                                  >
+                                    {space.name}
+                                    {space.capacity
+                                      ? ` (up to ${space.capacity} guests)`
+                                      : ''}
+                                  </option>
+                                ))}
+
+                            </select>
 
                           </label>
 
@@ -1890,6 +2114,10 @@ function BookPageContent() {
 
                               <option value="">
                                 Select meal
+                              </option>
+
+                              <option value="Breakfast">
+                                Breakfast
                               </option>
 
                               <option value="Lunch">
@@ -1933,6 +2161,10 @@ function BookPageContent() {
 
                               <option value="">
                                 Select Meal Category
+                              </option>
+
+                              <option value="Basic">
+                                Basic
                               </option>
 
                               <option value="Premium">
@@ -2053,57 +2285,122 @@ function BookPageContent() {
                         />
                       </label>
 
-                      {/* NUMBER OF ROOMS */}
-
-                      <label>
-                        <span>
-                          Number of rooms *
-                        </span>
-                        <select
-                          value={
-                            roomDetails.numRooms
-                          }
-                          onChange={(e) =>
-                            updateRoomField(
-                              'numRooms',
-                              e.target.value
-                            )
-                          }
-                        >
-                          <option value="">
-                            Select
-                          </option>
-                          {ROOM_COUNT_OPTIONS.map((n) => (
-                            <option
-                              key={n}
-                              value={n}
-                            >
-                              {n}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
                     </div>
 
-                    {/* ROOM CATEGORY SELECTION */}
+                    {/* ROOM CATEGORY SELECTION, PER NIGHT */}
 
-                    {(venue?.rooms?.length || 0) > 0 && (
-                      <div style={{ marginTop: '18px' }}>
-                        <RoomQuantitySelector
-                          rooms={venue?.rooms || []}
-                          selections={
-                            roomDetails.roomSelections
-                          }
-                          onChange={(selections) =>
-                            setRoomDetails((current) => ({
-                              ...current,
-                              roomSelections: selections,
-                            }))
-                          }
-                        />
-                      </div>
-                    )}
+                    {(venue?.rooms?.length || 0) > 0 &&
+                      roomDetails.nightlySelections.length > 0 && (
+                        <div style={{ marginTop: '18px' }}>
+                          <div className="nightlyRoomsHeader">
+                            <span>
+                              {roomDetails.nightlySelections.length}{' '}
+                              night
+                              {roomDetails.nightlySelections
+                                .length === 1
+                                ? ''
+                                : 's'}{' '}
+                              of the stay
+                            </span>
+
+                            {roomDetails.nightlySelections.length >
+                              1 && (
+                              <label className="nightlySameToggle">
+                                <input
+                                  type="checkbox"
+                                  checked={sameEveryNight}
+                                  onChange={(e) =>
+                                    toggleSameEveryNight(
+                                      e.target.checked
+                                    )
+                                  }
+                                />
+                                Same rooms every night
+                              </label>
+                            )}
+                          </div>
+
+                          {sameEveryNight &&
+                          roomDetails.nightlySelections.length >
+                            1 ? (
+                            <RoomQuantitySelector
+                              rooms={venue?.rooms || []}
+                              selections={
+                                roomDetails.nightlySelections[0]
+                                  ?.selections || []
+                              }
+                              onChange={
+                                applySelectionsToAllNights
+                              }
+                            />
+                          ) : (
+                            <div className="nightlyRoomsList">
+                              {computeNights(
+                                roomDetails.checkInDate,
+                                roomDetails.checkOutDate
+                              ).map((night, index) => {
+                                const nightSelection =
+                                  roomDetails.nightlySelections[
+                                    index
+                                  ];
+
+                                if (!nightSelection) return null;
+
+                                return (
+                                  <div
+                                    className="nightlyRoomsNight"
+                                    key={night.start}
+                                  >
+                                    <div className="nightlyRoomsNightHead">
+                                      <h4>
+                                        {formatShortDate(
+                                          night.start
+                                        )}{' '}
+                                        &rarr;{' '}
+                                        {formatShortDate(
+                                          night.end
+                                        )}
+                                      </h4>
+
+                                      {index === 0 &&
+                                        roomDetails
+                                          .nightlySelections
+                                          .length > 1 &&
+                                        nightSelection.selections
+                                          .length > 0 && (
+                                          <button
+                                            type="button"
+                                            className="nightlyCopyBtn"
+                                            onClick={() =>
+                                              applySelectionsToAllNights(
+                                                nightSelection.selections
+                                              )
+                                            }
+                                          >
+                                            Copy to every night
+                                          </button>
+                                        )}
+                                    </div>
+
+                                    <RoomQuantitySelector
+                                      rooms={venue?.rooms || []}
+                                      selections={
+                                        nightSelection.selections
+                                      }
+                                      onChange={(selections) =>
+                                        updateNightSelections(
+                                          nightSelection.date,
+                                          selections
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                     {/* GUEST DETAILS */}
 
@@ -2381,6 +2678,38 @@ function BookPageContent() {
 
                           <div className="reviewRows">
 
+                            {/* DATE */}
+
+                            <div>
+
+                              <span>
+                                Date
+                              </span>
+
+                              <strong>
+                                {formatDate(
+                                  currentEvent.eventDate
+                                )}
+                              </strong>
+
+                            </div>
+
+                            {/* GUEST COUNT */}
+
+                            <div>
+
+                              <span>
+                                Guests
+                              </span>
+
+                              <strong>
+                                {
+                                  currentEvent.guestCount
+                                }
+                              </strong>
+
+                            </div>
+
                             {/* VENUE SPACE */}
 
                             <div>
@@ -2400,22 +2729,6 @@ function BookPageContent() {
 
                             </div>
 
-                            {/* DATE */}
-
-                            <div>
-
-                              <span>
-                                Date
-                              </span>
-
-                              <strong>
-                                {formatDate(
-                                  currentEvent.eventDate
-                                )}
-                              </strong>
-
-                            </div>
-
                             {/* EVENT TYPE */}
 
                             <div>
@@ -2427,22 +2740,6 @@ function BookPageContent() {
                               <strong>
                                 {
                                   currentEvent.eventType
-                                }
-                              </strong>
-
-                            </div>
-
-                            {/* GUEST COUNT */}
-
-                            <div>
-
-                              <span>
-                                Guests
-                              </span>
-
-                              <strong>
-                                {
-                                  currentEvent.guestCount
                                 }
                               </strong>
 
@@ -2548,24 +2845,53 @@ function BookPageContent() {
                       </div>
 
                       <div>
-                        <span>Number of rooms</span>
+                        <span>Nights</span>
                         <strong>
-                          {roomDetails.numRooms}
+                          {roomDetails.nightlySelections.length}
                         </strong>
                       </div>
 
-                      {roomDetails.roomSelections.length > 0 && (
+                      {roomDetails.nightlySelections.some(
+                        (night) => night.selections.length > 0
+                      ) && (
                         <div>
-                          <span>Room categories</span>
+                          <span>Rooms by night</span>
                           <strong>
-                            {roomDetails.roomSelections
-                              .map(
-                                (s) =>
-                                  `${s.roomName} — ${s.quantity} room${
-                                    s.quantity === 1 ? '' : 's'
-                                  }`
-                              )
-                              .join(', ')}
+                            <div className="reviewNightlyRooms">
+                              {roomDetails.nightlySelections.map(
+                                (night, index) => {
+                                  if (
+                                    night.selections.length === 0
+                                  ) {
+                                    return null;
+                                  }
+
+                                  const nightEnd =
+                                    computeNights(
+                                      roomDetails.checkInDate,
+                                      roomDetails.checkOutDate
+                                    )[index]?.end || '';
+
+                                  return (
+                                    <div key={night.date}>
+                                      <em>
+                                        {formatShortDate(
+                                          night.date
+                                        )}{' '}
+                                        &rarr;{' '}
+                                        {formatShortDate(nightEnd)}:
+                                      </em>{' '}
+                                      {night.selections
+                                        .map(
+                                          (s) =>
+                                            `${s.roomName} — ${s.quantity}`
+                                        )
+                                        .join(', ')}
+                                    </div>
+                                  );
+                                }
+                              )}
+                            </div>
                           </strong>
                         </div>
                       )}

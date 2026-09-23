@@ -81,6 +81,13 @@ export function RoomDetailsModal({
     : room.gallery;
 
   const [activeImage, setActiveImage] = useState(0);
+  const [failedImages, setFailedImages] = useState<Set<number>>(
+    new Set()
+  );
+
+  const activeSrc = failedImages.has(activeImage)
+    ? null
+    : gallery[activeImage];
 
   const specLine = [
     room.bedType,
@@ -119,10 +126,16 @@ export function RoomDetailsModal({
         </button>
 
         <div className="room-modal-gallery">
-          {gallery.length > 0 ? (
+          {gallery.length > 0 && activeSrc ? (
             <img
-              src={gallery[activeImage]}
+              src={activeSrc}
               alt={room.name}
+              onError={() =>
+                setFailedImages(
+                  (current) =>
+                    new Set(current).add(activeImage)
+                )
+              }
             />
           ) : (
             <div className="room-modal-gallery-fallback">

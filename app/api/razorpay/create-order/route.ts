@@ -15,12 +15,16 @@ const BOOKING_AMOUNT =
   Number(process.env.NEXT_PUBLIC_BOOKING_FEE_INR) || 25000;
 
 /*
- * Bookings that already occupy a date for this venue.
+ * Bookings that already occupy a date for this venue. These must
+ * be real values of the booking_status enum in Supabase (currently
+ * requested, held, payment_pending, confirmed, cancelled, expired,
+ * failed) -- an invalid value here makes the .in() filter below
+ * throw on every single request, which is what was producing the
+ * "Unable to confirm availability" error for every venue booking.
  */
 const BLOCKING_STATUSES = [
   'held',
   'payment_pending',
-  'under_review',
   'confirmed',
 ];
 
@@ -51,23 +55,10 @@ type IncomingRoomSelection = {
   quantity?: number;
 };
 
-/*
- * "Less than 10" / "More than 20" aren't plain integers, so we
- * store both the label the guest picked (room_count_label) and a
- * best-effort numeric estimate (num_rooms) for reporting/sorting
- * in the admin dashboard.
- */
-function estimateRoomCount(label: unknown): number | null {
-  const raw = typeof label === 'string' ? label.trim() : '';
-
-  if (!raw) return null;
-  if (raw === 'Less than 10') return 9;
-  if (raw === 'More than 20') return 21;
-
-  const match = raw.match(/\d+/);
-
-  return match ? Number.parseInt(match[0], 10) : null;
-}
+type IncomingNightlySelection = {
+  date?: string;
+  selections?: IncomingRoomSelection[];
+};
 
 export async function POST(request: Request) {
   try {
@@ -119,15 +110,14 @@ export async function POST(request: Request) {
     const {
       checkinDate,
       checkoutDate,
-      numRooms,
       guestDetails,
       roomNotes,
     } = body;
 
-    const roomSelections: IncomingRoomSelection[] = Array.isArray(
-      body.roomSelections
+    const nightlySelections: IncomingNightlySelection[] = Array.isArray(
+      body.nightlySelections
     )
-      ? body.roomSelections
+      ? body.nightlySelections
       : [];
 
     /*
@@ -190,8 +180,7 @@ export async function POST(request: Request) {
     if (includesRoom) {
       if (
         !checkinDate ||
-        !checkoutDate ||
-        !numRooms
+        !checkoutDate
       ) {
         return NextResponse.json(
           {
@@ -391,19 +380,42 @@ export async function POST(request: Request) {
     }
 
     if (includesRoom) {
-      const cleanSelections = roomSelections
-        .filter(
-          (s) =>
-            s &&
-            s.roomId &&
-            s.roomName &&
-            Number(s.quantity) > 0
-        )
-        .map((s) => ({
-          roomId: String(s.roomId),
-          roomName: String(s.roomName),
-          quantity: Math.round(Number(s.quantity)),
+      const cleanNightly = nightlySelections
+        .filter((n) => n && n.date)
+        .map((n) => ({
+          date: String(n.date),
+          selections: (n.selections || [])
+            .filter(
+              (s) =>
+                s &&
+                s.roomId &&
+                s.roomName &&
+                Number(s.quantity) > 0
+            )
+            .map((s) => ({
+              roomId: String(s.roomId),
+              roomName: String(s.roomName),
+              quantity: Math.round(Number(s.quantity)),
+            })),
         }));
+
+      /*
+       * The hotel's peak simultaneous room need across the stay --
+       * the most useful single number for the summary fields and
+       * the admin dashboard. The full night-by-night breakdown is
+       * preserved separately in nightly_room_selections.
+       */
+      const peakRooms = cleanNightly.reduce(
+        (peak, n) =>
+          Math.max(
+            peak,
+            n.selections.reduce(
+              (sum, s) => sum + s.quantity,
+              0
+            )
+          ),
+        0
+      );
 
       bookingRows.push({
         wedding_id: wedding.id,
@@ -417,13 +429,8 @@ export async function POST(request: Request) {
         payment_order_id: order.id,
         checkin_date: checkinDate,
         checkout_date: checkoutDate,
-        num_rooms:
-          cleanSelections.reduce(
-            (sum, s) => sum + s.quantity,
-            0
-          ) || estimateRoomCount(numRooms),
-        room_count_label: String(numRooms),
-        room_selections: cleanSelections,
+        num_rooms: peakRooms || null,
+        nightly_room_selections: cleanNightly,
         guest_details: guestDetails || null,
       });
     }

@@ -15,9 +15,15 @@ type AdminEnquiry = {
   checkin_date: string | null;
   checkout_date: string | null;
   num_rooms: number | null;
-  room_count_label: string | null;
-  room_selections:
-    | { roomId: string; roomName: string; quantity: number }[]
+  nightly_room_selections:
+    | {
+        date: string;
+        selections: {
+          roomId: string;
+          roomName: string;
+          quantity: number;
+        }[];
+      }[]
     | null;
   guest_details: string | null;
   message: string | null;
@@ -53,7 +59,11 @@ function bookingTypeColor(type: AdminEnquiry['booking_type']) {
 
 function formatDate(value: string | null) {
   if (!value) return null;
-  const date = new Date(value);
+  /* A plain 'yyyy-mm-dd' string parses as UTC midnight per the
+     ES spec, not local midnight -- appending a time forces local
+     parsing so the displayed day can't drift a day off in
+     timezones behind UTC. */
+  const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString('en-IN', {
     day: 'numeric',
@@ -320,21 +330,33 @@ export default function AdminPage() {
                         ) || 'Not specified'}
                       </small>
                       <small>
-                        Rooms:{' '}
-                        {enquiry.room_count_label ??
-                          enquiry.num_rooms ??
+                        Peak rooms:{' '}
+                        {enquiry.num_rooms ??
                           'Not specified'}
                       </small>
-                      {enquiry.room_selections &&
-                        enquiry.room_selections.length > 0 && (
+                      {enquiry.nightly_room_selections &&
+                        enquiry.nightly_room_selections.some(
+                          (n) => n.selections.length > 0
+                        ) && (
                           <small>
-                            Categories:{' '}
-                            {enquiry.room_selections
-                              .map(
-                                (s) =>
-                                  `${s.roomName} × ${s.quantity}`
+                            By night:
+                            <br />
+                            {enquiry.nightly_room_selections
+                              .filter(
+                                (n) => n.selections.length > 0
                               )
-                              .join(', ')}
+                              .map((n) => (
+                                <span key={n.date}>
+                                  {formatDate(n.date)}:{' '}
+                                  {n.selections
+                                    .map(
+                                      (s) =>
+                                        `${s.roomName} × ${s.quantity}`
+                                    )
+                                    .join(', ')}
+                                  <br />
+                                </span>
+                              ))}
                           </small>
                         )}
                       {enquiry.guest_details && (

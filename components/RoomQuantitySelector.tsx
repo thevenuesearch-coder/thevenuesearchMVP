@@ -17,6 +17,37 @@ type RoomQuantitySelectorProps = {
 };
 
 /*
+ * Small helper so a broken/missing image falls back to the
+ * text placeholder rather than a broken-image icon -- each row
+ * needs its own error state since they're rendered in a list.
+ */
+function RoomThumb({
+  image,
+  name,
+}: {
+  image: string;
+  name: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (!image || failed) {
+    return (
+      <div className="roomQtyImageFallback">
+        <span>{name}</span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={image}
+      alt={name}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+/*
  * ============================================================
  * ROOM QUANTITY SELECTOR
  *
@@ -113,16 +144,10 @@ export function RoomQuantitySelector({
               key={room.id}
             >
               <div className="roomQtyImage">
-                {room.image ? (
-                  <img
-                    src={room.image}
-                    alt={room.name}
-                  />
-                ) : (
-                  <div className="roomQtyImageFallback">
-                    <span>{room.name}</span>
-                  </div>
-                )}
+                <RoomThumb
+                  image={room.image}
+                  name={room.name}
+                />
               </div>
 
               <div className="roomQtyInfo">
@@ -182,10 +207,11 @@ export function RoomQuantitySelector({
 
       <style jsx>{`
         .roomQtySelector {
-          border: 1px solid #e7e3db;
+          border: 1px solid rgba(138, 101, 48, 0.22);
           border-radius: 16px;
           padding: 18px 18px 6px;
           margin-top: 8px;
+          background: #fffefb;
         }
 
         .roomQtySelectorHeader {
@@ -206,7 +232,7 @@ export function RoomQuantitySelector({
           font-weight: 500;
           text-transform: none;
           letter-spacing: normal;
-          color: #666;
+          color: #8a6530;
           font-size: 13px;
         }
 
@@ -273,7 +299,7 @@ export function RoomQuantitySelector({
           border: none;
           background: none;
           padding: 0;
-          color: #8e6bea;
+          color: #8a6530;
           font-size: 12px;
           font-weight: 600;
           letter-spacing: 0.02em;
