@@ -29,7 +29,6 @@ const BLOCKING_STATUSES = [
 ];
 
 type IncomingEvent = {
-  eventName?: string;
   venueSpace?: string;
   venueSpaceName?: string;
   eventDate?: string;
@@ -40,7 +39,6 @@ type IncomingEvent = {
 
 function buildVenueBookingNotes(event: IncomingEvent) {
   const metadata = {
-    eventName: event.eventName?.trim() || null,
     venueSpaceId: event.venueSpace || null,
     venueSpaceName: event.venueSpaceName || event.venueSpace || null,
     notes: event.notes || null,

@@ -71,7 +71,6 @@ interface RazorpayResponse {
 ============================================================ */
 
 type EventDetails = {
-  eventName: string;
   eventDate: string;
   guestCount: string;
   venueSpace: string;
@@ -189,7 +188,6 @@ type BookingForm = {
 
 function createEmptyEvent(): EventDetails {
   return {
-    eventName: '',
     eventDate: '',
     guestCount: '',
     venueSpace: '',
@@ -689,11 +687,11 @@ function BookPageContent() {
         const currentEvent =
           form.events[index];
 
-        /* Event name */
+        /* Event type */
 
-        if (!currentEvent.eventName.trim()) {
+        if (!currentEvent.eventType) {
           setError(
-            `Please enter a name for Event ${index + 1}.`
+            `Please select the event type for Event ${index + 1}.`
           );
 
           return;
@@ -728,16 +726,6 @@ function BookPageContent() {
         if (!currentEvent.venueSpace) {
           setError(
             `Please select the venue space for Event ${index + 1}.`
-          );
-
-          return;
-        }
-
-        /* Event type */
-
-        if (!currentEvent.eventType) {
-          setError(
-            `Please select the event type for Event ${index + 1}.`
           );
 
           return;
@@ -1841,29 +1829,61 @@ function BookPageContent() {
                         <div className="formGrid">
 
                           {/* =================================================
-                              EVENT NAME
+                              EVENT TYPE
                           ================================================= */}
 
                           <label>
 
                             <span>
-                              Event name *
+                              Event type *
                             </span>
 
-                            <input
-                              type="text"
-                              placeholder="e.g. Priya & Rohan's Wedding"
+                            <select
                               value={
-                                currentEvent.eventName
+                                currentEvent.eventType
                               }
                               onChange={(e) =>
                                 updateEventField(
                                   index,
-                                  'eventName',
+                                  'eventType',
                                   e.target.value
                                 )
                               }
-                            />
+                            >
+
+                              <option value="">
+                                Select event type
+                              </option>
+
+                              <option value="Pre-Wedding Ritual">
+                                Pre-Wedding Ritual
+                              </option>
+
+                              <option value="Arrival Meal">
+                                Arrival Meal
+                              </option>
+
+                              <option value="Haldi">
+                                Haldi
+                              </option>
+
+                              <option value="Sangeeth">
+                                Sangeeth
+                              </option>
+
+                              <option value="Mehendi">
+                                Mehendi
+                              </option>
+
+                              <option value="Wedding">
+                                Wedding
+                              </option>
+
+                              <option value="Others">
+                                Others
+                              </option>
+
+                            </select>
 
                           </label>
 
@@ -2064,65 +2084,6 @@ function BookPageContent() {
                                       : ''}
                                   </option>
                                 ))}
-
-                            </select>
-
-                          </label>
-
-                          {/* =================================================
-                              EVENT TYPE
-                          ================================================= */}
-
-                          <label>
-
-                            <span>
-                              Event type *
-                            </span>
-
-                            <select
-                              value={
-                                currentEvent.eventType
-                              }
-                              onChange={(e) =>
-                                updateEventField(
-                                  index,
-                                  'eventType',
-                                  e.target.value
-                                )
-                              }
-                            >
-
-                              <option value="">
-                                Select event type
-                              </option>
-
-                              <option value="Pre-Wedding Ritual">
-                                Pre-Wedding Ritual
-                              </option>
-
-                              <option value="Arrival Meal">
-                                Arrival Meal
-                              </option>
-
-                              <option value="Haldi">
-                                Haldi
-                              </option>
-
-                              <option value="Sangeeth">
-                                Sangeeth
-                              </option>
-
-                              <option value="Mehendi">
-                                Mehendi
-                              </option>
-
-                              <option value="Wedding">
-                                Wedding
-                              </option>
-
-                              <option value="Others">
-                                Others
-                              </option>
 
                             </select>
 
@@ -2703,8 +2664,8 @@ function BookPageContent() {
                                   0,
                               }}
                             >
-                              {currentEvent.eventName ||
-                                `Event ${index + 1}`}
+                              Event{' '}
+                              {index + 1}
                             </h3>
 
                             <span className="eyebrow">
