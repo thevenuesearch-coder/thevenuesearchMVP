@@ -71,10 +71,11 @@ interface RazorpayResponse {
 ============================================================ */
 
 type EventDetails = {
-  venueSpace: string;
+  eventName: string;
   eventDate: string;
-  eventType: string;
   guestCount: string;
+  venueSpace: string;
+  eventType: string;
   mealTiming: string;
   mealCategory: string;
   notes: string;
@@ -94,22 +95,10 @@ type NightlyRoomSelection = {
 type RoomBookingDetails = {
   checkInDate: string;
   checkOutDate: string;
-  numRooms: string;
   nightlySelections: NightlyRoomSelection[];
   guestDetails: string;
   notes: string;
 };
-
-/*
- * Kept as a quick overall estimate alongside the per-night,
- * per-category RoomQuantitySelector below, per product direction.
- */
-const ROOM_COUNT_OPTIONS = [
-  'Less than 10',
-  '11', '12', '13', '14', '15',
-  '16', '17', '18', '19', '20',
-  'More than 20',
-];
 
 /*
  * Turns a check-in/check-out date pair into one entry per night
@@ -174,7 +163,6 @@ function createEmptyRoomDetails(): RoomBookingDetails {
   return {
     checkInDate: '',
     checkOutDate: '',
-    numRooms: '',
     nightlySelections: [],
     guestDetails: '',
     notes: '',
@@ -201,10 +189,11 @@ type BookingForm = {
 
 function createEmptyEvent(): EventDetails {
   return {
-    venueSpace: '',
+    eventName: '',
     eventDate: '',
-    eventType: '',
     guestCount: '',
+    venueSpace: '',
+    eventType: '',
     mealTiming: '',
     mealCategory: '',
     notes: '',
@@ -700,11 +689,11 @@ function BookPageContent() {
         const currentEvent =
           form.events[index];
 
-        /* Venue space */
+        /* Event name */
 
-        if (!currentEvent.venueSpace) {
+        if (!currentEvent.eventName.trim()) {
           setError(
-            `Please select the venue space for Event ${index + 1}.`
+            `Please enter a name for Event ${index + 1}.`
           );
 
           return;
@@ -720,16 +709,6 @@ function BookPageContent() {
           return;
         }
 
-        /* Event type */
-
-        if (!currentEvent.eventType) {
-          setError(
-            `Please select the event type for Event ${index + 1}.`
-          );
-
-          return;
-        }
-
         /* Guest count */
 
         if (
@@ -739,6 +718,26 @@ function BookPageContent() {
         ) {
           setError(
             `Please enter a valid number of guests for Event ${index + 1}.`
+          );
+
+          return;
+        }
+
+        /* Venue space */
+
+        if (!currentEvent.venueSpace) {
+          setError(
+            `Please select the venue space for Event ${index + 1}.`
+          );
+
+          return;
+        }
+
+        /* Event type */
+
+        if (!currentEvent.eventType) {
+          setError(
+            `Please select the event type for Event ${index + 1}.`
           );
 
           return;
@@ -791,13 +790,6 @@ function BookPageContent() {
       ) {
         setError(
           'Check-out date must be after the check-in date.'
-        );
-        return;
-      }
-
-      if (!roomDetails.numRooms) {
-        setError(
-          'Please select the number of rooms.'
         );
         return;
       }
@@ -1059,10 +1051,6 @@ function BookPageContent() {
               checkoutDate:
                 includesRoom
                   ? roomDetails.checkOutDate
-                  : undefined,
-              numRooms:
-                includesRoom
-                  ? roomDetails.numRooms
                   : undefined,
               nightlySelections:
                 includesRoom
@@ -1853,44 +1841,29 @@ function BookPageContent() {
                         <div className="formGrid">
 
                           {/* =================================================
-                              VENUE SPACE
+                              EVENT NAME
                           ================================================= */}
 
                           <label>
 
                             <span>
-                              Venue space *
+                              Event name *
                             </span>
 
-                            <select
+                            <input
+                              type="text"
+                              placeholder="e.g. Priya & Rohan's Wedding"
                               value={
-                                currentEvent.venueSpace
+                                currentEvent.eventName
                               }
                               onChange={(e) =>
                                 updateEventField(
                                   index,
-                                  'venueSpace',
+                                  'eventName',
                                   e.target.value
                                 )
                               }
-                            >
-
-                              <option value="">
-                                Select venue space
-                              </option>
-
-                              {venue.venueSpaces?.map(
-                                (space) => (
-                                  <option
-                                    key={space.id}
-                                    value={space.id}
-                                  >
-                                    {space.name}
-                                  </option>
-                                )
-                              )}
-
-                            </select>
+                            />
 
                           </label>
 
@@ -1924,6 +1897,175 @@ function BookPageContent() {
                                 )
                               }
                             />
+
+                          </label>
+
+                          {/* =================================================
+                              GUEST COUNT
+                          ================================================= */}
+
+                          <label>
+
+                            <span>
+                              Number of Guests *
+                            </span>
+
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              min={1}
+                              step={1}
+                              placeholder="Enter number"
+                              value={
+                                currentEvent.guestCount
+                              }
+                              onChange={(e) => {
+                                const raw = e.target.value;
+
+                                // Allow clearing the field, and
+                                // reject anything that isn't a
+                                // positive whole number.
+                                if (
+                                  raw === '' ||
+                                  /^\d+$/.test(raw)
+                                ) {
+                                  updateEventField(
+                                    index,
+                                    'guestCount',
+                                    raw
+                                  );
+
+                                  // The venue space this event has
+                                  // selected may no longer fit --
+                                  // clear it so the guest re-picks
+                                  // from the filtered list rather
+                                  // than silently keeping a space
+                                  // that's now too small.
+                                  const guests =
+                                    Number(raw);
+
+                                  const stillFits =
+                                    venue?.venueSpaces?.some(
+                                      (space) =>
+                                        space.id ===
+                                          currentEvent.venueSpace &&
+                                        (!space.capacity ||
+                                          space.capacity >=
+                                            guests)
+                                    );
+
+                                  if (
+                                    currentEvent.venueSpace &&
+                                    !stillFits
+                                  ) {
+                                    updateEventField(
+                                      index,
+                                      'venueSpace',
+                                      ''
+                                    );
+                                  }
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (
+                                  ['-', '+', 'e', 'E', '.'].includes(
+                                    e.key
+                                  )
+                                ) {
+                                  e.preventDefault();
+                                }
+                              }}
+                            />
+
+                          </label>
+
+                          {/* =================================================
+                              VENUE SPACE
+                              Filtered to spaces that can seat the
+                              guest count already entered above --
+                              only falls back to the full list
+                              before a guest count is entered, or
+                              if nothing on the venue fits it.
+                          ================================================= */}
+
+                          <label>
+
+                            <span>
+                              Venue space *
+                            </span>
+
+                            <select
+                              value={
+                                currentEvent.venueSpace
+                              }
+                              onChange={(e) =>
+                                updateEventField(
+                                  index,
+                                  'venueSpace',
+                                  e.target.value
+                                )
+                              }
+                            >
+
+                              <option value="">
+                                {currentEvent.guestCount &&
+                                (venue.venueSpaces || []).some(
+                                  (space) =>
+                                    space.capacity &&
+                                    space.capacity >=
+                                      Number(
+                                        currentEvent.guestCount
+                                      )
+                                )
+                                  ? 'Select a space that fits your guest count'
+                                  : 'Select venue space'}
+                              </option>
+
+                              {(venue.venueSpaces || [])
+                                .filter((space) => {
+                                  if (!currentEvent.guestCount)
+                                    return true;
+
+                                  const fitsAny = (
+                                    venue.venueSpaces || []
+                                  ).some(
+                                    (s) =>
+                                      s.capacity &&
+                                      s.capacity >=
+                                        Number(
+                                          currentEvent.guestCount
+                                        )
+                                  );
+
+                                  // If nothing on the venue can
+                                  // actually seat this many guests,
+                                  // show every space rather than an
+                                  // empty dropdown -- the guest can
+                                  // still pick and discuss with the
+                                  // venue directly.
+                                  if (!fitsAny) return true;
+
+                                  return (
+                                    !space.capacity ||
+                                    space.capacity >=
+                                      Number(
+                                        currentEvent.guestCount
+                                      )
+                                  );
+                                })
+                                .map((space) => (
+                                  <option
+                                    key={space.id}
+                                    value={space.id}
+                                  >
+                                    {space.name}
+                                    {space.capacity
+                                      ? ` (up to ${space.capacity} guests)`
+                                      : ''}
+                                  </option>
+                                ))}
+
+                            </select>
 
                           </label>
 
@@ -1987,55 +2129,6 @@ function BookPageContent() {
                           </label>
 
                           {/* =================================================
-                              GUEST COUNT
-                          ================================================= */}
-
-                          <label>
-
-                            <span>
-                              Number of Guests *
-                            </span>
-
-                            <input
-                              type="number"
-                              inputMode="numeric"
-                              min={1}
-                              step={1}
-                              placeholder="Enter number"
-                              value={
-                                currentEvent.guestCount
-                              }
-                              onChange={(e) => {
-                                const raw = e.target.value;
-
-                                // Allow clearing the field, and
-                                // reject anything that isn't a
-                                // positive whole number.
-                                if (
-                                  raw === '' ||
-                                  /^\d+$/.test(raw)
-                                ) {
-                                  updateEventField(
-                                    index,
-                                    'guestCount',
-                                    raw
-                                  );
-                                }
-                              }}
-                              onKeyDown={(e) => {
-                                if (
-                                  ['-', '+', 'e', 'E', '.'].includes(
-                                    e.key
-                                  )
-                                ) {
-                                  e.preventDefault();
-                                }
-                              }}
-                            />
-
-                          </label>
-
-                          {/* =================================================
                               MEAL
                           ================================================= */}
 
@@ -2060,6 +2153,10 @@ function BookPageContent() {
 
                               <option value="">
                                 Select meal
+                              </option>
+
+                              <option value="Breakfast">
+                                Breakfast
                               </option>
 
                               <option value="Lunch">
@@ -2103,6 +2200,10 @@ function BookPageContent() {
 
                               <option value="">
                                 Select Meal Category
+                              </option>
+
+                              <option value="Basic">
+                                Basic
                               </option>
 
                               <option value="Premium">
@@ -2221,37 +2322,6 @@ function BookPageContent() {
                             )
                           }
                         />
-                      </label>
-
-                      {/* NUMBER OF ROOMS */}
-
-                      <label>
-                        <span>
-                          Number of rooms *
-                        </span>
-                        <select
-                          value={
-                            roomDetails.numRooms
-                          }
-                          onChange={(e) =>
-                            updateRoomField(
-                              'numRooms',
-                              e.target.value
-                            )
-                          }
-                        >
-                          <option value="">
-                            Select
-                          </option>
-                          {ROOM_COUNT_OPTIONS.map((n) => (
-                            <option
-                              key={n}
-                              value={n}
-                            >
-                              {n}
-                            </option>
-                          ))}
-                        </select>
                       </label>
 
                     </div>
@@ -2633,8 +2703,8 @@ function BookPageContent() {
                                   0,
                               }}
                             >
-                              Event{' '}
-                              {index + 1}
+                              {currentEvent.eventName ||
+                                `Event ${index + 1}`}
                             </h3>
 
                             <span className="eyebrow">
@@ -2646,6 +2716,38 @@ function BookPageContent() {
                           </div>
 
                           <div className="reviewRows">
+
+                            {/* DATE */}
+
+                            <div>
+
+                              <span>
+                                Date
+                              </span>
+
+                              <strong>
+                                {formatDate(
+                                  currentEvent.eventDate
+                                )}
+                              </strong>
+
+                            </div>
+
+                            {/* GUEST COUNT */}
+
+                            <div>
+
+                              <span>
+                                Guests
+                              </span>
+
+                              <strong>
+                                {
+                                  currentEvent.guestCount
+                                }
+                              </strong>
+
+                            </div>
 
                             {/* VENUE SPACE */}
 
@@ -2666,22 +2768,6 @@ function BookPageContent() {
 
                             </div>
 
-                            {/* DATE */}
-
-                            <div>
-
-                              <span>
-                                Date
-                              </span>
-
-                              <strong>
-                                {formatDate(
-                                  currentEvent.eventDate
-                                )}
-                              </strong>
-
-                            </div>
-
                             {/* EVENT TYPE */}
 
                             <div>
@@ -2693,22 +2779,6 @@ function BookPageContent() {
                               <strong>
                                 {
                                   currentEvent.eventType
-                                }
-                              </strong>
-
-                            </div>
-
-                            {/* GUEST COUNT */}
-
-                            <div>
-
-                              <span>
-                                Guests
-                              </span>
-
-                              <strong>
-                                {
-                                  currentEvent.guestCount
                                 }
                               </strong>
 
@@ -2817,13 +2887,6 @@ function BookPageContent() {
                         <span>Nights</span>
                         <strong>
                           {roomDetails.nightlySelections.length}
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>Number of rooms</span>
-                        <strong>
-                          {roomDetails.numRooms}
                         </strong>
                       </div>
 

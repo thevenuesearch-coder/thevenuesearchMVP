@@ -84,7 +84,6 @@ async function sendAdminBookingEmail(details: {
     checkinDate: string | null;
     checkoutDate: string | null;
     numRooms: number | null;
-    roomCountLabel: string | null;
     nightlyRoomSelections:
       | {
           date: string;
@@ -140,7 +139,7 @@ async function sendAdminBookingEmail(details: {
                       .join(', ')}`
                 )
                 .join('<br/>')
-            : `${booking.roomCountLabel || booking.numRooms || '—'} rooms`;
+            : `Peak ${booking.numRooms || '—'} rooms`;
 
         return `
           <tr>
@@ -364,7 +363,7 @@ export async function POST(request: Request) {
       .eq('payment_order_id', razorpay_order_id)
       .eq('status', 'payment_pending')
       .select(
-        'id, wedding_id, venue_id, event_date, event_type, guest_count, booking_type, checkin_date, checkout_date, num_rooms, room_count_label, nightly_room_selections'
+        'id, wedding_id, venue_id, event_date, event_type, guest_count, booking_type, checkin_date, checkout_date, num_rooms, nightly_room_selections'
       );
 
     if (
@@ -411,7 +410,7 @@ export async function POST(request: Request) {
         await admin
           .from('booking_requests')
           .select(
-            'id, venue_id, event_date, event_type, guest_count, booking_type, checkin_date, checkout_date, num_rooms, room_count_label, nightly_room_selections'
+            'id, venue_id, event_date, event_type, guest_count, booking_type, checkin_date, checkout_date, num_rooms, nightly_room_selections'
           )
           .in('id', bookingIdsForEmail);
 
@@ -445,7 +444,6 @@ export async function POST(request: Request) {
             checkinDate: booking.checkin_date || null,
             checkoutDate: booking.checkout_date || null,
             numRooms: booking.num_rooms || null,
-            roomCountLabel: booking.room_count_label || null,
             nightlyRoomSelections:
               booking.nightly_room_selections || null,
           })),

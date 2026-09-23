@@ -99,7 +99,7 @@ export async function POST(request: Request) {
     }
 
     if (
-      booking.status !== 'under_review' &&
+      booking.status !== 'payment_pending' &&
       booking.status !== 'confirmed'
     ) {
       return NextResponse.json(

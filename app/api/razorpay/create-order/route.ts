@@ -15,16 +15,21 @@ const BOOKING_AMOUNT =
   Number(process.env.NEXT_PUBLIC_BOOKING_FEE_INR) || 25000;
 
 /*
- * Bookings that already occupy a date for this venue.
+ * Bookings that already occupy a date for this venue. These must
+ * be real values of the booking_status enum in Supabase (currently
+ * requested, held, payment_pending, confirmed, cancelled, expired,
+ * failed) -- an invalid value here makes the .in() filter below
+ * throw on every single request, which is what was producing the
+ * "Unable to confirm availability" error for every venue booking.
  */
 const BLOCKING_STATUSES = [
   'held',
   'payment_pending',
-  'under_review',
   'confirmed',
 ];
 
 type IncomingEvent = {
+  eventName?: string;
   venueSpace?: string;
   venueSpaceName?: string;
   eventDate?: string;
@@ -35,6 +40,7 @@ type IncomingEvent = {
 
 function buildVenueBookingNotes(event: IncomingEvent) {
   const metadata = {
+    eventName: event.eventName?.trim() || null,
     venueSpaceId: event.venueSpace || null,
     venueSpaceName: event.venueSpaceName || event.venueSpace || null,
     notes: event.notes || null,
@@ -55,25 +61,6 @@ type IncomingNightlySelection = {
   date?: string;
   selections?: IncomingRoomSelection[];
 };
-
-/*
- * "Less than 10" / "More than 20" aren't plain integers, so we
- * store both the label the guest picked (room_count_label) and a
- * best-effort numeric estimate for num_rooms when no per-category
- * selection was made (num_rooms otherwise comes from summing the
- * category quantities).
- */
-function estimateRoomCount(label: unknown): number | null {
-  const raw = typeof label === 'string' ? label.trim() : '';
-
-  if (!raw) return null;
-  if (raw === 'Less than 10') return 9;
-  if (raw === 'More than 20') return 21;
-
-  const match = raw.match(/\d+/);
-
-  return match ? Number.parseInt(match[0], 10) : null;
-}
 
 export async function POST(request: Request) {
   try {
@@ -125,7 +112,6 @@ export async function POST(request: Request) {
     const {
       checkinDate,
       checkoutDate,
-      numRooms,
       guestDetails,
       roomNotes,
     } = body;
@@ -196,8 +182,7 @@ export async function POST(request: Request) {
     if (includesRoom) {
       if (
         !checkinDate ||
-        !checkoutDate ||
-        !numRooms
+        !checkoutDate
       ) {
         return NextResponse.json(
           {
@@ -446,8 +431,7 @@ export async function POST(request: Request) {
         payment_order_id: order.id,
         checkin_date: checkinDate,
         checkout_date: checkoutDate,
-        num_rooms: peakRooms || estimateRoomCount(numRooms),
-        room_count_label: String(numRooms),
+        num_rooms: peakRooms || null,
         nightly_room_selections: cleanNightly,
         guest_details: guestDetails || null,
       });

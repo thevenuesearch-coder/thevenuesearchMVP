@@ -15,7 +15,6 @@ type AdminEnquiry = {
   checkin_date: string | null;
   checkout_date: string | null;
   num_rooms: number | null;
-  room_count_label: string | null;
   nightly_room_selections:
     | {
         date: string;
@@ -334,9 +333,6 @@ export default function AdminPage() {
                         Peak rooms:{' '}
                         {enquiry.num_rooms ??
                           'Not specified'}
-                        {enquiry.room_count_label
-                          ? ` (selected: ${enquiry.room_count_label})`
-                          : ''}
                       </small>
                       {enquiry.nightly_room_selections &&
                         enquiry.nightly_room_selections.some(
