@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import type { RoomCategory } from '../lib/data';
-import { RoomDetailsModal } from './RoomDetailsModal';
 
 export type RoomSelection = {
   roomId: string;
@@ -57,6 +56,10 @@ function RoomThumb({
  * rooms across more than one of them. There is deliberately no
  * guest-count field here: guest count belongs to the event
  * details, not the room stay.
+ *
+ * Each row shows the room's full details inline -- image, spec
+ * line, description, amenities -- rather than hiding them behind
+ * a "View details" link, so the card itself is the detail view.
  * ============================================================
  */
 export function RoomQuantitySelector({
@@ -64,9 +67,6 @@ export function RoomQuantitySelector({
   selections,
   onChange,
 }: RoomQuantitySelectorProps) {
-  const [detailsRoom, setDetailsRoom] =
-    useState<RoomCategory | null>(null);
-
   function quantityFor(roomId: string) {
     return (
       selections.find((s) => s.roomId === roomId)?.quantity || 0
@@ -138,78 +138,95 @@ export function RoomQuantitySelector({
         {rooms.map((room) => {
           const qty = quantityFor(room.id);
 
+          const specLine = [
+            room.bedType,
+            room.occupancyNote ||
+              (room.maxOccupancy
+                ? `Sleeps ${room.maxOccupancy}`
+                : null),
+            room.sizeSqm
+              ? `${room.sizeSqm} sq.m`
+              : room.sizeSqft
+                ? `${room.sizeSqft} sq.ft`
+                : null,
+            room.view,
+          ]
+            .filter(Boolean)
+            .join(' · ');
+
+          const tags = [
+            ...room.features,
+            ...room.amenities,
+          ].slice(0, 8);
+
           return (
-            <div
-              className="roomQtyRow"
-              key={room.id}
-            >
+            <div className="roomQtyRow" key={room.id}>
               <div className="roomQtyImage">
-                <RoomThumb
-                  image={room.image}
-                  name={room.name}
-                />
+                <RoomThumb image={room.image} name={room.name} />
               </div>
 
               <div className="roomQtyInfo">
                 <h4>{room.name}</h4>
 
-                {room.occupancyNote || room.maxOccupancy ? (
-                  <p>
-                    {room.occupancyNote ||
-                      `Sleeps ${room.maxOccupancy}`}
+                {specLine && (
+                  <p className="roomQtySpec">{specLine}</p>
+                )}
+
+                {room.description && (
+                  <p className="roomQtyDescription">
+                    {room.description}
                   </p>
-                ) : null}
+                )}
 
-                <button
-                  type="button"
-                  className="roomQtyViewDetails"
-                  onClick={() => setDetailsRoom(room)}
-                >
-                  View details
-                </button>
-              </div>
+                {tags.length > 0 && (
+                  <ul className="roomQtyTags">
+                    {tags.map((tag) => (
+                      <li key={tag}>{tag}</li>
+                    ))}
+                  </ul>
+                )}
 
-              <div className="roomQtyStepper">
-                <button
-                  type="button"
-                  aria-label={`Fewer ${room.name}`}
-                  disabled={qty <= 0}
-                  onClick={() =>
-                    setQuantity(room, qty - 1)
-                  }
-                >
-                  −
-                </button>
+                <div className="roomQtyStepperRow">
+                  <span className="roomQtyStepperLabel">
+                    Rooms required
+                  </span>
 
-                <span>{qty}</span>
+                  <div className="roomQtyStepper">
+                    <button
+                      type="button"
+                      aria-label={`Fewer ${room.name}`}
+                      disabled={qty <= 0}
+                      onClick={() =>
+                        setQuantity(room, qty - 1)
+                      }
+                    >
+                      −
+                    </button>
 
-                <button
-                  type="button"
-                  aria-label={`More ${room.name}`}
-                  onClick={() =>
-                    setQuantity(room, qty + 1)
-                  }
-                >
-                  +
-                </button>
+                    <span>{qty}</span>
+
+                    <button
+                      type="button"
+                      aria-label={`More ${room.name}`}
+                      onClick={() =>
+                        setQuantity(room, qty + 1)
+                      }
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {detailsRoom && (
-        <RoomDetailsModal
-          room={detailsRoom}
-          onClose={() => setDetailsRoom(null)}
-        />
-      )}
-
       <style jsx>{`
         .roomQtySelector {
           border: 1px solid rgba(138, 101, 48, 0.22);
           border-radius: 16px;
-          padding: 18px 18px 6px;
+          padding: 22px 22px 8px;
           margin-top: 8px;
           background: #fffefb;
         }
@@ -220,7 +237,7 @@ export function RoomQuantitySelector({
           justify-content: space-between;
           flex-wrap: wrap;
           gap: 8px;
-          margin-bottom: 14px;
+          margin-bottom: 18px;
           font-size: 13px;
           font-weight: 600;
           letter-spacing: 0.04em;
@@ -243,10 +260,9 @@ export function RoomQuantitySelector({
 
         .roomQtyRow {
           display: grid;
-          grid-template-columns: 72px 1fr auto;
-          align-items: center;
-          gap: 14px;
-          padding: 12px 0;
+          grid-template-columns: 220px 1fr;
+          gap: 26px;
+          padding: 26px 0;
           border-top: 1px solid #efece5;
         }
 
@@ -255,9 +271,9 @@ export function RoomQuantitySelector({
         }
 
         .roomQtyImage {
-          width: 72px;
-          height: 72px;
-          border-radius: 10px;
+          width: 220px;
+          aspect-ratio: 4 / 3;
+          border-radius: 12px;
           overflow: hidden;
           background: #f2efe9;
           flex-shrink: 0;
@@ -276,35 +292,63 @@ export function RoomQuantitySelector({
           display: grid;
           place-items: center;
           text-align: center;
-          padding: 4px;
-          font-size: 9px;
+          padding: 8px;
+          font-size: 12px;
           color: #a39c8f;
-          letter-spacing: 0.04em;
+          letter-spacing: 0.02em;
         }
 
         .roomQtyInfo h4 {
-          margin: 0 0 2px;
+          margin: 0 0 6px;
           font-family: Georgia, 'Times New Roman', serif;
           font-weight: 400;
-          font-size: 16px;
+          font-size: 22px;
+          color: #22190f;
         }
 
-        .roomQtyInfo p {
-          margin: 0 0 4px;
-          font-size: 12.5px;
-          color: #666;
-        }
-
-        .roomQtyViewDetails {
-          border: none;
-          background: none;
-          padding: 0;
-          color: #8a6530;
-          font-size: 12px;
+        .roomQtySpec {
+          margin: 0 0 12px;
+          font-size: 13px;
           font-weight: 600;
-          letter-spacing: 0.02em;
-          cursor: pointer;
-          text-decoration: underline;
+          color: #8a6530;
+        }
+
+        .roomQtyDescription {
+          margin: 0 0 14px;
+          font-size: 13.5px;
+          line-height: 1.7;
+          color: #55503f;
+          max-width: 60ch;
+        }
+
+        .roomQtyTags {
+          list-style: none;
+          margin: 0 0 18px;
+          padding: 0;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .roomQtyTags li {
+          padding: 5px 12px;
+          border: 1px solid #e2dccd;
+          border-radius: 20px;
+          font-size: 11.5px;
+          color: #66604f;
+          background: #fbf8f1;
+        }
+
+        .roomQtyStepperRow {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .roomQtyStepperLabel {
+          font-size: 12.5px;
+          font-weight: 600;
+          color: #22190f;
         }
 
         .roomQtyStepper {
@@ -317,13 +361,13 @@ export function RoomQuantitySelector({
         }
 
         .roomQtyStepper button {
-          width: 26px;
-          height: 26px;
+          width: 30px;
+          height: 30px;
           border-radius: 50%;
           border: 1px solid #151515;
           background: #fff;
           color: #151515;
-          font-size: 16px;
+          font-size: 17px;
           line-height: 1;
           cursor: pointer;
           display: grid;
@@ -336,34 +380,24 @@ export function RoomQuantitySelector({
         }
 
         .roomQtyStepper span {
-          min-width: 18px;
+          min-width: 20px;
           text-align: center;
-          font-size: 14px;
+          font-size: 15px;
           font-weight: 600;
         }
 
         @media (max-width: 640px) {
           .roomQtyRow {
-            grid-template-columns: 56px 1fr;
-            grid-template-areas:
-              'image info'
-              'stepper stepper';
+            grid-template-columns: 1fr;
+            gap: 14px;
           }
 
           .roomQtyImage {
-            grid-area: image;
-            width: 56px;
-            height: 56px;
+            width: 100%;
           }
 
-          .roomQtyInfo {
-            grid-area: info;
-          }
-
-          .roomQtyStepper {
-            grid-area: stepper;
-            justify-content: flex-end;
-            margin-top: 8px;
+          .roomQtyStepperRow {
+            justify-content: space-between;
           }
         }
       `}</style>
