@@ -305,6 +305,75 @@ function BookPageContent() {
     bookingType === 'room' ||
     bookingType === 'venue_room';
 
+  /*
+   * ============================================================
+   * FORM SUB-STEP (within step 1)
+   *
+   * Splits "booking details" into a genuine Events sub-step and a
+   * genuine Rooms sub-step, rather than showing both sections in
+   * one long scroll. A venue-only booking never has a Rooms
+   * sub-step; a room-only booking starts on Rooms directly.
+   * ============================================================
+   */
+  const [formSubStep, setFormSubStep] =
+    useState<'events' | 'rooms'>(
+      bookingType === 'room' ? 'rooms' : 'events'
+    );
+
+  useEffect(() => {
+    // If the user switches booking type in a way that makes the
+    // current sub-step unavailable, move them somewhere valid
+    // rather than leaving them on a hidden section.
+    if (
+      formSubStep === 'events' &&
+      !includesVenue
+    ) {
+      setFormSubStep('rooms');
+    } else if (
+      formSubStep === 'rooms' &&
+      !includesRoom
+    ) {
+      setFormSubStep('events');
+    }
+  }, [bookingType, includesVenue, includesRoom, formSubStep]);
+
+  /*
+   * Drives the progress indicator: 2 steps for a venue-only or
+   * room-only booking, 3 for venue + room (events, rooms, review).
+   */
+  const progressSteps: {
+    key: 'events' | 'rooms' | 'review';
+    label: string;
+    small: string;
+  }[] = [
+    ...(includesVenue
+      ? [
+          {
+            key: 'events' as const,
+            label: 'Event details',
+            small: 'Your celebration',
+          },
+        ]
+      : []),
+    ...(includesRoom
+      ? [
+          {
+            key: 'rooms' as const,
+            label: 'Room details',
+            small: 'Your stay',
+          },
+        ]
+      : []),
+    {
+      key: 'review' as const,
+      label: 'Review & payment',
+      small: 'Confirm and pay',
+    },
+  ];
+
+  const currentProgressKey: 'events' | 'rooms' | 'review' =
+    step === 2 ? 'review' : formSubStep;
+
   function updateRoomField(
     field: keyof RoomBookingDetails,
     value: string
@@ -648,10 +717,10 @@ function BookPageContent() {
     }
 
     /* --------------------------------------------------------
-       NUMBER OF EVENTS (venue booking only)
+       NUMBER OF EVENTS (venue booking only, events sub-step)
     -------------------------------------------------------- */
 
-    if (includesVenue) {
+    if (includesVenue && formSubStep === 'events') {
       if (!form.numberOfEvents) {
         setError(
           'Please select the number of events.'
@@ -754,10 +823,31 @@ function BookPageContent() {
     }
 
     /* --------------------------------------------------------
-       ROOM DETAILS (room booking only)
+       EVENTS SUB-STEP COMPLETE -- either continue on to the
+       Rooms sub-step (venue + room booking), or this booking
+       has no room component, so go straight to review.
     -------------------------------------------------------- */
 
-    if (includesRoom) {
+    if (includesVenue && formSubStep === 'events') {
+      if (includesRoom) {
+        setFormSubStep('rooms');
+      } else {
+        setStep(2);
+      }
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+
+      return;
+    }
+
+    /* --------------------------------------------------------
+       ROOM DETAILS (rooms sub-step)
+    -------------------------------------------------------- */
+
+    if (includesRoom && formSubStep === 'rooms') {
       if (!roomDetails.checkInDate) {
         setError(
           'Please select a check-in date.'
@@ -1388,21 +1478,27 @@ function BookPageContent() {
           </Link>
 
           <span className="kicker">
-            {step === 1
+            {currentProgressKey === 'events'
               ? 'BOOK THIS VENUE'
-              : 'REVIEW YOUR BOOKING'}
+              : currentProgressKey === 'rooms'
+                ? 'RESERVE YOUR ROOMS'
+                : 'REVIEW YOUR BOOKING'}
           </span>
 
           <h1>
-            {step === 1
+            {currentProgressKey === 'events'
               ? 'Start your booking.'
-              : 'Review your booking.'}
+              : currentProgressKey === 'rooms'
+                ? 'Plan your stay.'
+                : 'Review your booking.'}
           </h1>
 
           <p>
-            {step === 1
-              ? 'Tell us about your celebration and continue to review your booking details.'
-              : 'Review all your event details before proceeding to payment.'}
+            {currentProgressKey === 'events'
+              ? 'Tell us about your celebration, then continue to room booking.'
+              : currentProgressKey === 'rooms'
+                ? 'Choose your dates and rooms for each night of the stay.'
+                : 'Review all your details before proceeding to payment.'}
           </p>
 
         </div>
@@ -1413,57 +1509,43 @@ function BookPageContent() {
 
         <div className="bookingSteps">
 
-          <div
-            className={
-              step === 1
-                ? 'bookingStep active'
-                : 'bookingStep complete'
-            }
-          >
+          {progressSteps.map((progressStep, index) => {
+            const stepIndex = progressSteps.findIndex(
+              (s) => s.key === currentProgressKey
+            );
 
-            <span>
-              1
-            </span>
+            const status =
+              index === stepIndex
+                ? 'active'
+                : index < stepIndex
+                  ? 'complete'
+                  : '';
 
-            <div>
+            return (
+              <div
+                className={`bookingStep ${status}`.trim()}
+                key={progressStep.key}
+              >
 
-              <strong>
-                Booking details
-              </strong>
+                <span>
+                  {String(index + 1).padStart(2, '0')}
+                </span>
 
-              <small>
-                Your event information
-              </small>
+                <div>
 
-            </div>
+                  <strong>
+                    {progressStep.label}
+                  </strong>
 
-          </div>
+                  <small>
+                    {progressStep.small}
+                  </small>
 
-          <div
-            className={
-              step === 2
-                ? 'bookingStep active'
-                : 'bookingStep'
-            }
-          >
+                </div>
 
-            <span>
-              2
-            </span>
-
-            <div>
-
-              <strong>
-                Review & payment
-              </strong>
-
-              <small>
-                Confirm and pay
-              </small>
-
-            </div>
-
-          </div>
+              </div>
+            );
+          })}
 
         </div>
 
@@ -1718,7 +1800,8 @@ function BookPageContent() {
                 ================================================= */}
 
                 {(bookingType === 'venue' ||
-                  bookingType === 'venue_room') && (
+                  bookingType === 'venue_room') &&
+                  formSubStep === 'events' && (
 
                 <div className="formSection">
 
@@ -2231,9 +2314,26 @@ function BookPageContent() {
                 ================================================= */}
 
                 {(bookingType === 'room' ||
-                  bookingType === 'venue_room') && (
+                  bookingType === 'venue_room') &&
+                  formSubStep === 'rooms' && (
 
                   <div className="formSection">
+
+                    {bookingType === 'venue_room' && (
+                      <button
+                        type="button"
+                        className="backToEventsBtn"
+                        onClick={() => {
+                          setFormSubStep('events');
+                          window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth',
+                          });
+                        }}
+                      >
+                        &larr; Back to event details
+                      </button>
+                    )}
 
                     <span className="kicker">
                       ROOM DETAILS
@@ -2471,7 +2571,11 @@ function BookPageContent() {
                       submitting
                     }
                   >
-                    Review Booking →
+                    {includesVenue &&
+                    formSubStep === 'events' &&
+                    includesRoom
+                      ? 'Continue to Room Booking →'
+                      : 'Review Booking →'}
                   </button>
 
                 </div>
@@ -2977,6 +3081,12 @@ function BookPageContent() {
                     onClick={() => {
                       setError('');
                       setStep(1);
+                      // Land back on whichever sub-step was
+                      // completed last, rather than always
+                      // restarting at event details.
+                      setFormSubStep(
+                        includesRoom ? 'rooms' : 'events'
+                      );
 
                       window.scrollTo({
                         top: 0,
