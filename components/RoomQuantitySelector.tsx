@@ -67,6 +67,9 @@ export function RoomQuantitySelector({
   selections,
   onChange,
 }: RoomQuantitySelectorProps) {
+  const [lightboxRoom, setLightboxRoom] =
+    useState<RoomCategory | null>(null);
+
   function quantityFor(roomId: string) {
     return (
       selections.find((s) => s.roomId === roomId)?.quantity || 0
@@ -163,6 +166,16 @@ export function RoomQuantitySelector({
             <div className="roomQtyRow" key={room.id}>
               <div className="roomQtyImage">
                 <RoomThumb image={room.image} name={room.name} />
+
+                {room.image && (
+                  <button
+                    type="button"
+                    className="roomQtyViewImageBtn"
+                    onClick={() => setLightboxRoom(room)}
+                  >
+                    View room image
+                  </button>
+                )}
               </div>
 
               <div className="roomQtyInfo">
@@ -222,6 +235,35 @@ export function RoomQuantitySelector({
         })}
       </div>
 
+      {lightboxRoom && (
+        <div
+          className="roomQtyLightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${lightboxRoom.name} photo`}
+          onClick={() => setLightboxRoom(null)}
+        >
+          <button
+            type="button"
+            className="roomQtyLightboxClose"
+            onClick={() => setLightboxRoom(null)}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+
+          <img
+            src={lightboxRoom.image}
+            alt={lightboxRoom.name}
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          <span className="roomQtyLightboxCaption">
+            {lightboxRoom.name}
+          </span>
+        </div>
+      )}
+
       <style jsx>{`
         .roomQtySelector {
           border: 1px solid rgba(138, 101, 48, 0.22);
@@ -271,6 +313,7 @@ export function RoomQuantitySelector({
         }
 
         .roomQtyImage {
+          position: relative;
           width: 320px;
           aspect-ratio: 3 / 2;
           border-radius: 12px;
@@ -285,6 +328,28 @@ export function RoomQuantitySelector({
           object-fit: cover;
           object-position: center;
           display: block;
+        }
+
+        .roomQtyViewImageBtn {
+          position: absolute;
+          left: 10px;
+          right: 10px;
+          bottom: 10px;
+          padding: 9px 0;
+          border: none;
+          border-radius: 8px;
+          background: rgba(20, 15, 8, 0.62);
+          backdrop-filter: blur(3px);
+          color: #fff;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+
+        .roomQtyViewImageBtn:hover {
+          background: rgba(20, 15, 8, 0.8);
         }
 
         .roomQtyImageFallback {
@@ -387,6 +452,52 @@ export function RoomQuantitySelector({
           font-weight: 600;
         }
 
+        .roomQtyLightbox {
+          position: fixed;
+          inset: 0;
+          z-index: 999999;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
+          padding: 32px;
+          background: rgba(10, 8, 4, 0.88);
+          backdrop-filter: blur(6px);
+        }
+
+        .roomQtyLightbox img {
+          max-width: min(1000px, 100%);
+          max-height: 82vh;
+          width: auto;
+          height: auto;
+          object-fit: contain;
+          border-radius: 8px;
+          box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        .roomQtyLightboxClose {
+          position: absolute;
+          top: 22px;
+          right: 26px;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.08);
+          color: #fff;
+          font-size: 16px;
+          cursor: pointer;
+          display: grid;
+          place-items: center;
+        }
+
+        .roomQtyLightboxCaption {
+          color: #f1e6d0;
+          font-family: Georgia, 'Times New Roman', serif;
+          font-size: 16px;
+        }
+
         @media (max-width: 640px) {
           .roomQtyRow {
             grid-template-columns: 1fr;
@@ -399,6 +510,15 @@ export function RoomQuantitySelector({
 
           .roomQtyStepperRow {
             justify-content: space-between;
+          }
+
+          .roomQtyLightbox {
+            padding: 20px;
+          }
+
+          .roomQtyLightboxClose {
+            top: 14px;
+            right: 14px;
           }
         }
       `}</style>
