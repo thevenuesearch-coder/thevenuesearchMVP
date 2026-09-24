@@ -260,7 +260,7 @@ export function RoomQuantitySelector({
 
         .roomQtyRow {
           display: grid;
-          grid-template-columns: 220px 1fr;
+          grid-template-columns: 320px 1fr;
           gap: 26px;
           padding: 26px 0;
           border-top: 1px solid #efece5;
@@ -271,8 +271,8 @@ export function RoomQuantitySelector({
         }
 
         .roomQtyImage {
-          width: 220px;
-          aspect-ratio: 4 / 3;
+          width: 320px;
+          aspect-ratio: 3 / 2;
           border-radius: 12px;
           overflow: hidden;
           background: #f2efe9;
@@ -283,6 +283,7 @@ export function RoomQuantitySelector({
           width: 100%;
           height: 100%;
           object-fit: cover;
+          object-position: center;
           display: block;
         }
 
