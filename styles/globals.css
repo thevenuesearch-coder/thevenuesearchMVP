@@ -1303,6 +1303,25 @@
   text-underline-offset: 2px;
 }
 
+.backToEventsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  padding: 0;
+  margin-bottom: 18px;
+  color: var(--bp-muted, #7c705d);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.backToEventsBtn:hover {
+  color: var(--bp-gold-deep, #8a6530);
+}
+
 .reviewNightlyRooms {
   display: flex;
   flex-direction: column;
