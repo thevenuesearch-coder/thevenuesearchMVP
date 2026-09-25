@@ -331,14 +331,14 @@ export default function Login() {
         {/* Heading */}
         <h1>
           {step === 'details'
-            ? 'Create your wedding workspace.'
+            ? 'Sign in to The Venue Search.'
             : 'Verify your email.'}
         </h1>
 
         {/* Description */}
         <p>
           {step === 'details'
-            ? 'Enter your details to get started. We will send a secure 6-digit verification code to your email.'
+            ? "Enter your details to continue — we'll create your account automatically if this is your first time. We will send a secure 6-digit verification code to your email."
             : `Enter the 6-digit code we sent to ${email
                 .trim()
                 .toLowerCase()}.`}

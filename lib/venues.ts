@@ -161,6 +161,59 @@ export async function fetchVenues(): Promise<Venue[]> {
   return ((data || []) as DbVenue[]).map(normalizeVenue);
 }
 
+/*
+ * Server-side counterpart to fetchVenues(): queries Supabase
+ * directly instead of via a relative /api fetch (which only
+ * resolves inside a browser). Used from Server Components so the
+ * venue grid is present in the initial HTML -- real content for
+ * search engines and anyone whose JS is slow or unavailable --
+ * rather than only appearing after a client-side useEffect runs.
+ * Mirrors the exact query in app/api/venues/route.ts.
+ */
+export async function fetchVenuesServer(): Promise<Venue[]> {
+  const { supabase } = await import('./supabase');
+
+  const { data, error } = await supabase
+    .from('venues')
+    .select(
+      `
+        id,
+        slug,
+        name,
+        destination,
+        city,
+        country,
+        type,
+        capacity_max,
+        indicative_price,
+        hold_fee,
+        rating,
+        verified,
+        hero_image,
+        tags,
+        description,
+        venue_spaces (
+          id,
+          slug,
+          name,
+          capacity,
+          image_url,
+          description,
+          tags
+        )
+      `
+    )
+    .eq('status', 'published')
+    .order('featured', { ascending: false });
+
+  if (error) {
+    console.error('fetchVenuesServer error:', error.message);
+    return [];
+  }
+
+  return ((data || []) as DbVenue[]).map(normalizeVenue);
+}
+
 export async function fetchVenueBySlug(
   slug: string
 ): Promise<Venue | null> {
@@ -182,4 +235,103 @@ export async function fetchVenueBySlug(
   const { data } = await response.json();
 
   return data ? normalizeVenue(data as DbVenue) : null;
+}
+
+/*
+ * Server-side counterpart to fetchVenueBySlug(). Mirrors the
+ * exact query in app/api/venues/[slug]/route.ts. Used by the venue
+ * detail page's Server Component wrapper both to render real
+ * content server-side and to power generateMetadata (per-venue
+ * SEO title/description/OG tags).
+ */
+export async function fetchVenueBySlugServer(
+  slug: string
+): Promise<Venue | null> {
+  if (!slug) return null;
+
+  const { supabase } = await import('./supabase');
+
+  const { data, error } = await supabase
+    .from('venues')
+    .select(
+      `
+        id,
+        slug,
+        name,
+        destination,
+        city,
+        country,
+        type,
+        capacity_max,
+        indicative_price,
+        hold_fee,
+        rating,
+        verified,
+        hero_image,
+        tags,
+        description,
+        venue_spaces (
+          id,
+          slug,
+          name,
+          capacity,
+          image_url,
+          description,
+          tags
+        ),
+        venue_rooms (
+          id,
+          slug,
+          name,
+          image_url,
+          gallery_urls,
+          bed_type,
+          max_occupancy,
+          occupancy_note,
+          size_sqm,
+          size_sqft,
+          view_type,
+          description,
+          features,
+          bathroom_details,
+          amenities,
+          technology,
+          dining_details,
+          services,
+          special_inclusions,
+          has_balcony,
+          floor_location,
+          source_url,
+          status,
+          sort_order
+        )
+      `
+    )
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .maybeSingle();
+
+  if (error) {
+    console.error('fetchVenueBySlugServer error:', error.message);
+    return null;
+  }
+
+  if (!data) return null;
+
+  /*
+   * Same post-query filtering the API route does -- a nested
+   * Supabase select embeds related rows as-is, so unpublished
+   * ('draft') rooms would otherwise leak into the public page.
+   */
+  const publishedRooms = ((data as any).venue_rooms || [])
+    .filter((room: any) => room.status === 'published')
+    .sort(
+      (a: any, b: any) =>
+        (a.sort_order || 0) - (b.sort_order || 0)
+    );
+
+  return normalizeVenue({
+    ...(data as DbVenue),
+    venue_rooms: publishedRooms,
+  } as DbVenue);
 }

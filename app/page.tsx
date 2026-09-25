@@ -1,126 +1,37 @@
-'use client';
-
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
 
-import { fetchVenues } from '../lib/venues';
-import type { Venue } from '../lib/data';
+import { fetchVenuesServer } from '../lib/venues';
 import { VenueCard } from '../components/VenueCard';
+import { HeroSearchBox } from '../components/HeroSearchBox';
 
-export default function Home() {
-  const [destination, setDestination] = useState('');
-  const [venue, setVenue] = useState('');
-  const [guests, setGuests] = useState('');
+export const metadata: Metadata = {
+  title: 'Verified Destination Wedding Venues in Hyderabad & India',
+  description:
+    'Find and book verified destination wedding venues, palaces and luxury hotels in Hyderabad and across India. Transparent decisions, instant holds, and a booking journey built around certainty.',
+};
 
-  const [venues, setVenues] = useState<Venue[]>([]);
-  const [venuesLoading, setVenuesLoading] = useState(true);
-  const [venuesError, setVenuesError] = useState('');
+/*
+ * Rendered per-request rather than statically at build time --
+ * venues come from Supabase and can change at any time (new
+ * venues published, images updated), so this must always fetch
+ * fresh data, matching the cache: 'no-store' the old client-side
+ * fetch used.
+ */
+export const dynamic = 'force-dynamic';
 
-  /*
-   * =====================================================
-   * LOAD VENUES FROM SUPABASE
-   * =====================================================
-   */
-
-  useEffect(() => {
-    let mounted = true;
-
-    fetchVenues()
-      .then((data) => {
-        if (mounted) setVenues(data);
-      })
-      .catch((err) => {
-        console.error('Failed to load venues:', err);
-        if (mounted) {
-          setVenuesError(
-            'We could not load venues right now. Please refresh the page.'
-          );
-        }
-      })
-      .finally(() => {
-        if (mounted) setVenuesLoading(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  /*
-   * =====================================================
-   * DESTINATIONS
-   * =====================================================
-   *
-   * Get the destinations directly from the venue data.
-   * This keeps the destination list synchronized with
-   * the venues available on the platform.
-   */
-
-  const destinations = Array.from(
-    new Set(
-      venues
-        .map((v) => v.destination)
-        .filter(Boolean)
-    )
-  );
-
-  /*
-   * =====================================================
-   * FILTER VENUES BY DESTINATION
-   * =====================================================
-   *
-   * When a destination is selected, only venues from
-   * that destination will appear in the Venue dropdown.
-   */
-
-  const destinationVenues = destination
-    ? venues.filter(
-        (v) =>
-          v.destination === destination
-      )
-    : venues;
-
-  /*
-   * =====================================================
-   * SELECTED VENUE
-   * =====================================================
-   */
-
-  const selectedVenue =
-    destinationVenues.find(
-      (v) => v.id === venue
-    );
-
-  /*
-   * =====================================================
-   * EXPLORE URL
-   * =====================================================
-   */
-
-  const exploreHref =
-    `/explore?destination=${encodeURIComponent(
-      destination
-    )}` +
-    `${venue ? `&venue=${encodeURIComponent(venue)}` : ''}` +
-    `${guests ? `&guests=${encodeURIComponent(guests)}` : ''}`;
-
-  /*
-   * =====================================================
-   * DESTINATION CHANGE
-   * =====================================================
-   *
-   * When the destination changes, reset the selected
-   * venue because the previous venue may belong to
-   * another destination.
-   */
-
-  function handleDestinationChange(
-    value: string
-  ) {
-    setDestination(value);
-    setVenue('');
-  }
+/*
+ * Server Component: venues are fetched here, server-side, so the
+ * featured-venues grid and the collections strip are present in
+ * the actual HTML response -- real content for search engines and
+ * anyone whose JavaScript is slow or unavailable, rather than the
+ * "Loading venues…" placeholder that used to be all a crawler (or
+ * this page's own SSR output) ever saw. Only the interactive
+ * search box (which needs client state) is a separate client
+ * component; everything else here renders on the server.
+ */
+export default async function Home() {
+  const venues = await fetchVenuesServer();
 
   return (
     <main>
@@ -137,8 +48,7 @@ export default function Home() {
             playsInline
             poster={venues[0]?.image}
             src={
-              process.env.NEXT_PUBLIC_HERO_VIDEO_URL ||
-              undefined
+              process.env.NEXT_PUBLIC_HERO_VIDEO_URL || undefined
             }
           />
         </div>
@@ -146,173 +56,7 @@ export default function Home() {
         <div className="heroShade" />
 
         <div className="heroContent">
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: 30,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            transition={{
-              duration: 0.8,
-            }}
-          >
-            <span className="kicker">
-              THE NEW STANDARD FOR VENUE DISCOVERY
-            </span>
-
-            <h1>
-              Find the place
-              <br />
-              <em>
-                your story deserves.
-              </em>
-            </h1>
-
-            <p>
-              Verified destination wedding venues,
-              transparent decisions and a booking journey
-              built around certainty.
-            </p>
-
-            {/* =================================================
-                HERO SEARCH
-            ================================================= */}
-
-            <div className="searchBox">
-
-              {/* =================================================
-                  DESTINATION
-              ================================================= */}
-
-              <div>
-                <small>
-                  Destination
-                </small>
-
-                <select
-                  value={destination}
-                  onChange={(e) =>
-                    handleDestinationChange(
-                      e.target.value
-                    )
-                  }
-                >
-                  <option value="">
-                    All destinations
-                  </option>
-
-                  {destinations.map(
-                    (item) => (
-                      <option
-                        key={item}
-                        value={item}
-                      >
-                        {item}
-                      </option>
-                    )
-                  )}
-                </select>
-              </div>
-
-              {/* =================================================
-                  VENUE
-              ================================================= */}
-
-              <div>
-                <small>
-                  Venue
-                </small>
-
-                <select
-                  value={venue}
-                  onChange={(e) =>
-                    setVenue(
-                      e.target.value
-                    )
-                  }
-                >
-                  <option value="">
-                    {destination
-                      ? `All ${destination} venues`
-                      : 'All venues'}
-                  </option>
-
-                  {destinationVenues.map(
-                    (v) => (
-                      <option
-                        key={v.id}
-                        value={v.id}
-                      >
-                        {v.name}
-                      </option>
-                    )
-                  )}
-                </select>
-              </div>
-
-              {/* =================================================
-                  GUESTS
-              ================================================= */}
-
-              <div>
-                <small>
-                  Guests
-                </small>
-
-                <select
-                  value={guests}
-                  onChange={(e) =>
-                    setGuests(
-                      e.target.value
-                    )
-                  }
-                >
-                  <option value="">
-                    Guest count
-                  </option>
-
-                  <option value="50–100">
-                    50–100
-                  </option>
-
-                  <option value="100–200">
-                    100–200
-                  </option>
-
-                  <option value="200–400">
-                    200–400
-                  </option>
-
-                  <option value="400–600">
-                    400–600
-                  </option>
-
-                  <option value="600+">
-                    600+
-                  </option>
-                </select>
-              </div>
-
-              {/* =================================================
-                  EXPLORE BUTTON
-              ================================================= */}
-
-              <Link
-                data-cursor="open"
-                className="primaryBtn large"
-                href={
-                  selectedVenue
-                    ? `/venues/${selectedVenue.id}`
-                    : exploreHref
-                }
-              >
-                Explore venues →
-              </Link>
-            </div>
-          </motion.div>
+          <HeroSearchBox venues={venues} />
         </div>
 
         <div className="heroNote">
@@ -327,9 +71,7 @@ export default function Home() {
       ===================================================== */}
 
       <section className="statement">
-        <span className="kicker">
-          WHY VENUE SEARCH
-        </span>
+        <span className="kicker">WHY VENUE SEARCH</span>
 
         <h2>
           Venue discovery shouldn't feel like a negotiation.
@@ -344,33 +86,18 @@ export default function Home() {
 
         <div className="stats">
           <div>
-            <strong>
-              30–40%
-            </strong>
-
-            <span>
-              planning time saved
-            </span>
+            <strong>30–40%</strong>
+            <span>planning time saved</span>
           </div>
 
           <div>
-            <strong>
-              100%
-            </strong>
-
-            <span>
-              verified-first approach
-            </span>
+            <strong>100%</strong>
+            <span>verified-first approach</span>
           </div>
 
           <div>
-            <strong>
-              0
-            </strong>
-
-            <span>
-              double-booking tolerance
-            </span>
+            <strong>0</strong>
+            <span>double-booking tolerance</span>
           </div>
         </div>
       </section>
@@ -386,45 +113,29 @@ export default function Home() {
               CURATED FOR THE DESTINATION WEDDING
             </span>
 
-            <h2>
-              Discover beautiful venues.
-            </h2>
+            <h2>Discover beautiful venues.</h2>
           </div>
 
-          <Link href="/explore">
-            View all venues →
-          </Link>
+          <Link href="/explore">View all venues →</Link>
         </div>
 
-        {venuesLoading ? (
-          <div className="emptyState">
-            <p>Loading venues…</p>
-          </div>
-        ) : venuesError ? (
-          <div className="emptyState">
-            <p>{venuesError}</p>
-          </div>
-        ) : venues.length === 0 ? (
+        {venues.length === 0 ? (
           <div className="emptyState">
             <p>No venues are published yet — check back soon.</p>
           </div>
         ) : (
           <div className="venueGrid">
-            {venues
-              .slice(0, 3)
-              .map((v) => (
-                <VenueCard
-                  key={v.id}
-                  v={{
-                    ...v,
-                    slug: v.id,
-                    capacityMin:
-                      v.capacity,
-                    description:
-                      v.desc,
-                  }}
-                />
-              ))}
+            {venues.slice(0, 3).map((v) => (
+              <VenueCard
+                key={v.id}
+                v={{
+                  ...v,
+                  slug: v.id,
+                  capacityMin: v.capacity,
+                  description: v.desc,
+                }}
+              />
+            ))}
           </div>
         )}
       </section>
@@ -435,20 +146,15 @@ export default function Home() {
 
       <section className="experience">
         <div className="experienceText">
-          <span className="kicker">
-            FROM SEARCH TO CERTAINTY
-          </span>
+          <span className="kicker">FROM SEARCH TO CERTAINTY</span>
 
-          <h2>
-            Discover. Compare. Hold. Book.
-          </h2>
+          <h2>Discover. Compare. Hold. Book.</h2>
 
           <p>
             One wedding view connects the main venue with
-            mehendi, sangeet and haldi spaces. Enquiries,
-            Instant Holds and Instant Books stay clearly
-            separated so every decision has a defined next
-            step.
+            mehendi, sangeet and haldi spaces. Enquiries, Instant
+            Holds and Instant Books stay clearly separated so
+            every decision has a defined next step.
           </p>
 
           <Link
@@ -461,40 +167,30 @@ export default function Home() {
         </div>
 
         <div className="orbit">
-          <div className="orbitCenter">
-            TVS
-          </div>
+          <div className="orbitCenter">TVS</div>
 
           <span>
             01
             <br />
-            <b>
-              Discover
-            </b>
+            <b>Discover</b>
           </span>
 
           <span>
             02
             <br />
-            <b>
-              Compare
-            </b>
+            <b>Compare</b>
           </span>
 
           <span>
             03
             <br />
-            <b>
-              Hold
-            </b>
+            <b>Hold</b>
           </span>
 
           <span>
             04
             <br />
-            <b>
-              Confirm
-            </b>
+            <b>Confirm</b>
           </span>
         </div>
       </section>
@@ -504,41 +200,25 @@ export default function Home() {
       ===================================================== */}
 
       <section className="collections">
-        <span className="kicker">
-          INSPIRE THE DECISION
-        </span>
+        <span className="kicker">INSPIRE THE DECISION</span>
 
-        <h2>
-          Start with a feeling.
-        </h2>
+        <h2>Start with a feeling.</h2>
 
         <div className="collectionRow">
-          {venues.slice(0, 4).map(
-            (v, index) => (
-              <Link
-                href={`/venues/${v.id}`}
-                className="collection"
-                key={v.id}
-              >
-                {v.image && (
-                  <img
-                    src={v.image}
-                    alt={v.name}
-                  />
-                )}
+          {venues.slice(0, 4).map((v, index) => (
+            <Link
+              href={`/venues/${v.id}`}
+              className="collection"
+              key={v.id}
+            >
+              {v.image && <img src={v.image} alt={v.name} />}
 
-                <div>
-                  <small>
-                    0{index + 1}
-                  </small>
-
-                  <h3>
-                    {v.name}
-                  </h3>
-                </div>
-              </Link>
-            )
-          )}
+              <div>
+                <small>0{index + 1}</small>
+                <h3>{v.name}</h3>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
     </main>
