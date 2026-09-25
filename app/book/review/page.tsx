@@ -2095,6 +2095,73 @@ function ReviewPageContent() {
               }}
             >
 
+              {/* ==================================================
+                  THE VENUE SEARCH BRANDING
+              ================================================== */}
+
+              <div
+                style={{
+                  display:
+                    'flex',
+
+                  flexDirection:
+                    'column',
+
+                  alignItems:
+                    'center',
+
+                  justifyContent:
+                    'center',
+
+                  marginBottom:
+                    '24px',
+                }}
+              >
+
+                <img
+                  src="/logo.png"
+                  alt="The Venue Search"
+                  style={{
+                    width:
+                      '76px',
+
+                    height:
+                      '76px',
+
+                    objectFit:
+                      'contain',
+
+                    display:
+                      'block',
+
+                    marginBottom:
+                      '8px',
+                  }}
+                />
+
+                <div
+                  style={{
+                    fontSize:
+                      '18px',
+
+                    fontWeight:
+                      700,
+
+                    letterSpacing:
+                      '-0.02em',
+
+                    color:
+                      '#151515',
+
+                    lineHeight:
+                      1.2,
+                  }}
+                >
+                  The Venue Search
+                </div>
+
+              </div>
+
               <div
                 style={{
                   width:
