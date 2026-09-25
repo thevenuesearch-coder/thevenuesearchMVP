@@ -21,6 +21,52 @@ import {
   saveBookingDraft,
 } from '../../../lib/booking-draft';
 
+const MAX_ROOMS_PER_CATEGORY = 18;
+
+// Keep date validation in the user's local timezone so the booking date
+// does not shift because of UTC conversion (e.g. around midnight in India).
+function getTodayDateString() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getTomorrowDateString() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const year = tomorrow.getFullYear();
+  const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+  const day = String(tomorrow.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function getNextDateString(dateString: string) {
+  const [year, month, day] = dateString.split('-').map(Number);
+  const nextDate = new Date(year, month - 1, day);
+  nextDate.setDate(nextDate.getDate() + 1);
+
+  return `${nextDate.getFullYear()}-${String(
+    nextDate.getMonth() + 1
+  ).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+}
+
+function normalizeRoomSelections(
+  selections: RoomSelection[]
+): RoomSelection[] {
+  return selections
+    .map((selection) => ({
+      ...selection,
+      quantity: Math.min(
+        Math.max(Number(selection.quantity) || 0, 0),
+        MAX_ROOMS_PER_CATEGORY
+      ),
+    }))
+    .filter((selection) => selection.quantity > 0);
+}
 /* ============================================================
    ROOM BOOKING PAGE (Step 2 of 3: rooms)
 
@@ -95,7 +141,35 @@ function RoomsPageContent() {
     }
 
     setDraft(loaded);
-    setRoomDetails(loaded.roomDetails);
+
+    const today = getTodayDateString();
+    const savedCheckIn = loaded.roomDetails.checkInDate;
+    const savedCheckOut = loaded.roomDetails.checkOutDate;
+
+    // Do not allow an old saved draft to reintroduce today or a past date.
+    const safeCheckIn =
+      savedCheckIn && savedCheckIn > today ? savedCheckIn : '';
+
+    const safeCheckOut =
+      savedCheckOut &&
+      savedCheckOut > today &&
+      (!safeCheckIn || savedCheckOut > safeCheckIn)
+        ? savedCheckOut
+        : '';
+
+    setRoomDetails({
+      ...loaded.roomDetails,
+      checkInDate: safeCheckIn,
+      checkOutDate: safeCheckOut,
+      nightlySelections:
+        loaded.roomDetails.nightlySelections.map((night) => ({
+          ...night,
+          selections: normalizeRoomSelections(
+            night.selections
+          ),
+        })),
+    });
+
     setDraftChecked(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [venue, venueId, selectedSpaceId]);
@@ -114,12 +188,18 @@ function RoomsPageContent() {
     nightDate: string,
     selections: RoomSelection[]
   ) {
+    const normalizedSelections =
+      normalizeRoomSelections(selections);
+
     setRoomDetails((current) => ({
       ...current,
       nightlySelections: current.nightlySelections.map(
         (night) =>
           night.date === nightDate
-            ? { ...night, selections }
+            ? {
+                ...night,
+                selections: normalizedSelections,
+              }
             : night
       ),
     }));
@@ -135,10 +215,16 @@ function RoomsPageContent() {
   function applySelectionsToAllNights(
     selections: RoomSelection[]
   ) {
+    const normalizedSelections =
+      normalizeRoomSelections(selections);
+
     setRoomDetails((current) => ({
       ...current,
       nightlySelections: current.nightlySelections.map(
-        (night) => ({ ...night, selections })
+        (night) => ({
+          ...night,
+          selections: normalizedSelections,
+        })
       ),
     }));
   }
@@ -218,13 +304,25 @@ function RoomsPageContent() {
       return;
     }
 
+    const today = getTodayDateString();
+
     if (!roomDetails.checkInDate) {
       setError('Please select a check-in date.');
       return;
     }
 
+    if (roomDetails.checkInDate <= today) {
+      setError('Check-in date must be after today.');
+      return;
+    }
+
     if (!roomDetails.checkOutDate) {
       setError('Please select a check-out date.');
+      return;
+    }
+
+    if (roomDetails.checkOutDate <= today) {
+      setError('Check-out date must be after today.');
       return;
     }
 
@@ -241,6 +339,23 @@ function RoomsPageContent() {
     ) {
       setError(
         'Please select at least one room category for every night of the stay.'
+      );
+      return;
+    }
+
+    const hasExceededRoomLimit =
+      roomDetails.nightlySelections.some(
+        (night) =>
+          night.selections.some(
+            (selection) =>
+              Number(selection.quantity) >
+              MAX_ROOMS_PER_CATEGORY
+          )
+      );
+
+    if (hasExceededRoomLimit) {
+      setError(
+        'You can select a maximum of 18 rooms in each room category per night.'
       );
       return;
     }
@@ -428,15 +543,31 @@ function RoomsPageContent() {
                         </span>
                         <input
                           type="date"
-                          value={
-                            roomDetails.checkInDate
-                          }
-                          onChange={(e) =>
-                            updateRoomField(
-                              'checkInDate',
-                              e.target.value
-                            )
-                          }
+                          min={getTomorrowDateString()}
+                          value={roomDetails.checkInDate}
+                          onChange={(e) => {
+                            const nextCheckIn = e.target.value;
+                            const today = getTodayDateString();
+
+                            if (nextCheckIn <= today) {
+                              setError('Check-in date must be after today.');
+                              return;
+                            }
+
+                            setError('');
+
+                            setRoomDetails((current) => ({
+                              ...current,
+                              checkInDate: nextCheckIn,
+                              // A checkout date must be after the new
+                              // check-in date. Clear it if it is no longer valid.
+                              checkOutDate:
+                                current.checkOutDate &&
+                                current.checkOutDate > nextCheckIn
+                                  ? current.checkOutDate
+                                  : '',
+                            }));
+                          }}
                         />
                       </label>
 
@@ -448,15 +579,35 @@ function RoomsPageContent() {
                         </span>
                         <input
                           type="date"
-                          value={
-                            roomDetails.checkOutDate
+                          min={
+                            roomDetails.checkInDate
+                              ? getNextDateString(roomDetails.checkInDate)
+                              : getTomorrowDateString()
                           }
-                          onChange={(e) =>
+                          value={roomDetails.checkOutDate}
+                          onChange={(e) => {
+                            const nextCheckOut = e.target.value;
+                            const today = getTodayDateString();
+                            const minimumCheckOut =
+                              roomDetails.checkInDate
+                                ? getNextDateString(roomDetails.checkInDate)
+                                : getTomorrowDateString();
+
+                            if (nextCheckOut < minimumCheckOut) {
+                              setError(
+                                roomDetails.checkInDate
+                                  ? 'Check-out date must be after the check-in date.'
+                                  : 'Check-out date must be after today.'
+                              );
+                              return;
+                            }
+
+                            setError('');
                             updateRoomField(
                               'checkOutDate',
-                              e.target.value
-                            )
-                          }
+                              nextCheckOut
+                            );
+                          }}
                         />
                       </label>
 

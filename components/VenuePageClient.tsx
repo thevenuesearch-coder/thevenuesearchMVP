@@ -544,11 +544,11 @@ export function VenuePageClient({
                 }`}
                 className="book-button"
               >
-                <span>
+                <span className="action-button-label">
                   Book The Venue
                 </span>
 
-                <span>
+                <span className="action-button-arrow">
                   →
                 </span>
               </Link>
@@ -562,11 +562,11 @@ export function VenuePageClient({
                 }`}
                 className="enquiry-button"
               >
-                <span>
+                <span className="action-button-label">
                   Drop an Enquiry
                 </span>
 
-                <span>
+                <span className="action-button-arrow">
                   →
                 </span>
               </Link>
@@ -1527,59 +1527,140 @@ export function VenuePageClient({
 
         .book-button,
         .enquiry-button {
-          min-height: 58px;
+          box-sizing: border-box;
+
+          width: 100%;
+
+          min-height: 54px;
+
+          display: flex;
+
+          flex-direction: row;
+
+          align-items: center;
+
+          justify-content: flex-start;
+
+          padding: 0 8px 0 20px;
+
+          border: 0;
+
+          border-radius: 999px;
+
+          background:
+            linear-gradient(
+              100deg,
+              #2b54b8 0%,
+              #24b8d1 100%
+            );
+
+          color: #fff;
+
+          text-decoration: none;
+
+          font-size: 14px;
+
+          font-weight: 600;
+
+          line-height: 1;
+
+          direction: ltr;
+
+          overflow: hidden;
+
+          box-shadow:
+            0 10px 26px
+            rgba(22, 74, 155, .22);
+
+          transition:
+            transform .25s ease,
+            box-shadow .25s ease,
+            filter .25s ease;
+        }
+
+
+        .action-button-label {
+          position: static;
+
+          display: block;
+
+          flex: 1 1 auto;
+
+          width: auto;
+
+          height: auto;
+
+          margin: 0;
+
+          padding: 0;
+
+          color: #fff;
+
+          font-size: 14px;
+
+          font-weight: 600;
+
+          line-height: 1.2;
+
+          text-align: left;
+
+          white-space: nowrap;
+
+          overflow: hidden;
+
+          text-overflow: ellipsis;
+
+          transform: none;
+        }
+
+
+        .action-button-arrow {
+          position: static;
+
+          width: 38px;
+
+          height: 38px;
+
+          min-width: 38px;
+
+          min-height: 38px;
+
+          flex: 0 0 38px;
 
           display: flex;
 
           align-items: center;
 
-          justify-content: space-between;
+          justify-content: center;
 
-          padding:
-            0 22px;
+          margin: 0 0 0 10px;
 
-          text-decoration: none;
+          padding: 0;
 
-          font-size: 13px;
-
-          font-weight: 700;
-
-          letter-spacing: .02em;
-
-          border-radius: 10px;
-
-          transition: .25s ease;
-        }
-
-
-        .book-button {
-          background:
-            linear-gradient(
-              120deg,
-              #8a6530,
-              #c9a15f
-            );
-
-          color: #1b140c;
-
-          box-shadow:
-            0 16px 34px
-            rgba(201, 161, 95, .22);
-        }
-
-
-        .book-button span:last-child {
-          font-size: 15px;
-        }
-
-
-        .enquiry-button {
           border:
-            1px solid #4a4436;
+            1px solid
+            rgba(255,255,255,.35);
 
-          color: #f1e6d0;
+          border-radius: 50%;
 
-          background: transparent;
+          background:
+            rgba(255,255,255,.10);
+
+          color: #fff;
+
+          font-size: 17px;
+
+          font-weight: 400;
+
+          line-height: 1;
+
+          box-shadow: none;
+
+          transform: none;
+
+          transition:
+            transform .2s ease,
+            background .2s ease;
         }
 
 
@@ -1587,20 +1668,31 @@ export function VenuePageClient({
         .enquiry-button:hover {
           transform:
             translateY(-2px);
-        }
 
+          background:
+            linear-gradient(
+              100deg,
+              #2b54b8 0%,
+              #24b8d1 100%
+            );
 
-        .book-button:hover {
+          color: #fff;
+
           box-shadow:
-            0 20px 40px
-            rgba(201, 161, 95, .32);
+            0 14px 32px
+            rgba(22,74,155,.30);
+
+          filter: brightness(1.04);
         }
 
 
-        .enquiry-button:hover {
-          border-color: #c9a15f;
+        .book-button:hover .action-button-arrow,
+        .enquiry-button:hover .action-button-arrow {
+          transform:
+            translateX(2px);
 
-          background: rgba(201, 161, 95, .08);
+          background:
+            rgba(255,255,255,.18);
         }
 
 

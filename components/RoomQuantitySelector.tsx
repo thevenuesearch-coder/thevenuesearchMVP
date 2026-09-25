@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+
 import type { RoomCategory } from '../lib/data';
+import { RoomDetailsModal } from './RoomDetailsModal';
 
 export type RoomSelection = {
   roomId: string;
-  roomName: string;
   quantity: number;
 };
 
@@ -16,218 +17,233 @@ type RoomQuantitySelectorProps = {
 };
 
 /*
- * Small helper so a broken/missing image falls back to the
- * text placeholder rather than a broken-image icon -- each row
- * needs its own error state since they're rendered in a list.
+ * Business rule:
+ * There are only 18 rooms available in each room category.
+ *
+ * This limit is enforced here at the UI/component level and is also
+ * validated/sanitized by /book/rooms before the booking draft is saved.
  */
-function RoomThumb({
-  image,
-  name,
-}: {
-  image: string;
-  name: string;
-}) {
-  const [failed, setFailed] = useState(false);
+export const MAX_ROOMS_PER_CATEGORY = 18;
 
-  if (!image || failed) {
-    return (
-      <div className="roomQtyImageFallback">
-        <span>{name}</span>
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={image}
-      alt={name}
-      onError={() => setFailed(true)}
-    />
+/*
+ * Keep every quantity between 0 and the maximum allowed.
+ */
+function clampQuantity(value: number) {
+  return Math.min(
+    Math.max(Number(value) || 0, 0),
+    MAX_ROOMS_PER_CATEGORY
   );
 }
 
 /*
- * ============================================================
- * ROOM QUANTITY SELECTOR
- *
- * Replaces the old single "Room type preference" dropdown with a
- * per-category quantity stepper -- a hotel may have several room
- * categories (Deluxe, Premium, Suite, ...), and a guest may need
- * rooms across more than one of them. There is deliberately no
- * guest-count field here: guest count belongs to the event
- * details, not the room stay.
- *
- * Each row shows the room's full details inline -- image, spec
- * line, description, amenities -- rather than hiding them behind
- * a "View details" link, so the card itself is the detail view.
- * ============================================================
+ * Normalize selections coming from the UI or an older session.
+ * This prevents invalid quantities from entering the booking flow.
  */
+function normalizeSelections(
+  selections: RoomSelection[]
+): RoomSelection[] {
+  return selections
+    .map((selection) => ({
+      ...selection,
+      quantity: clampQuantity(selection.quantity),
+    }))
+    .filter((selection) => selection.quantity > 0);
+}
+
 export function RoomQuantitySelector({
   rooms,
   selections,
   onChange,
 }: RoomQuantitySelectorProps) {
-  const [lightboxRoom, setLightboxRoom] =
+  const [activeRoom, setActiveRoom] =
     useState<RoomCategory | null>(null);
 
-  function quantityFor(roomId: string) {
-    return (
-      selections.find((s) => s.roomId === roomId)?.quantity || 0
+  /*
+   * Always work with normalized selections.
+   *
+   * This protects the UI if an older sessionStorage draft
+   * contains an invalid quantity such as 42.
+   */
+  const normalizedSelections = useMemo(
+    () => normalizeSelections(selections),
+    [selections]
+  );
+
+  /*
+   * Get the currently selected quantity for a room category.
+   */
+  function getQuantity(roomId: string) {
+    const selection = normalizedSelections.find(
+      (item) => item.roomId === roomId
     );
+
+    return selection?.quantity || 0;
   }
 
-  function setQuantity(room: RoomCategory, quantity: number) {
-    const clamped = Math.max(0, Math.min(50, quantity));
+  /*
+   * Update the quantity for a particular room category.
+   */
+  function updateQuantity(
+    roomId: string,
+    requestedQuantity: number
+  ) {
+    const quantity = clampQuantity(requestedQuantity);
 
-    const existingIndex = selections.findIndex(
-      (s) => s.roomId === room.id
-    );
+    const currentSelections =
+      normalizeSelections(selections);
 
-    if (clamped === 0) {
-      if (existingIndex === -1) return;
-
+    /*
+     * If quantity becomes zero, remove the room
+     * category from the selection list.
+     */
+    if (quantity === 0) {
       onChange(
-        selections.filter((s) => s.roomId !== room.id)
+        currentSelections.filter(
+          (selection) =>
+            selection.roomId !== roomId
+        )
       );
 
       return;
     }
 
-    if (existingIndex === -1) {
-      onChange([
-        ...selections,
-        {
-          roomId: room.id,
-          roomName: room.name,
-          quantity: clamped,
-        },
-      ]);
+    /*
+     * Check whether this room category has
+     * already been selected.
+     */
+    const existing =
+      currentSelections.find(
+        (selection) =>
+          selection.roomId === roomId
+      );
+
+    /*
+     * Update an existing selection.
+     */
+    if (existing) {
+      onChange(
+        currentSelections.map(
+          (selection) =>
+            selection.roomId === roomId
+              ? {
+                  ...selection,
+                  quantity,
+                }
+              : selection
+        )
+      );
 
       return;
     }
 
-    const next = [...selections];
-
-    next[existingIndex] = {
-      ...next[existingIndex],
-      quantity: clamped,
-    };
-
-    onChange(next);
+    /*
+     * Add a new room category selection.
+     */
+    onChange([
+      ...currentSelections,
+      {
+        roomId,
+        quantity,
+      },
+    ]);
   }
 
-  const totalRooms = selections.reduce(
-    (sum, s) => sum + s.quantity,
-    0
-  );
-
-  if (rooms.length === 0) {
-    return null;
+  /*
+   * No room categories available.
+   */
+  if (!rooms.length) {
+    return (
+      <div className="roomSelectorEmpty">
+        No room categories are available for
+        this property.
+      </div>
+    );
   }
 
   return (
-    <div className="roomQtySelector">
-      <div className="roomQtySelectorHeader">
-        <span>Room Selection</span>
-
-        {totalRooms > 0 && (
-          <span className="roomQtySelectorTotal">
-            {totalRooms} room{totalRooms === 1 ? '' : 's'} selected
-          </span>
-        )}
-      </div>
-
-      <div className="roomQtySelectorList">
+    <>
+      <div className="roomCategoryList">
         {rooms.map((room) => {
-          const qty = quantityFor(room.id);
+          const quantity =
+            getQuantity(room.id);
 
-          const specLine = [
-            room.bedType,
-            room.occupancyNote ||
-              (room.maxOccupancy
-                ? `Sleeps ${room.maxOccupancy}`
-                : null),
-            room.sizeSqm
-              ? `${room.sizeSqm} sq.m`
-              : room.sizeSqft
-                ? `${room.sizeSqft} sq.ft`
-                : null,
-            room.view,
-          ]
-            .filter(Boolean)
-            .join(' · ');
+          const atMinimum =
+            quantity <= 0;
 
-          const tags = [
-            ...room.features,
-            ...room.amenities,
-          ].slice(0, 8);
+          const atMaximum =
+            quantity >=
+            MAX_ROOMS_PER_CATEGORY;
 
           return (
-            <div className="roomQtyRow" key={room.id}>
-              <div className="roomQtyImage">
-                <RoomThumb image={room.image} name={room.name} />
+            <div
+              className="roomCategoryRow"
+              key={room.id}
+            >
+              {/* ROOM INFORMATION */}
+              <div className="roomCategoryInfo">
+                <h3>{room.name}</h3>
 
-                {room.image && (
-                  <button
-                    type="button"
-                    className="roomQtyViewImageBtn"
-                    onClick={() => setLightboxRoom(room)}
-                  >
-                    View room image
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="roomViewDetailsBtn"
+                  onClick={() =>
+                    setActiveRoom(room)
+                  }
+                >
+                  View details
+                  <span>→</span>
+                </button>
               </div>
 
-              <div className="roomQtyInfo">
-                <h4>{room.name}</h4>
+              {/* ROOM QUANTITY */}
+              <div className="roomQuantityControl">
+                <span className="roomQuantityLabel">
+                  Rooms required
+                </span>
 
-                {specLine && (
-                  <p className="roomQtySpec">{specLine}</p>
-                )}
+                <div
+                  className="roomQuantityStepper"
+                  aria-label={`${room.name} room quantity`}
+                >
+                  {/* DECREASE */}
+                  <button
+                    type="button"
+                    aria-label={`Remove one ${room.name}`}
+                    disabled={atMinimum}
+                    onClick={() =>
+                      updateQuantity(
+                        room.id,
+                        quantity - 1
+                      )
+                    }
+                  >
+                    −
+                  </button>
 
-                {room.description && (
-                  <p className="roomQtyDescription">
-                    {room.description}
-                  </p>
-                )}
+                  {/* CURRENT QUANTITY */}
+                  <strong>
+                    {quantity}
+                  </strong>
 
-                {tags.length > 0 && (
-                  <ul className="roomQtyTags">
-                    {tags.map((tag) => (
-                      <li key={tag}>{tag}</li>
-                    ))}
-                  </ul>
-                )}
-
-                <div className="roomQtyStepperRow">
-                  <span className="roomQtyStepperLabel">
-                    Rooms required
-                  </span>
-
-                  <div className="roomQtyStepper">
-                    <button
-                      type="button"
-                      aria-label={`Fewer ${room.name}`}
-                      disabled={qty <= 0}
-                      onClick={() =>
-                        setQuantity(room, qty - 1)
-                      }
-                    >
-                      −
-                    </button>
-
-                    <span>{qty}</span>
-
-                    <button
-                      type="button"
-                      aria-label={`More ${room.name}`}
-                      onClick={() =>
-                        setQuantity(room, qty + 1)
-                      }
-                    >
-                      +
-                    </button>
-                  </div>
+                  {/* INCREASE */}
+                  <button
+                    type="button"
+                    aria-label={`Add one ${room.name}`}
+                    disabled={atMaximum}
+                    title={
+                      atMaximum
+                        ? 'Maximum 18 rooms available in this category'
+                        : `Add one ${room.name}`
+                    }
+                    onClick={() =>
+                      updateQuantity(
+                        room.id,
+                        quantity + 1
+                      )
+                    }
+                  >
+                    +
+                  </button>
                 </div>
               </div>
             </div>
@@ -235,293 +251,17 @@ export function RoomQuantitySelector({
         })}
       </div>
 
-      {lightboxRoom && (
-        <div
-          className="roomQtyLightbox"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${lightboxRoom.name} photo`}
-          onClick={() => setLightboxRoom(null)}
-        >
-          <button
-            type="button"
-            className="roomQtyLightboxClose"
-            onClick={() => setLightboxRoom(null)}
-            aria-label="Close"
-          >
-            ✕
-          </button>
-
-          <img
-            src={lightboxRoom.image}
-            alt={lightboxRoom.name}
-            onClick={(e) => e.stopPropagation()}
-          />
-
-          <span className="roomQtyLightboxCaption">
-            {lightboxRoom.name}
-          </span>
-        </div>
+      {/* ROOM DETAILS MODAL */}
+      {activeRoom && (
+        <RoomDetailsModal
+          room={activeRoom}
+          onClose={() =>
+            setActiveRoom(null)
+          }
+        />
       )}
-
-      <style jsx>{`
-        .roomQtySelector {
-          border: 1px solid rgba(138, 101, 48, 0.22);
-          border-radius: 16px;
-          padding: 22px 22px 8px;
-          margin-top: 8px;
-          background: #fffefb;
-        }
-
-        .roomQtySelectorHeader {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin-bottom: 18px;
-          font-size: 13px;
-          font-weight: 600;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          color: #151515;
-        }
-
-        .roomQtySelectorTotal {
-          font-weight: 500;
-          text-transform: none;
-          letter-spacing: normal;
-          color: #8a6530;
-          font-size: 13px;
-        }
-
-        .roomQtySelectorList {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .roomQtyRow {
-          display: grid;
-          grid-template-columns: 320px 1fr;
-          gap: 26px;
-          padding: 26px 0;
-          border-top: 1px solid #efece5;
-        }
-
-        .roomQtyRow:first-child {
-          border-top: none;
-        }
-
-        .roomQtyImage {
-          position: relative;
-          width: 320px;
-          aspect-ratio: 3 / 2;
-          border-radius: 12px;
-          overflow: hidden;
-          background: #f2efe9;
-          flex-shrink: 0;
-        }
-
-        .roomQtyImage img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center;
-          display: block;
-        }
-
-        .roomQtyViewImageBtn {
-          position: absolute;
-          left: 10px;
-          right: 10px;
-          bottom: 10px;
-          padding: 9px 0;
-          border: none;
-          border-radius: 8px;
-          background: rgba(20, 15, 8, 0.62);
-          backdrop-filter: blur(3px);
-          color: #fff;
-          font-size: 12px;
-          font-weight: 600;
-          letter-spacing: 0.02em;
-          cursor: pointer;
-          transition: background 0.2s ease;
-        }
-
-        .roomQtyViewImageBtn:hover {
-          background: rgba(20, 15, 8, 0.8);
-        }
-
-        .roomQtyImageFallback {
-          width: 100%;
-          height: 100%;
-          display: grid;
-          place-items: center;
-          text-align: center;
-          padding: 8px;
-          font-size: 12px;
-          color: #a39c8f;
-          letter-spacing: 0.02em;
-        }
-
-        .roomQtyInfo h4 {
-          margin: 0 0 6px;
-          font-family: Georgia, 'Times New Roman', serif;
-          font-weight: 400;
-          font-size: 22px;
-          color: #22190f;
-        }
-
-        .roomQtySpec {
-          margin: 0 0 12px;
-          font-size: 13px;
-          font-weight: 600;
-          color: #8a6530;
-        }
-
-        .roomQtyDescription {
-          margin: 0 0 14px;
-          font-size: 13.5px;
-          line-height: 1.7;
-          color: #55503f;
-          max-width: 60ch;
-        }
-
-        .roomQtyTags {
-          list-style: none;
-          margin: 0 0 18px;
-          padding: 0;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-
-        .roomQtyTags li {
-          padding: 5px 12px;
-          border: 1px solid #e2dccd;
-          border-radius: 20px;
-          font-size: 11.5px;
-          color: #66604f;
-          background: #fbf8f1;
-        }
-
-        .roomQtyStepperRow {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-        }
-
-        .roomQtyStepperLabel {
-          font-size: 12.5px;
-          font-weight: 600;
-          color: #22190f;
-        }
-
-        .roomQtyStepper {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          border: 1px solid #dcd8d0;
-          border-radius: 30px;
-          padding: 4px 6px;
-        }
-
-        .roomQtyStepper button {
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          border: 1px solid #151515;
-          background: #fff;
-          color: #151515;
-          font-size: 17px;
-          line-height: 1;
-          cursor: pointer;
-          display: grid;
-          place-items: center;
-        }
-
-        .roomQtyStepper button:disabled {
-          opacity: 0.3;
-          cursor: not-allowed;
-        }
-
-        .roomQtyStepper span {
-          min-width: 20px;
-          text-align: center;
-          font-size: 15px;
-          font-weight: 600;
-        }
-
-        .roomQtyLightbox {
-          position: fixed;
-          inset: 0;
-          z-index: 999999;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 16px;
-          padding: 32px;
-          background: rgba(10, 8, 4, 0.88);
-          backdrop-filter: blur(6px);
-        }
-
-        .roomQtyLightbox img {
-          max-width: min(1000px, 100%);
-          max-height: 82vh;
-          width: auto;
-          height: auto;
-          object-fit: contain;
-          border-radius: 8px;
-          box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
-        }
-
-        .roomQtyLightboxClose {
-          position: absolute;
-          top: 22px;
-          right: 26px;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          background: rgba(255, 255, 255, 0.08);
-          color: #fff;
-          font-size: 16px;
-          cursor: pointer;
-          display: grid;
-          place-items: center;
-        }
-
-        .roomQtyLightboxCaption {
-          color: #f1e6d0;
-          font-family: Georgia, 'Times New Roman', serif;
-          font-size: 16px;
-        }
-
-        @media (max-width: 640px) {
-          .roomQtyRow {
-            grid-template-columns: 1fr;
-            gap: 14px;
-          }
-
-          .roomQtyImage {
-            width: 100%;
-          }
-
-          .roomQtyStepperRow {
-            justify-content: space-between;
-          }
-
-          .roomQtyLightbox {
-            padding: 20px;
-          }
-
-          .roomQtyLightboxClose {
-            top: 14px;
-            right: 14px;
-          }
-        }
-      `}</style>
-    </div>
+    </>
   );
 }
+
+export default RoomQuantitySelector;

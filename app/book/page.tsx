@@ -160,12 +160,77 @@ function BookPageContent() {
   ) {
     setForm((current) => ({
       ...current,
-      events: current.events.map((event, eventIndex) =>
-        eventIndex === index ? { ...event, [field]: value } : event
-      ),
+      events: current.events.map((event, eventIndex) => {
+        if (eventIndex !== index) {
+          return event;
+        }
+
+        const updatedEvent = {
+          ...event,
+          [field]: value,
+        };
+
+        /*
+         * If the guest count changes, make sure the previously
+         * selected venue space can still accommodate the new count.
+         * If it cannot, clear the selection so the user must choose
+         * another valid space.
+         */
+        if (field === 'guestCount') {
+          const guests = Number(value);
+
+          if (
+            value &&
+            Number.isFinite(guests) &&
+            guests > 0 &&
+            updatedEvent.venueSpace
+          ) {
+            const selectedSpace = venue?.venueSpaces?.find(
+              (space) => space.id === updatedEvent.venueSpace
+            );
+
+            if (
+              selectedSpace &&
+              Number(selectedSpace.capacity || 0) < guests
+            ) {
+              updatedEvent.venueSpace = '';
+            }
+          }
+        }
+
+        return updatedEvent;
+      }),
     }));
 
     setError('');
+  }
+
+  /*
+   * Return only venue spaces whose declared capacity is enough
+   * for the requested number of guests.
+   *
+   * Before a guest count is entered, all spaces are shown.
+   * Once a guest count is entered, only spaces with
+   * capacity >= guest count are shown.
+   */
+  function getAvailableVenueSpaces(event: EventDetails) {
+    const spaces = venue?.venueSpaces || [];
+
+    if (!event.guestCount) {
+      return spaces;
+    }
+
+    const guests = Number(event.guestCount);
+
+    if (!Number.isFinite(guests) || guests < 1) {
+      return spaces;
+    }
+
+    return spaces.filter(
+      (space) =>
+        Number.isFinite(Number(space.capacity)) &&
+        Number(space.capacity) >= guests
+    );
   }
 
   /* ==========================================================
@@ -241,8 +306,37 @@ function BookPageContent() {
         }
 
         if (!currentEvent.venueSpace) {
+          const availableSpaces =
+            getAvailableVenueSpaces(currentEvent);
+
+          if (
+            currentEvent.guestCount &&
+            availableSpaces.length === 0
+          ) {
+            setError(
+              `No venue space at ${venue.name} can accommodate ${currentEvent.guestCount} guests for Event ${index + 1}. Please reduce the guest count or choose another venue.`
+            );
+          } else {
+            setError(
+              `Please select the venue space for Event ${index + 1}.`
+            );
+          }
+
+          return;
+        }
+
+        const selectedSpace = venue.venueSpaces?.find(
+          (space) => space.id === currentEvent.venueSpace
+        );
+
+        if (
+          currentEvent.guestCount &&
+          selectedSpace &&
+          Number(selectedSpace.capacity || 0) <
+            Number(currentEvent.guestCount)
+        ) {
           setError(
-            `Please select the venue space for Event ${index + 1}.`
+            `${selectedSpace.name} can accommodate up to ${selectedSpace.capacity} guests. Please select a larger venue space for Event ${index + 1}.`
           );
           return;
         }
@@ -747,7 +841,7 @@ function BookPageContent() {
                               </option>
 
                               <option value="Sangeeth">
-                                Sangeeth
+                                Sangeet
                               </option>
 
                               <option value="Mehendi">
@@ -756,6 +850,22 @@ function BookPageContent() {
 
                               <option value="Wedding">
                                 Wedding
+                              </option>
+
+                              <option value="Wedding">
+                                Reception
+                              </option>
+
+                              <option value="Wedding">
+                                Birthday
+                              </option>
+
+                              <option value="Wedding">
+                                Corporate Events
+                              </option>
+
+                              <option value="Wedding">
+                                Social Events
                               </option>
 
                               <option value="Others">
@@ -821,9 +931,8 @@ function BookPageContent() {
                               onChange={(e) => {
                                 const raw = e.target.value;
 
-                                // Allow clearing the field, and
-                                // reject anything that isn't a
-                                // positive whole number.
+                                // Allow clearing the field, and reject
+                                // anything that is not a whole number.
                                 if (
                                   raw === '' ||
                                   /^\d+$/.test(raw)
@@ -833,36 +942,6 @@ function BookPageContent() {
                                     'guestCount',
                                     raw
                                   );
-
-                                  // The venue space this event has
-                                  // selected may no longer fit --
-                                  // clear it so the guest re-picks
-                                  // from the filtered list rather
-                                  // than silently keeping a space
-                                  // that's now too small.
-                                  const guests =
-                                    Number(raw);
-
-                                  const stillFits =
-                                    venue?.venueSpaces?.some(
-                                      (space) =>
-                                        space.id ===
-                                          currentEvent.venueSpace &&
-                                        (!space.capacity ||
-                                          space.capacity >=
-                                            guests)
-                                    );
-
-                                  if (
-                                    currentEvent.venueSpace &&
-                                    !stillFits
-                                  ) {
-                                    updateEventField(
-                                      index,
-                                      'venueSpace',
-                                      ''
-                                    );
-                                  }
                                 }
                               }}
                               onKeyDown={(e) => {
@@ -880,93 +959,143 @@ function BookPageContent() {
 
                           {/* =================================================
                               VENUE SPACE
-                              Filtered to spaces that can seat the
-                              guest count already entered above --
-                              only falls back to the full list
-                              before a guest count is entered, or
-                              if nothing on the venue fits it.
+                              Show only spaces whose declared capacity
+                              can accommodate the guest count. If no
+                              space can accommodate it, show a clear
+                              message instead of offering invalid spaces.
                           ================================================= */}
 
-                          <label>
+                          {(() => {
+                            const availableSpaces =
+                              getAvailableVenueSpaces(currentEvent);
 
-                            <span>
-                              Venue space *
-                            </span>
+                            const hasGuestCount =
+                              Boolean(currentEvent.guestCount);
 
-                            <select
-                              value={
-                                currentEvent.venueSpace
-                              }
-                              onChange={(e) =>
-                                updateEventField(
-                                  index,
-                                  'venueSpace',
-                                  e.target.value
-                                )
-                              }
-                            >
-
-                              <option value="">
-                                {currentEvent.guestCount &&
-                                (venue.venueSpaces || []).some(
-                                  (space) =>
-                                    space.capacity &&
-                                    space.capacity >=
-                                      Number(
-                                        currentEvent.guestCount
-                                      )
-                                )
-                                  ? 'Select a space that fits your guest count'
-                                  : 'Select venue space'}
-                              </option>
-
-                              {(venue.venueSpaces || [])
-                                .filter((space) => {
-                                  if (!currentEvent.guestCount)
-                                    return true;
-
-                                  const fitsAny = (
-                                    venue.venueSpaces || []
-                                  ).some(
-                                    (s) =>
-                                      s.capacity &&
-                                      s.capacity >=
-                                        Number(
-                                          currentEvent.guestCount
-                                        )
-                                  );
-
-                                  // If nothing on the venue can
-                                  // actually seat this many guests,
-                                  // show every space rather than an
-                                  // empty dropdown -- the guest can
-                                  // still pick and discuss with the
-                                  // venue directly.
-                                  if (!fitsAny) return true;
-
-                                  return (
-                                    !space.capacity ||
-                                    space.capacity >=
-                                      Number(
-                                        currentEvent.guestCount
-                                      )
-                                  );
-                                })
-                                .map((space) => (
-                                  <option
-                                    key={space.id}
-                                    value={space.id}
+                            if (
+                              hasGuestCount &&
+                              availableSpaces.length === 0
+                            ) {
+                              return (
+                                <div
+                                  style={{
+                                    gridColumn: '1 / -1',
+                                    padding: '18px 20px',
+                                    borderRadius: '12px',
+                                    border:
+                                      '1px solid rgba(20, 150, 255, 0.25)',
+                                    background:
+                                      'linear-gradient(135deg, #f7fbff, #eef8ff)',
+                                    color: '#16324a',
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'flex-start',
+                                      gap: '12px',
+                                    }}
                                   >
-                                    {space.name}
-                                    {space.capacity
-                                      ? ` (up to ${space.capacity} guests)`
-                                      : ''}
+                                    <span
+                                      style={{
+                                        width: '30px',
+                                        height: '30px',
+                                        flexShrink: 0,
+                                        borderRadius: '50%',
+                                        display: 'grid',
+                                        placeItems: 'center',
+                                        background: '#1496ff',
+                                        color: '#ffffff',
+                                        fontWeight: 700,
+                                        fontSize: '14px',
+                                      }}
+                                      aria-hidden="true"
+                                    >
+                                      !
+                                    </span>
+
+                                    <div>
+                                      <strong
+                                        style={{
+                                          display: 'block',
+                                          marginBottom: '5px',
+                                          fontSize: '15px',
+                                        }}
+                                      >
+                                        No venue space available
+                                      </strong>
+
+                                      <span
+                                        style={{
+                                          display: 'block',
+                                          color: '#667685',
+                                          fontSize: '14px',
+                                          lineHeight: 1.5,
+                                        }}
+                                      >
+                                        No venue space at this property can
+                                        accommodate{' '}
+                                        {currentEvent.guestCount} guests.
+                                      </span>
+
+                                      <span
+                                        style={{
+                                          display: 'block',
+                                          marginTop: '6px',
+                                          color: '#667685',
+                                          fontSize: '13px',
+                                        }}
+                                      >
+                                        Please reduce the guest count or
+                                        choose another venue.
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <label>
+                                <span>
+                                  Venue space *
+                                </span>
+
+                                <select
+                                  value={
+                                    currentEvent.venueSpace
+                                  }
+                                  onChange={(e) =>
+                                    updateEventField(
+                                      index,
+                                      'venueSpace',
+                                      e.target.value
+                                    )
+                                  }
+                                >
+                                  <option value="">
+                                    {hasGuestCount
+                                      ? 'Select a space that fits your guest count'
+                                      : 'Select venue space'}
                                   </option>
-                                ))}
 
-                            </select>
-
-                          </label>
+                                  {availableSpaces.map(
+                                    (space) => (
+                                      <option
+                                        key={space.id}
+                                        value={space.id}
+                                      >
+                                        {space.name}
+                                        {space.capacity
+                                          ? ` (up to ${space.capacity} guests)`
+                                          : ''}
+                                      </option>
+                                    )
+                                  )}
+                                </select>
+                              </label>
+                            );
+                          })()}
 
                           {/* =================================================
                               MEAL

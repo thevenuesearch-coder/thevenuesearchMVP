@@ -1154,7 +1154,13 @@ function ReviewPageContent() {
                                       {night.selections
                                         .map(
                                           (s) =>
-                                            `${s.roomName} — ${s.quantity}`
+                                            (() => {
+  const room = venue.rooms?.find(
+    (room) => room.id === s.roomId
+  );
+
+  return `${room?.name ?? 'Room'} — ${s.quantity}`;
+})()
                                         )
                                         .join(', ')}
                                     </div>
