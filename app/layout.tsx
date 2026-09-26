@@ -27,10 +27,43 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'The Venue Search',
+  url: 'https://venuesearch.in',
+  logo: 'https://venuesearch.in/logo.png',
+  description:
+    'A verified venue discovery and booking platform for wedding and event venues across India.',
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'The Venue Search',
+  url: 'https://venuesearch.in',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: 'https://venuesearch.in/explore?destination={search_term_string}',
+    },
+    'query-input': 'required name=search_term_string',
+  },
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <Cursor />
         <Header />
         {children}
