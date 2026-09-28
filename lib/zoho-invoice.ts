@@ -141,13 +141,49 @@ export async function createZohoInvoiceForBooking(details: {
   });
 
   try {
-    await zohoFetch(`/invoices/${invoiceId}/email`, accessToken, organizationId, {
+    const emailBody = `
+<div style="margin:0;padding:32px 16px;background:#f5f7fb;font-family:Arial,Helvetica,sans-serif;color:#172033;">
+  <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e7eaf0;border-radius:16px;overflow:hidden;box-shadow:0 4px 18px rgba(15,23,42,0.06);">
+    <div style="padding:24px 28px;border-bottom:1px solid #eef1f5;background:#ffffff;">
+      <img src="https://venuesearch.in/logo.png" alt="VenueSearch" style="display:block;max-width:190px;max-height:64px;width:auto;height:auto;">
+    </div>
+    <div style="padding:34px 32px 30px;">
+      <p style="margin:0 0 18px;font-size:24px;line-height:1.3;font-weight:700;color:#111827;">Thank you for your booking</p>
+      <p style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#4b5563;">
+        Thank you for your booking with <strong style="color:#111827;">VenueSearch</strong>.
+      </p>
+      <p style="margin:0 0 22px;font-size:15px;line-height:1.7;color:#4b5563;">
+        Your booking payment has been received successfully. The official invoice document will be shared with you soon.
+      </p>
+      <div style="margin:0 0 24px;padding:18px 20px;background:#f8fafc;border:1px solid #e8edf3;border-radius:12px;">
+        <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">Venue</p>
+        <p style="margin:0;font-size:16px;font-weight:600;color:#111827;">${details.venueName}</p>
+      </div>
+      <p style="margin:0;font-size:14px;line-height:1.7;color:#6b7280;">
+        If you have any questions, please contact us at
+        <a href="mailto:bookings@venuesearch.in" style="color:#2563eb;text-decoration:none;">bookings@venuesearch.in</a>.
+      </p>
+    </div>
+    <div style="padding:20px 28px;background:#0b123b;color:#dbe2ff;text-align:center;">
+      <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#ffffff;">The Venue Search Private Limited</p>
+      <p style="margin:0;font-size:12px;line-height:1.6;">
+        <a href="https://venuesearch.in" style="color:#dbe2ff;text-decoration:none;">venuesearch.in</a>
+        &nbsp;•&nbsp; bookings@venuesearch.in
+      </p>
+    </div>
+  </div>
+  <p style="max-width:640px;margin:16px auto 0;text-align:center;font-size:11px;color:#9ca3af;">
+    This is an automated email from VenueSearch.
+  </p>
+</div>`;
+
+    await zohoFetch(`/invoices/${invoiceId}/email?send_attachment=true`, accessToken, organizationId, {
       method: 'POST',
       body: JSON.stringify({
         send_from_org_email_id: true,
         to_mail_ids: [details.email],
-        subject: `VenueSearch booking invoice — ${details.venueName}`,
-        body: 'Thank you for your booking with VenueSearch. Your invoice for the booking confirmation fee is attached.',
+        subject: `Thank You for Booking with VenueSearch — ${details.venueName}`,
+        body: emailBody,
       }),
     });
   } catch (emailError) {
