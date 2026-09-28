@@ -41,6 +41,28 @@ async function getOrganizationId(accessToken: string) {
   return String(organization.organization_id);
 }
 
+async function getZohoTaxId(accessToken: string, organizationId: string) {
+  if (process.env.ZOHO_TAX_ID) return process.env.ZOHO_TAX_ID;
+
+  const data = await zohoFetch<{
+    taxes?: Array<{ tax_id: string; tax_name?: string; tax_percentage?: number }>;
+  }>('/settings/taxes?per_page=200', accessToken, organizationId);
+
+  const gst18 = data.taxes?.find(
+    (tax) =>
+      tax.tax_name?.trim().toLowerCase() === 'gst18' &&
+      Number(tax.tax_percentage) === 18,
+  );
+
+  if (!gst18?.tax_id) {
+    throw new Error(
+      'Zoho GST18 tax was not found. Set ZOHO_TAX_ID in Vercel to the GST18 tax/group ID from Zoho Invoice.',
+    );
+  }
+
+  return String(gst18.tax_id);
+}
+
 async function getOrCreateContact(accessToken: string, organizationId: string, details: { fullName: string; email: string; mobile: string }) {
   const params = new URLSearchParams({ email: details.email, per_page: '200' });
   const existing = await zohoFetch<{ contacts?: Array<{ contact_id: string; email?: string }> }>(`/contacts?${params.toString()}`, accessToken, organizationId);
@@ -80,6 +102,7 @@ export async function createZohoInvoiceForBooking(details: {
     email: details.email,
     mobile: details.mobile,
   });
+  const taxId = await getZohoTaxId(accessToken, organizationId);
   const today = new Date().toISOString().slice(0, 10);
 
   const invoice = await zohoFetch<{ invoice?: { invoice_id: string; invoice_number?: string } }>('/invoices', accessToken, organizationId, {
@@ -90,11 +113,13 @@ export async function createZohoInvoiceForBooking(details: {
       date: today,
       reference_number: details.razorpayPaymentId,
       payment_terms: 0,
+      is_inclusive_tax: true,
       line_items: [{
         name: 'VenueSearch Booking Confirmation Fee',
         description: `${details.venueName} (${details.venueCity}) — booking IDs: ${details.bookingIds.join(', ')} — Razorpay order: ${details.razorpayOrderId}`,
         quantity: 1,
         rate: details.amountInr,
+        tax_id: taxId,
       }],
     }),
   });
