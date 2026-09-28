@@ -11,18 +11,9 @@ const SCOPES = [
 
 export async function GET() {
   const clientId = process.env.ZOHO_CLIENT_ID;
+  if (!clientId) return NextResponse.json({ success: false, error: 'ZOHO_CLIENT_ID is not configured.' }, { status: 500 });
 
-  if (!clientId) {
-    return NextResponse.json(
-      { success: false, error: 'ZOHO_CLIENT_ID is not configured.' },
-      { status: 500 }
-    );
-  }
-
-  const redirectUri =
-    process.env.ZOHO_REDIRECT_URI ||
-    'https://venuesearch.in/api/zoho/callback';
-
+  const redirectUri = process.env.ZOHO_REDIRECT_URI || 'https://venuesearch.in/api/zoho/callback';
   const params = new URLSearchParams({
     scope: SCOPES,
     client_id: clientId,
@@ -33,7 +24,5 @@ export async function GET() {
     prompt: 'consent',
   });
 
-  return NextResponse.redirect(
-    `https://accounts.zoho.in/oauth/v2/auth?${params.toString()}`
-  );
+  return NextResponse.redirect(`https://accounts.zoho.in/oauth/v2/auth?${params.toString()}`);
 }
