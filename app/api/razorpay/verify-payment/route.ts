@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { createZohoInvoiceForBooking } from '../../../../lib/zoho-invoice';
 
 const ADMIN_EMAIL =
   process.env.ADMIN_EMAIL || 'thevenuesearch@gmail.com';
@@ -454,6 +455,71 @@ export async function POST(request: Request) {
         'Admin booking notification failed:',
         emailError
       );
+    }
+
+    /*
+     * ==========================================================
+     * ZOHO INVOICE
+     *
+     * Payment is already cryptographically verified and the
+     * booking is confirmed at this point. Create the Zoho
+     * customer, invoice and recorded payment now. A Zoho
+     * failure must not turn a successful Razorpay payment into
+     * a failed booking; it is recorded for later retry.
+     * ==========================================================
+     */
+    let zohoInvoice: {
+      organizationId: string;
+      contactId: string;
+      invoiceId: string;
+      invoiceNumber: string | null;
+      zohoPaymentId: string | null;
+    } | null = null;
+
+    try {
+      const bookingFeeInr =
+        Number(process.env.NEXT_PUBLIC_BOOKING_FEE_INR) || 25000;
+
+      const firstBooking = updated[0];
+      const venueId = firstBooking?.venue_id;
+
+      const { data: venue } = venueId
+        ? await admin
+            .from('venues')
+            .select('name, city')
+            .eq('id', venueId)
+            .maybeSingle()
+        : { data: null };
+
+      zohoInvoice = await createZohoInvoiceForBooking({
+        fullName: fullName || 'Customer',
+        email: email || '',
+        mobile: mobile || '',
+        venueName: venue?.name || 'VenueSearch booking',
+        venueCity: venue?.city || 'India',
+        bookingIds: updated.map((booking) => booking.id),
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        amountInr: bookingFeeInr,
+      });
+
+      await admin
+        .from('booking_requests')
+        .update({
+          zoho_contact_id: zohoInvoice.contactId,
+          zoho_invoice_id: zohoInvoice.invoiceId,
+          zoho_invoice_number: zohoInvoice.invoiceNumber,
+          zoho_payment_id: zohoInvoice.zohoPaymentId,
+          zoho_sync_status: 'synced',
+        })
+        .in('id', bookingIds);
+    } catch (zohoError) {
+      console.error('ZOHO INVOICE SYNC FAILED:', zohoError);
+
+      await admin
+        .from('booking_requests')
+        .update({ zoho_sync_status: 'failed' })
+        .in('id', bookingIds);
     }
 
     return NextResponse.json({
