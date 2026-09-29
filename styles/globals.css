@@ -2997,3 +2997,494 @@
   }
 }
 
+
+/* =========================================================
+   VENUE COMPARISON — floating tray, toggle button, /compare page
+   ========================================================= */
+
+.compareToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+
+  background: #fff;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+
+  transition: 0.25s;
+}
+
+.compareToggle:hover {
+  border-color: var(--cyan);
+}
+
+.compareToggle.active {
+  background: linear-gradient(100deg, #2b54b8, #24b8d1);
+  border-color: transparent;
+  color: #fff;
+}
+
+.compareToggle.full {
+  width: 100%;
+  justify-content: center;
+  margin-top: 14px;
+  padding: 14px;
+}
+
+.compareToggleIcon {
+  font-size: 13px;
+}
+
+/* ---------- floating compare tray ---------- */
+
+.compareBar {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  z-index: 60;
+
+  transform: translateX(-50%);
+  width: min(680px, 92vw);
+}
+
+.compareBarInner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  padding: 12px 16px;
+  border-radius: 20px;
+
+  background: #0b0b10f0;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 60px #00000030;
+  color: #fff;
+}
+
+.compareBarSlots {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.compareBarSlot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  flex: 1;
+  min-width: 0;
+  padding: 6px;
+  border-radius: 14px;
+  background: #ffffff10;
+}
+
+.compareBarSlot.empty {
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  color: #999;
+  font-size: 11px;
+  text-align: center;
+}
+
+.compareBarSlot img,
+.compareBarSlotFallback {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #ffffff18;
+}
+
+.compareBarSlotText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.compareBarSlotText b {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compareBarSlotText span {
+  font-size: 10px;
+  color: #aaa6ae;
+}
+
+.compareBarRemove {
+  margin-left: auto;
+  background: transparent;
+  border: 0;
+  color: #ccc;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px;
+}
+
+.compareBarRemove:hover {
+  color: #fff;
+}
+
+.compareBarHint {
+  font-size: 11px;
+  color: #bbb;
+  white-space: nowrap;
+}
+
+/* ---------- /compare page ---------- */
+
+.compare-page .centerIntro {
+  margin-bottom: 50px;
+}
+
+.compareHeadRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto 60px;
+}
+
+.comparePickerCard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 340px;
+  border: 1px dashed var(--line);
+  border-radius: 22px;
+  background: #fff;
+  padding: 30px;
+}
+
+.comparePicker {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+
+.comparePickerLabel {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.comparePicker select,
+.compareHeaderActions select {
+  border: 1px solid #ddd;
+  background: #fff;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  outline: 0;
+}
+
+.compareError {
+  color: #b33;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.compareHint {
+  text-align: center;
+  color: var(--muted);
+  max-width: 520px;
+  margin: -30px auto 60px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.compareHint a {
+  color: var(--blue);
+  font-weight: 600;
+}
+
+/* ---------- header card ---------- */
+
+.compareHeaderCard {
+  background: #fff;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 18px 50px #0000000c;
+
+  transition: 0.3s;
+}
+
+.compareHeaderCard:hover {
+  box-shadow: 0 24px 70px #00000014;
+}
+
+.compareHeaderImage {
+  position: relative;
+  height: 240px;
+}
+
+.compareHeaderImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.compareHeaderImageFallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eeeae3;
+  color: #777;
+}
+
+.compareRemoveBtn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 0;
+
+  background: #ffffffe6;
+  color: #17171b;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.compareRemoveBtn:hover {
+  background: #fff;
+}
+
+.compareHeaderBody {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.compareHeaderProperty {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 500;
+}
+
+.compareHeaderVenue {
+  font-size: 13px;
+  color: var(--cyan);
+  font-weight: 600;
+}
+
+.compareHeaderLocation {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.compareBestFor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 4px;
+}
+
+.compareBestForTag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #2854b8;
+}
+
+.compareHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.compareHeaderActions select {
+  flex: 1;
+}
+
+.compareHeaderCtas {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.compareHeaderCtas .primaryBtn,
+.compareHeaderCtas .outlineBtn {
+  flex: 1;
+  justify-content: center;
+  font-size: 12px;
+  padding: 12px 14px;
+}
+
+/* ---------- desktop comparison table ---------- */
+
+.compareTable {
+  max-width: 1100px;
+  margin: 0 auto 80px;
+}
+
+.compareCategory {
+  margin-bottom: 34px;
+}
+
+.compareCategory h2 {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  margin: 0 0 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.compareRow {
+  display: grid;
+  grid-template-columns: 200px 1fr 1fr;
+  gap: 16px;
+  align-items: center;
+
+  padding: 14px 16px;
+  border-radius: 12px;
+}
+
+.compareRow:nth-child(even) {
+  background: #fff;
+}
+
+.compareRow.diffRow {
+  background: #fff7e6;
+}
+
+.compareRowLabel {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.compareRowValue {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.amenityMark {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.amenityMark.yes {
+  color: #1a9a6e;
+}
+
+.amenityMark.no {
+  color: #c7c2c9;
+}
+
+.compareEmptyNote {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------- mobile swipe panels ---------- */
+
+.compareSwipe {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .compareHeadRow {
+    grid-template-columns: 1fr;
+  }
+
+  .compareTable {
+    display: none;
+  }
+
+  .compareSwipe {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 0 22px 40px;
+    margin: 0 -22px;
+  }
+
+  .compareSwipePanel {
+    min-width: 88vw;
+    scroll-snap-align: start;
+
+    background: #fff;
+    border-radius: 22px;
+    padding: 24px;
+    box-shadow: 0 18px 50px #0000000c;
+  }
+
+  .compareSwipePanel h3 {
+    font-family: var(--serif);
+    font-size: 22px;
+    margin: 0 0 16px;
+  }
+
+  .compareSwipeCategory {
+    margin-bottom: 22px;
+  }
+
+  .compareSwipeCategory h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .compareSwipeRow {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    font-size: 13px;
+  }
+
+  .compareSwipeRow span {
+    color: var(--muted);
+  }
+
+  .compareSwipeRow b.yes {
+    color: #1a9a6e;
+  }
+
+  .compareSwipeRow b.no {
+    color: #b8b3ba;
+  }
+
+  .compareBarInner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .compareBarHint {
+    text-align: center;
+  }
+}

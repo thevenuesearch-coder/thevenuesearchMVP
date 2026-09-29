@@ -6,6 +6,7 @@ import Link from 'next/link';
 import type { Venue, RoomCategory } from '../lib/data';
 import { RoomCard } from './RoomCard';
 import { RoomDetailsModal } from './RoomDetailsModal';
+import { CompareToggleButton } from './CompareToggleButton';
 
 type VenuePageClientProps = {
   initialVenue: Venue | null;
@@ -584,6 +585,17 @@ export function VenuePageClient({
               </p>
 
             </div>
+
+
+            <CompareToggleButton
+              id={venue.id}
+              name={venue.name}
+              image={venue.image}
+              city={venue.city}
+              label="Add to comparison"
+              activeLabel="Added to comparison"
+              className="full"
+            />
 
           </div>
 

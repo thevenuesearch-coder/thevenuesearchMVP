@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabase-browser';
+import { CompareToggleButton } from './CompareToggleButton';
 
 type VenueCardData = {
   id: string;
@@ -475,13 +476,24 @@ export function VenueCard({
             Verified venue profile
           </span>
 
-          <Link
-            data-cursor="view"
-            className="smallBtn"
-            href={`/venues/${v.slug}`}
-          >
-            View venue
-          </Link>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+
+            <CompareToggleButton
+              id={v.slug}
+              name={v.name}
+              image={v.image}
+              city={v.city}
+            />
+
+            <Link
+              data-cursor="view"
+              className="smallBtn"
+              href={`/venues/${v.slug}`}
+            >
+              View venue
+            </Link>
+
+          </div>
 
         </div>
 
