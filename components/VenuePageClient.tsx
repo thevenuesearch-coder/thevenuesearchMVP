@@ -575,6 +575,17 @@ export function VenuePageClient({
             </div>
 
 
+            <CompareToggleButton
+              id={venue.id}
+              name={venue.name}
+              image={venue.image}
+              city={venue.city}
+              label="Add to comparison"
+              activeLabel="Added to comparison"
+              className="full"
+            />
+
+
             <div className="action-note">
 
               <span>✓</span>
@@ -585,17 +596,6 @@ export function VenuePageClient({
               </p>
 
             </div>
-
-
-            <CompareToggleButton
-              id={venue.id}
-              name={venue.name}
-              image={venue.image}
-              city={venue.city}
-              label="Add to comparison"
-              activeLabel="Added to comparison"
-              className="full"
-            />
 
           </div>
 
