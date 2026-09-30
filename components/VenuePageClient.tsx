@@ -7,6 +7,7 @@ import type { Venue, RoomCategory } from '../lib/data';
 import { RoomCard } from './RoomCard';
 import { RoomDetailsModal } from './RoomDetailsModal';
 import { CompareToggleButton } from './CompareToggleButton';
+import { VenueCompareSection } from './VenueCompareSection';
 
 type VenuePageClientProps = {
   initialVenue: Venue | null;
@@ -625,6 +626,9 @@ export function VenuePageClient({
         </aside>
 
       </section>
+
+
+      <VenueCompareSection venue={venue} />
 
 
       {/* =====================================================

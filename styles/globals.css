@@ -3483,3 +3483,66 @@
     max-width: 80px;
   }
 }
+
+/* ---------- inline "Compare with similar venues" (venue detail page) ---------- */
+
+.venueCompareSection {
+  max-width: 1400px;
+  margin: 90px auto 100px;
+  padding: 0 22px;
+}
+
+.venueCompareHeading {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 30px;
+}
+
+.venueCompareHeading h2 {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 500;
+  margin: 8px 0 14px;
+}
+
+.venueCompareFullLink {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.venueCompareCardsRow {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.venueCompareSwap {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 12px;
+  background: #fff;
+}
+
+@media (max-width: 900px) {
+  .venueCompareCardsRow {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+
+  .venueCompareSection {
+    padding: 0;
+  }
+
+  .venueCompareHeading {
+    padding: 0 22px;
+  }
+
+  .venueCompareCardsRow {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+}

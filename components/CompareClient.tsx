@@ -4,250 +4,20 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
-import type { Venue, VenueSpace } from '../lib/data';
+import type { Venue } from '../lib/data';
 import { fetchVenues, fetchVenueBySlug } from '../lib/venues';
 import { CompareToggleButton } from './CompareToggleButton';
 import { MAX_COMPARE, MIN_COMPARE } from '../lib/compare';
-
-const NOT_AVAILABLE = 'Not available';
-
-/* ============================================================
-   FORMATTING + DERIVATION HELPERS
-   (everything here reads real fields only -- nothing invented)
-   ============================================================ */
-
-function formatPrice(value: number | null): string {
-  if (!value) return NOT_AVAILABLE;
-
-  if (value >= 100000) {
-    const lakhs = value / 100000;
-    const rounded = Number.isInteger(lakhs) ? lakhs : Math.round(lakhs * 10) / 10;
-    return `₹${rounded}L`;
-  }
-
-  return `₹${value.toLocaleString('en-IN')}`;
-}
-
-function normalizeLabel(label: string): string {
-  return label.trim().toLowerCase();
-}
-
-function collectAmenities(venue: Venue): string[] {
-  const pool: string[] = [
-    ...venue.tags,
-    ...venue.venueSpaces.flatMap((space) => space.tags),
-    ...venue.rooms.flatMap((room) => [
-      ...room.amenities,
-      ...room.features,
-      ...room.technology,
-      ...room.services,
-      ...room.specialInclusions,
-    ]),
-  ];
-
-  const seen = new Map<string, string>();
-  for (const raw of pool) {
-    const label = raw.trim();
-    if (!label) continue;
-    const key = normalizeLabel(label);
-    if (!seen.has(key)) seen.set(key, label);
-  }
-
-  return Array.from(seen.values()).sort((a, b) => a.localeCompare(b));
-}
-
-function bestForTags(venue: Venue): string[] {
-  const tags: string[] = [];
-
-  if (venue.capacity >= 400) tags.push('Large weddings');
-  else if (venue.capacity > 0 && venue.capacity <= 150) tags.push('Intimate events');
-  else if (venue.capacity > 0) tags.push('Mid-size celebrations');
-
-  if (venue.rooms.length >= 4) tags.push('Accommodation-heavy bookings');
-  else if (venue.rooms.length > 0) tags.push('On-site guest stays');
-
-  if (venue.venueSpaces.length >= 3) tags.push('Multi-event weekends');
-  if (/resort|palace/i.test(venue.type)) tags.push('Destination weddings');
-
-  return Array.from(new Set(tags));
-}
-
-/**
- * Indoor/Outdoor isn't a real column in the schema -- venue_spaces
- * has no such flag. Rather than guess from words like "lawn" or
- * "garden", this only reports a value when a space's own tags
- * literally contain the word "indoor" or "outdoor" -- anything
- * else honestly reports "Not available".
- */
-function indoorOutdoor(space: VenueSpace | null, venue: Venue): string {
-  const pool = (space ? space.tags : venue.tags).map((t) => t.toLowerCase());
-  const hasIndoor = pool.some((t) => t.includes('indoor'));
-  const hasOutdoor = pool.some((t) => t.includes('outdoor'));
-  if (hasIndoor && hasOutdoor) return 'Indoor & Outdoor';
-  if (hasIndoor) return 'Indoor';
-  if (hasOutdoor) return 'Outdoor';
-  return NOT_AVAILABLE;
-}
-
-const EVENT_KEYWORDS: { label: string; pattern: RegExp }[] = [
-  { label: 'Pre-wedding events', pattern: /pre[- ]?wedding|engagement/i },
-  { label: 'Haldi', pattern: /haldi/i },
-  { label: 'Mehendi', pattern: /mehendi|mehndi/i },
-  { label: 'Sangeet', pattern: /sangeet/i },
-  { label: 'Wedding', pattern: /wedding/i },
-  { label: 'Reception', pattern: /reception/i },
-  { label: 'Other events', pattern: /corporate|conference|convention|social event/i },
-];
-
-/**
- * Only flags an event type as offered when it's literally named
- * somewhere in the venue's own tags/type/description -- if a
- * venue simply doesn't mention "sangeet" anywhere, this reports
- * "Not available" rather than assuming yes or no.
- */
-function eventSuitabilityFlags(space: VenueSpace | null, venue: Venue): Record<string, boolean | null> {
-  const text = [
-    space?.description || '',
-    space?.tags.join(' ') || '',
-    venue.desc,
-    venue.tags.join(' '),
-    venue.type,
-  ]
-    .join(' ')
-    .toLowerCase();
-
-  const result: Record<string, boolean | null> = {};
-  for (const { label, pattern } of EVENT_KEYWORDS) {
-    result[label] = pattern.test(text) ? true : null;
-  }
-  return result;
-}
-
-function roomOccupancySummary(venue: Venue): string {
-  const values = venue.rooms
-    .map((r) => r.maxOccupancy)
-    .filter((n): n is number => typeof n === 'number' && n > 0);
-  if (values.length === 0) return NOT_AVAILABLE;
-  return `Up to ${Math.max(...values)} per room`;
-}
-
-/* ============================================================
-   COLUMN MODEL
-   Each compared column = a venue (property) + optionally one of
-   its venue_spaces, so two columns can be the same property but
-   two different banquet spaces within it.
-   ============================================================ */
-
-type Column = {
-  venue: Venue;
-  space: VenueSpace | null;
-};
-
-function parseColumnsParam(raw: string): { slug: string; spaceId: string | null }[] {
-  if (!raw) return [];
-  return raw
-    .split(',')
-    .map((token) => token.trim())
-    .filter(Boolean)
-    .slice(0, MAX_COMPARE)
-    .map((token) => {
-      const [slug, spaceId] = token.split(':');
-      return { slug, spaceId: spaceId || null };
-    });
-}
-
-function serializeColumns(refs: { slug: string; spaceId: string | null }[]): string {
-  return refs.map((r) => (r.spaceId ? `${r.slug}:${r.spaceId}` : r.slug)).join(',');
-}
-
-/* ============================================================
-   ROW MODEL
-   ============================================================ */
-
-type Row = {
-  label: string;
-  values: string[];
-  skipDiff?: boolean;
-};
-
-type Category = {
-  key: string;
-  title: string;
-  rows: Row[];
-};
-
-function buildCategories(columns: Column[]): Category[] {
-  const val = (fn: (c: Column) => string): string[] => columns.map(fn);
-
-  const propertyInfo: Row[] = [
-    { label: 'Property name', values: val((c) => c.venue.name) },
-    {
-      label: 'Location',
-      values: val((c) => `${c.venue.city}${c.venue.country && c.venue.country !== c.venue.city ? `, ${c.venue.country}` : ''}`),
-    },
-    { label: 'Venue type', values: val((c) => c.venue.type || NOT_AVAILABLE) },
-    { label: 'Property rating', values: val((c) => (c.venue.rating ? `${c.venue.rating} ★` : NOT_AVAILABLE)) },
-    {
-      label: 'Banquet spaces at property',
-      values: val((c) => (c.venue.venueSpaces.length ? String(c.venue.venueSpaces.length) : NOT_AVAILABLE)),
-    },
-    {
-      label: 'Property capacity',
-      values: val((c) => (c.venue.capacity ? `Up to ${c.venue.capacity.toLocaleString('en-IN')} guests` : NOT_AVAILABLE)),
-    },
-  ];
-
-  const venueDetails: Row[] = [
-    {
-      label: 'Venue / space name',
-      values: val((c) => c.space?.name || c.venue.name),
-    },
-    {
-      label: 'Capacity',
-      values: val((c) => {
-        const cap = c.space?.capacity || c.venue.capacity;
-        return cap ? `${cap.toLocaleString('en-IN')} guests` : NOT_AVAILABLE;
-      }),
-    },
-    { label: 'Indoor / Outdoor', values: val((c) => indoorOutdoor(c.space, c.venue)) },
-    { label: 'Venue area', values: val(() => NOT_AVAILABLE), skipDiff: true },
-    {
-      label: 'About this space',
-      values: val((c) => c.space?.description || c.venue.desc || NOT_AVAILABLE),
-      skipDiff: true,
-    },
-    { label: 'Starting price', values: val((c) => formatPrice(c.venue.price)) },
-  ];
-
-  const eventRows: Row[] = EVENT_KEYWORDS.map(({ label }) => ({
-    label,
-    values: columns.map((c) => (eventSuitabilityFlags(c.space, c.venue)[label] ? 'Available' : NOT_AVAILABLE)),
-  }));
-
-  const accommodation: Row[] = [
-    {
-      label: 'Room categories',
-      values: val((c) => (c.venue.rooms.length ? String(c.venue.rooms.length) : NOT_AVAILABLE)),
-    },
-    {
-      label: 'Room category names',
-      values: val((c) => c.venue.rooms.map((r) => r.name).join(', ') || NOT_AVAILABLE),
-      skipDiff: true,
-    },
-    { label: 'Max occupancy', values: val((c) => roomOccupancySummary(c.venue)) },
-    {
-      label: 'Balcony rooms',
-      values: val((c) => (c.venue.rooms.length ? (c.venue.rooms.some((r) => r.hasBalcony) ? 'Available' : NOT_AVAILABLE) : NOT_AVAILABLE)),
-    },
-  ];
-
-  return [
-    { key: 'property', title: 'Property Information', rows: propertyInfo },
-    { key: 'venue', title: 'Venue Details', rows: venueDetails },
-    { key: 'events', title: 'Wedding & Event Features', rows: eventRows },
-    { key: 'rooms', title: 'Accommodation', rows: accommodation },
-  ];
-}
+import {
+  NOT_AVAILABLE,
+  formatPrice,
+  bestForTags,
+  buildCategories,
+  buildAmenityUnion,
+  parseColumnsParam,
+  serializeColumns,
+  type Column,
+} from '../lib/compareLogic';
 
 /* ============================================================
    PICKER (initial selection + "add venue")
@@ -531,14 +301,8 @@ export function CompareClient() {
 
   const amenityUnion = useMemo(() => {
     if (!bothReady) return [];
-    const perVenue = readyColumns.map((c) => new Set(collectAmenities(c.venue).map(normalizeLabel)));
-    const display = new Map<string, string>();
-    readyColumns.forEach((c) => {
-      collectAmenities(c.venue).forEach((label) => display.set(normalizeLabel(label), label));
-    });
-    return Array.from(display.entries())
-      .map(([key, label]) => ({ label, present: perVenue.map((set) => set.has(key)) }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+    return buildAmenityUnion(readyColumns.map((c) => c.venue));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bothReady, readyColumns]);
 
   const gridStyle = { gridTemplateColumns: `220px repeat(${readyColumns.length}, minmax(220px, 1fr))` };
