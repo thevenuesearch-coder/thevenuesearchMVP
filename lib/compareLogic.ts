@@ -81,43 +81,6 @@ export function indoorOutdoor(space: VenueSpace | null, venue: Venue): string {
   return NOT_AVAILABLE;
 }
 
-export const EVENT_KEYWORDS: { label: string; pattern: RegExp }[] = [
-  { label: 'Pre-wedding events', pattern: /pre[- ]?wedding|engagement/i },
-  { label: 'Haldi', pattern: /haldi/i },
-  { label: 'Mehendi', pattern: /mehendi|mehndi/i },
-  { label: 'Sangeet', pattern: /sangeet/i },
-  { label: 'Wedding', pattern: /wedding/i },
-  { label: 'Reception', pattern: /reception/i },
-  { label: 'Other events', pattern: /corporate|conference|convention|social event/i },
-];
-
-/**
- * Only flags an event type as offered when it's literally named
- * somewhere in the venue's own tags/type/description -- if a
- * venue simply doesn't mention "sangeet" anywhere, this reports
- * "Not available" rather than assuming yes or no.
- */
-export function eventSuitabilityFlags(
-  space: VenueSpace | null,
-  venue: Venue
-): Record<string, boolean | null> {
-  const text = [
-    space?.description || '',
-    space?.tags.join(' ') || '',
-    venue.desc,
-    venue.tags.join(' '),
-    venue.type,
-  ]
-    .join(' ')
-    .toLowerCase();
-
-  const result: Record<string, boolean | null> = {};
-  for (const { label, pattern } of EVENT_KEYWORDS) {
-    result[label] = pattern.test(text) ? true : null;
-  }
-  return result;
-}
-
 export function roomOccupancySummary(venue: Venue): string {
   const values = venue.rooms
     .map((r) => r.maxOccupancy)
@@ -222,11 +185,6 @@ export function buildCategories(columns: Column[]): Category[] {
     { label: 'Starting price', values: val((c) => formatPrice(c.venue.price)) },
   ];
 
-  const eventRows: Row[] = EVENT_KEYWORDS.map(({ label }) => ({
-    label,
-    values: columns.map((c) => (eventSuitabilityFlags(c.space, c.venue)[label] ? 'Available' : NOT_AVAILABLE)),
-  }));
-
   const accommodation: Row[] = [
     {
       label: 'Room categories',
@@ -249,7 +207,6 @@ export function buildCategories(columns: Column[]): Category[] {
   return [
     { key: 'property', title: 'Property Information', rows: propertyInfo },
     { key: 'venue', title: 'Venue Details', rows: venueDetails },
-    { key: 'events', title: 'Wedding & Event Features', rows: eventRows },
     { key: 'rooms', title: 'Accommodation', rows: accommodation },
   ];
 }

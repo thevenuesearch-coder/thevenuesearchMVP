@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
 import type { Venue } from '../lib/data';
-import { fetchVenues } from '../lib/venues';
+import { fetchVenues, fetchVenueBySlug } from '../lib/venues';
 import {
   formatPrice,
   bestForTags,
@@ -18,9 +18,15 @@ import {
 const RIVAL_COUNT = 3;
 
 export function VenueCompareSection({ venue }: { venue: Venue }) {
+  // allVenues comes from the list endpoint, which (by design, for
+  // list-page performance) doesn't include room data -- fine for
+  // populating the "change venue" picker, but NOT enough to compare
+  // rooms/amenities accurately, so full detail is fetched separately
+  // below for whichever venues are actually being compared.
   const [allVenues, setAllVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
   const [rivalIds, setRivalIds] = useState<string[] | null>(null);
+  const [detailCache, setDetailCache] = useState<Record<string, Venue>>({});
 
   useEffect(() => {
     let mounted = true;
@@ -39,12 +45,41 @@ export function VenueCompareSection({ venue }: { venue: Venue }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [venue.id]);
 
+  // Full detail fetch (rooms, amenities, spaces) for every rival --
+  // matches how /compare fetches its columns, so rooms/amenities
+  // aren't silently blank just because the pick came from the list.
+  useEffect(() => {
+    if (!rivalIds) return;
+    const missing = rivalIds.filter((id) => id !== venue.id && !(id in detailCache));
+    if (missing.length === 0) return;
+
+    let mounted = true;
+    Promise.all(
+      missing.map((id) =>
+        fetchVenueBySlug(id)
+          .then((v) => [id, v] as const)
+          .catch(() => [id, null] as const)
+      )
+    ).then((results) => {
+      if (!mounted) return;
+      setDetailCache((prev) => {
+        const next = { ...prev };
+        for (const [id, v] of results) if (v) next[id] = v;
+        return next;
+      });
+    });
+    return () => {
+      mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rivalIds]);
+
   const rivals = useMemo(() => {
     if (!rivalIds) return [];
     return rivalIds
-      .map((id) => allVenues.find((v) => v.id === id))
+      .map((id) => detailCache[id])
       .filter((v): v is Venue => Boolean(v));
-  }, [rivalIds, allVenues]);
+  }, [rivalIds, detailCache]);
 
   const columns: Column[] = useMemo(
     () => [venue, ...rivals].map((v) => ({ venue: v, space: v.venueSpaces[0] || null })),
