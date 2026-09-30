@@ -4,16 +4,20 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
-import type { Venue } from '../lib/data';
+import type { Venue, VenueSpace } from '../lib/data';
 import { fetchVenues, fetchVenueBySlug } from '../lib/venues';
 import { CompareToggleButton } from './CompareToggleButton';
+import { MAX_COMPARE, MIN_COMPARE } from '../lib/compare';
+
+const NOT_AVAILABLE = 'Not available';
 
 /* ============================================================
-   FORMATTING HELPERS
+   FORMATTING + DERIVATION HELPERS
+   (everything here reads real fields only -- nothing invented)
    ============================================================ */
 
 function formatPrice(value: number | null): string {
-  if (!value) return 'On request';
+  if (!value) return NOT_AVAILABLE;
 
   if (value >= 100000) {
     const lakhs = value / 100000;
@@ -28,13 +32,6 @@ function normalizeLabel(label: string): string {
   return label.trim().toLowerCase();
 }
 
-/**
- * Pulls every amenity/feature-like string a venue exposes -- its
- * own tags, its event spaces' tags, and every room category's
- * amenities/features/technology/services/inclusions -- into one
- * de-duplicated, display-cased list. Nothing here is hardcoded:
- * whatever the venue actually has in Supabase is what shows up.
- */
 function collectAmenities(venue: Venue): string[] {
   const pool: string[] = [
     ...venue.tags,
@@ -59,11 +56,6 @@ function collectAmenities(venue: Venue): string[] {
   return Array.from(seen.values()).sort((a, b) => a.localeCompare(b));
 }
 
-/**
- * "Best for" tags -- factual, derived only from real fields
- * (capacity, room count, event space count, venue type). Not a
- * marketing guess: every tag traces back to a specific data point.
- */
 function bestForTags(venue: Venue): string[] {
   const tags: string[] = [];
 
@@ -75,47 +67,106 @@ function bestForTags(venue: Venue): string[] {
   else if (venue.rooms.length > 0) tags.push('On-site guest stays');
 
   if (venue.venueSpaces.length >= 3) tags.push('Multi-event weekends');
-
   if (/resort|palace/i.test(venue.type)) tags.push('Destination weddings');
 
   return Array.from(new Set(tags));
 }
 
-function roomOccupancySummary(venue: Venue): string {
-  const values = venue.rooms
-    .map((room) => room.maxOccupancy)
-    .filter((n): n is number => typeof n === 'number' && n > 0);
-
-  if (values.length === 0) return '—';
-
-  const max = Math.max(...values);
-  return `Up to ${max} per room`;
+/**
+ * Indoor/Outdoor isn't a real column in the schema -- venue_spaces
+ * has no such flag. Rather than guess from words like "lawn" or
+ * "garden", this only reports a value when a space's own tags
+ * literally contain the word "indoor" or "outdoor" -- anything
+ * else honestly reports "Not available".
+ */
+function indoorOutdoor(space: VenueSpace | null, venue: Venue): string {
+  const pool = (space ? space.tags : venue.tags).map((t) => t.toLowerCase());
+  const hasIndoor = pool.some((t) => t.includes('indoor'));
+  const hasOutdoor = pool.some((t) => t.includes('outdoor'));
+  if (hasIndoor && hasOutdoor) return 'Indoor & Outdoor';
+  if (hasIndoor) return 'Indoor';
+  if (hasOutdoor) return 'Outdoor';
+  return NOT_AVAILABLE;
 }
 
-function spaceCapacitySummary(venue: Venue): string {
-  const values = venue.venueSpaces
-    .map((space) => space.capacity)
-    .filter((n) => n > 0);
+const EVENT_KEYWORDS: { label: string; pattern: RegExp }[] = [
+  { label: 'Pre-wedding events', pattern: /pre[- ]?wedding|engagement/i },
+  { label: 'Haldi', pattern: /haldi/i },
+  { label: 'Mehendi', pattern: /mehendi|mehndi/i },
+  { label: 'Sangeet', pattern: /sangeet/i },
+  { label: 'Wedding', pattern: /wedding/i },
+  { label: 'Reception', pattern: /reception/i },
+  { label: 'Other events', pattern: /corporate|conference|convention|social event/i },
+];
 
-  if (values.length === 0) return '—';
-  if (values.length === 1) return `${values[0].toLocaleString('en-IN')} guests`;
+/**
+ * Only flags an event type as offered when it's literally named
+ * somewhere in the venue's own tags/type/description -- if a
+ * venue simply doesn't mention "sangeet" anywhere, this reports
+ * "Not available" rather than assuming yes or no.
+ */
+function eventSuitabilityFlags(space: VenueSpace | null, venue: Venue): Record<string, boolean | null> {
+  const text = [
+    space?.description || '',
+    space?.tags.join(' ') || '',
+    venue.desc,
+    venue.tags.join(' '),
+    venue.type,
+  ]
+    .join(' ')
+    .toLowerCase();
 
-  return `${Math.min(...values).toLocaleString('en-IN')}–${Math.max(
-    ...values
-  ).toLocaleString('en-IN')} guests`;
+  const result: Record<string, boolean | null> = {};
+  for (const { label, pattern } of EVENT_KEYWORDS) {
+    result[label] = pattern.test(text) ? true : null;
+  }
+  return result;
+}
+
+function roomOccupancySummary(venue: Venue): string {
+  const values = venue.rooms
+    .map((r) => r.maxOccupancy)
+    .filter((n): n is number => typeof n === 'number' && n > 0);
+  if (values.length === 0) return NOT_AVAILABLE;
+  return `Up to ${Math.max(...values)} per room`;
 }
 
 /* ============================================================
-   COMPARISON ROW MODEL
+   COLUMN MODEL
+   Each compared column = a venue (property) + optionally one of
+   its venue_spaces, so two columns can be the same property but
+   two different banquet spaces within it.
+   ============================================================ */
+
+type Column = {
+  venue: Venue;
+  space: VenueSpace | null;
+};
+
+function parseColumnsParam(raw: string): { slug: string; spaceId: string | null }[] {
+  if (!raw) return [];
+  return raw
+    .split(',')
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .slice(0, MAX_COMPARE)
+    .map((token) => {
+      const [slug, spaceId] = token.split(':');
+      return { slug, spaceId: spaceId || null };
+    });
+}
+
+function serializeColumns(refs: { slug: string; spaceId: string | null }[]): string {
+  return refs.map((r) => (r.spaceId ? `${r.slug}:${r.spaceId}` : r.slug)).join(',');
+}
+
+/* ============================================================
+   ROW MODEL
    ============================================================ */
 
 type Row = {
   label: string;
-  a: string;
-  b: string;
-  /** Free-text rows (descriptions) skip the diff highlight -- two
-   *  venues will always word their story differently; that's not
-   *  a meaningful "difference" worth flagging. */
+  values: string[];
   skipDiff?: boolean;
 };
 
@@ -125,111 +176,94 @@ type Category = {
   rows: Row[];
 };
 
-function buildCategories(a: Venue, b: Venue): Category[] {
-  const row = (label: string, av: string, bv: string, skipDiff = false): Row => ({
+function buildCategories(columns: Column[]): Category[] {
+  const val = (fn: (c: Column) => string): string[] => columns.map(fn);
+
+  const propertyInfo: Row[] = [
+    { label: 'Property name', values: val((c) => c.venue.name) },
+    {
+      label: 'Location',
+      values: val((c) => `${c.venue.city}${c.venue.country && c.venue.country !== c.venue.city ? `, ${c.venue.country}` : ''}`),
+    },
+    { label: 'Venue type', values: val((c) => c.venue.type || NOT_AVAILABLE) },
+    { label: 'Property rating', values: val((c) => (c.venue.rating ? `${c.venue.rating} ★` : NOT_AVAILABLE)) },
+    {
+      label: 'Banquet spaces at property',
+      values: val((c) => (c.venue.venueSpaces.length ? String(c.venue.venueSpaces.length) : NOT_AVAILABLE)),
+    },
+    {
+      label: 'Property capacity',
+      values: val((c) => (c.venue.capacity ? `Up to ${c.venue.capacity.toLocaleString('en-IN')} guests` : NOT_AVAILABLE)),
+    },
+  ];
+
+  const venueDetails: Row[] = [
+    {
+      label: 'Venue / space name',
+      values: val((c) => c.space?.name || c.venue.name),
+    },
+    {
+      label: 'Capacity',
+      values: val((c) => {
+        const cap = c.space?.capacity || c.venue.capacity;
+        return cap ? `${cap.toLocaleString('en-IN')} guests` : NOT_AVAILABLE;
+      }),
+    },
+    { label: 'Indoor / Outdoor', values: val((c) => indoorOutdoor(c.space, c.venue)) },
+    { label: 'Venue area', values: val(() => NOT_AVAILABLE), skipDiff: true },
+    {
+      label: 'About this space',
+      values: val((c) => c.space?.description || c.venue.desc || NOT_AVAILABLE),
+      skipDiff: true,
+    },
+    { label: 'Starting price', values: val((c) => formatPrice(c.venue.price)) },
+  ];
+
+  const eventRows: Row[] = EVENT_KEYWORDS.map(({ label }) => ({
     label,
-    a: av || '—',
-    b: bv || '—',
-    skipDiff,
-  });
+    values: columns.map((c) => (eventSuitabilityFlags(c.space, c.venue)[label] ? 'Available' : NOT_AVAILABLE)),
+  }));
+
+  const accommodation: Row[] = [
+    {
+      label: 'Room categories',
+      values: val((c) => (c.venue.rooms.length ? String(c.venue.rooms.length) : NOT_AVAILABLE)),
+    },
+    {
+      label: 'Room category names',
+      values: val((c) => c.venue.rooms.map((r) => r.name).join(', ') || NOT_AVAILABLE),
+      skipDiff: true,
+    },
+    { label: 'Max occupancy', values: val((c) => roomOccupancySummary(c.venue)) },
+    {
+      label: 'Balcony rooms',
+      values: val((c) => (c.venue.rooms.length ? (c.venue.rooms.some((r) => r.hasBalcony) ? 'Available' : NOT_AVAILABLE) : NOT_AVAILABLE)),
+    },
+  ];
 
   return [
-    {
-      key: 'overview',
-      title: 'Overview',
-      rows: [
-        row('Property', a.name, b.name),
-        row('Venue type', a.type, b.type),
-        row('Rating', a.rating ? `${a.rating} ★` : '—', b.rating ? `${b.rating} ★` : '—'),
-        row('Verified', a.verified ? 'Verified' : 'Unverified', b.verified ? 'Verified' : 'Unverified'),
-        row('About', a.desc, b.desc, true),
-      ],
-    },
-    {
-      key: 'venue-details',
-      title: 'Venue Details',
-      rows: [
-        row(
-          'Event spaces',
-          a.venueSpaces.length ? String(a.venueSpaces.length) : '—',
-          b.venueSpaces.length ? String(b.venueSpaces.length) : '—'
-        ),
-        row(
-          'Space names',
-          a.venueSpaces.map((s) => s.name).join(', '),
-          b.venueSpaces.map((s) => s.name).join(', '),
-          true
-        ),
-      ],
-    },
-    {
-      key: 'capacity',
-      title: 'Capacity',
-      rows: [
-        row(
-          'Guest capacity',
-          a.capacity ? `Up to ${a.capacity.toLocaleString('en-IN')} guests` : '—',
-          b.capacity ? `Up to ${b.capacity.toLocaleString('en-IN')} guests` : '—'
-        ),
-        row('Per-space capacity', spaceCapacitySummary(a), spaceCapacitySummary(b)),
-      ],
-    },
-    {
-      key: 'pricing',
-      title: 'Pricing',
-      rows: [
-        row('Starting price', formatPrice(a.price), formatPrice(b.price)),
-        row('Hold / deposit fee', formatPrice(a.hold), formatPrice(b.hold)),
-      ],
-    },
-    {
-      key: 'location',
-      title: 'Location',
-      rows: [
-        row('City', a.city, b.city),
-        row('Destination', a.destination, b.destination),
-        row('Country', a.country, b.country),
-      ],
-    },
-    {
-      key: 'rooms',
-      title: 'Rooms',
-      rows: [
-        row(
-          'Room categories',
-          a.rooms.length ? String(a.rooms.length) : '—',
-          b.rooms.length ? String(b.rooms.length) : '—'
-        ),
-        row('Max occupancy', roomOccupancySummary(a), roomOccupancySummary(b)),
-        row(
-          'Balcony rooms available',
-          a.rooms.some((r) => r.hasBalcony) ? 'Yes' : a.rooms.length ? 'No' : '—',
-          b.rooms.some((r) => r.hasBalcony) ? 'Yes' : b.rooms.length ? 'No' : '—'
-        ),
-      ],
-    },
+    { key: 'property', title: 'Property Information', rows: propertyInfo },
+    { key: 'venue', title: 'Venue Details', rows: venueDetails },
+    { key: 'events', title: 'Wedding & Event Features', rows: eventRows },
+    { key: 'rooms', title: 'Accommodation', rows: accommodation },
   ];
 }
 
 /* ============================================================
-   VENUE PICKER (used for both initial selection and "change")
+   PICKER (initial selection + "add venue")
    ============================================================ */
 
 function VenuePicker({
   venues,
   loading,
-  excludeId,
   onSelect,
   label,
 }: {
   venues: Venue[];
   loading: boolean;
-  excludeId?: string;
   onSelect: (slug: string) => void;
   label: string;
 }) {
-  const options = venues.filter((v) => v.id !== excludeId);
-
   return (
     <div className="comparePicker">
       <span className="comparePickerLabel">{label}</span>
@@ -241,9 +275,9 @@ function VenuePicker({
         }}
       >
         <option value="" disabled>
-          {loading ? 'Loading venues…' : 'Choose a venue to compare'}
+          {loading ? 'Loading venues…' : 'Choose a venue'}
         </option>
-        {options.map((v) => (
+        {venues.map((v) => (
           <option key={v.id} value={v.id}>
             {v.name} — {v.city}
           </option>
@@ -254,27 +288,30 @@ function VenuePicker({
 }
 
 /* ============================================================
-   VENUE HEADER CARD (image, property + venue name, change/remove)
+   VENUE CARD (top row)
    ============================================================ */
 
-function VenueHeaderCard({
-  venue,
-  venues,
-  onChange,
+function VenueCardColumn({
+  column,
+  allVenues,
+  onChangeVenue,
+  onChangeSpace,
   onRemove,
 }: {
-  venue: Venue;
-  venues: Venue[];
-  onChange: (slug: string) => void;
+  column: Column;
+  allVenues: Venue[];
+  onChangeVenue: (slug: string) => void;
+  onChangeSpace: (spaceId: string) => void;
   onRemove: () => void;
 }) {
-  const primarySpace = venue.venueSpaces[0];
+  const { venue, space } = column;
+  const displayName = space?.name || venue.name;
 
   return (
     <div className="compareHeaderCard">
       <div className="compareHeaderImage">
-        {venue.image ? (
-          <img src={venue.image} alt={venue.name} loading="lazy" />
+        {(space?.image || venue.image) ? (
+          <img src={space?.image || venue.image} alt={displayName} loading="lazy" />
         ) : (
           <div className="compareHeaderImageFallback">The Venue Search</div>
         )}
@@ -282,7 +319,7 @@ function VenueHeaderCard({
         <button
           type="button"
           className="compareRemoveBtn"
-          aria-label={`Remove ${venue.name} from comparison`}
+          aria-label={`Remove ${displayName} from comparison`}
           onClick={onRemove}
         >
           ×
@@ -290,14 +327,15 @@ function VenueHeaderCard({
       </div>
 
       <div className="compareHeaderBody">
+        <span className="compareHeaderVenue">{displayName}</span>
         <span className="compareHeaderProperty">{venue.name}</span>
-        {primarySpace && (
-          <span className="compareHeaderVenue">{primarySpace.name}</span>
-        )}
         <span className="compareHeaderLocation">
           {venue.city}
           {venue.country && venue.country !== venue.city ? `, ${venue.country}` : ''}
         </span>
+
+        <span className="compareHeaderPrice">{formatPrice(venue.price)}</span>
+        {venue.rating ? <span className="compareHeaderRating">{venue.rating} ★</span> : null}
 
         <div className="compareBestFor">
           {bestForTags(venue).map((tag) => (
@@ -310,34 +348,51 @@ function VenueHeaderCard({
         <div className="compareHeaderActions">
           <select
             value={venue.id}
-            onChange={(event) => onChange(event.target.value)}
-            aria-label={`Change venue (currently ${venue.name})`}
+            onChange={(event) => onChangeVenue(event.target.value)}
+            aria-label={`Change property (currently ${venue.name})`}
           >
-            {venues.map((v) => (
+            {allVenues.map((v) => (
               <option key={v.id} value={v.id}>
                 {v.name} — {v.city}
               </option>
             ))}
           </select>
 
-          <CompareToggleButton
-            id={venue.id}
-            name={venue.name}
-            image={venue.image}
-            city={venue.city}
-            label="Comparing"
-            activeLabel="Comparing"
-          />
+          {venue.venueSpaces.length > 1 && (
+            <select
+              value={space?.id || ''}
+              onChange={(event) => onChangeSpace(event.target.value)}
+              aria-label={`Change venue space (currently ${displayName})`}
+            >
+              {venue.venueSpaces.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         <div className="compareHeaderCtas">
-          <Link data-cursor="open" className="primaryBtn" href={`/book?venue=${venue.id}`}>
+          <Link
+            data-cursor="open"
+            className="primaryBtn"
+            href={`/book?venue=${venue.id}${space ? `&space=${space.id}` : ''}`}
+          >
             Check Availability
           </Link>
           <Link className="outlineBtn" href={`/venues/${venue.id}`}>
-            View full profile
+            View Venue
           </Link>
         </div>
+
+        <CompareToggleButton
+          id={venue.id}
+          name={venue.name}
+          image={venue.image}
+          city={venue.city}
+          className="full"
+        />
       </div>
     </div>
   );
@@ -352,127 +407,141 @@ export function CompareClient() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const slugA = searchParams.get('a') || '';
-  const slugB = searchParams.get('b') || '';
+  // Back-compat: earlier version used ?a=&b=. Fold those into the
+  // new ?v=slug,slug scheme so old links / the tray still work.
+  const rawV = searchParams.get('v');
+  const legacyA = searchParams.get('a');
+  const legacyB = searchParams.get('b');
+  const columnRefs = useMemo(() => {
+    if (rawV) return parseColumnsParam(rawV);
+    const legacy = [legacyA, legacyB].filter(Boolean) as string[];
+    return parseColumnsParam(legacy.join(','));
+  }, [rawV, legacyA, legacyB]);
 
   const [allVenues, setAllVenues] = useState<Venue[]>([]);
   const [loadingList, setLoadingList] = useState(true);
+  const [venueCache, setVenueCache] = useState<Record<string, Venue | null>>({});
+  const [loadingSlugs, setLoadingSlugs] = useState<Set<string>>(new Set());
 
-  const [venueA, setVenueA] = useState<Venue | null>(null);
-  const [venueB, setVenueB] = useState<Venue | null>(null);
-  const [loadingA, setLoadingA] = useState(false);
-  const [loadingB, setLoadingB] = useState(false);
-  const [errorA, setErrorA] = useState('');
-  const [errorB, setErrorB] = useState('');
-
-  // Full venue list, for the "choose / change venue" pickers.
   useEffect(() => {
     let mounted = true;
-
     fetchVenues()
-      .then((venues) => {
-        if (mounted) setAllVenues(venues);
-      })
-      .catch(() => {
-        if (mounted) setAllVenues([]);
-      })
-      .finally(() => {
-        if (mounted) setLoadingList(false);
-      });
-
+      .then((venues) => mounted && setAllVenues(venues))
+      .catch(() => mounted && setAllVenues([]))
+      .finally(() => mounted && setLoadingList(false));
     return () => {
       mounted = false;
     };
   }, []);
 
+  // Fetch full detail for every unique slug referenced in the URL.
   useEffect(() => {
     let mounted = true;
+    const neededSlugs = Array.from(new Set(columnRefs.map((r) => r.slug))).filter(
+      (slug) => !(slug in venueCache)
+    );
 
-    if (!slugA) {
-      setVenueA(null);
-      return;
-    }
+    if (neededSlugs.length === 0) return;
 
-    setLoadingA(true);
-    setErrorA('');
+    setLoadingSlugs((prev) => new Set([...prev, ...neededSlugs]));
 
-    fetchVenueBySlug(slugA)
-      .then((venue) => {
-        if (!mounted) return;
-        if (!venue) setErrorA('That venue could not be found.');
-        setVenueA(venue);
-      })
-      .catch(() => {
-        if (mounted) setErrorA('Unable to load this venue right now.');
-      })
-      .finally(() => {
-        if (mounted) setLoadingA(false);
+    Promise.all(
+      neededSlugs.map((slug) =>
+        fetchVenueBySlug(slug)
+          .then((venue) => [slug, venue] as const)
+          .catch(() => [slug, null] as const)
+      )
+    ).then((results) => {
+      if (!mounted) return;
+      setVenueCache((prev) => {
+        const next = { ...prev };
+        for (const [slug, venue] of results) next[slug] = venue;
+        return next;
       });
+      setLoadingSlugs((prev) => {
+        const next = new Set(prev);
+        for (const [slug] of results) next.delete(slug);
+        return next;
+      });
+    });
 
     return () => {
       mounted = false;
     };
-  }, [slugA]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columnRefs]);
 
-  useEffect(() => {
-    let mounted = true;
-
-    if (!slugB) {
-      setVenueB(null);
-      return;
-    }
-
-    setLoadingB(true);
-    setErrorB('');
-
-    fetchVenueBySlug(slugB)
-      .then((venue) => {
-        if (!mounted) return;
-        if (!venue) setErrorB('That venue could not be found.');
-        setVenueB(venue);
-      })
-      .catch(() => {
-        if (mounted) setErrorB('Unable to load this venue right now.');
-      })
-      .finally(() => {
-        if (mounted) setLoadingB(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [slugB]);
-
-  function updateParam(key: 'a' | 'b', value: string | null) {
+  function writeColumnRefs(refs: { slug: string; spaceId: string | null }[]) {
     const params = new URLSearchParams(searchParams.toString());
-    if (value) params.set(key, value);
-    else params.delete(key);
+    params.delete('a');
+    params.delete('b');
+    if (refs.length) params.set('v', serializeColumns(refs));
+    else params.delete('v');
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
+  function updateVenueAt(index: number, slug: string) {
+    const next = [...columnRefs];
+    next[index] = { slug, spaceId: null };
+    writeColumnRefs(next);
+  }
+
+  function updateSpaceAt(index: number, spaceId: string) {
+    const next = [...columnRefs];
+    next[index] = { ...next[index], spaceId };
+    writeColumnRefs(next);
+  }
+
+  function removeAt(index: number) {
+    const next = columnRefs.filter((_, i) => i !== index);
+    writeColumnRefs(next);
+  }
+
+  function addVenue(slug: string) {
+    if (columnRefs.length >= MAX_COMPARE) return;
+
+    const existingCount = columnRefs.filter((r) => r.slug === slug).length;
+    let spaceId: string | null = null;
+
+    if (existingCount > 0) {
+      const venue = venueCache[slug];
+      const nextSpace = venue?.venueSpaces[existingCount];
+      spaceId = nextSpace ? nextSpace.id : null;
+    }
+
+    writeColumnRefs([...columnRefs, { slug, spaceId }]);
+  }
+
+  const columns: (Column | null)[] = columnRefs.map((ref) => {
+    const venue = venueCache[ref.slug];
+    if (!venue) return null;
+    const space = ref.spaceId ? venue.venueSpaces.find((s) => s.id === ref.spaceId) || null : venue.venueSpaces[0] || null;
+    return { venue, space };
+  });
+
+  const readyColumns = columns.filter((c): c is Column => c !== null);
+  const anyLoading = loadingSlugs.size > 0;
+  const bothReady = readyColumns.length >= MIN_COMPARE && readyColumns.length === columnRefs.length;
+
   const categories = useMemo(() => {
-    if (!venueA || !venueB) return [];
-    return buildCategories(venueA, venueB);
-  }, [venueA, venueB]);
+    if (!bothReady) return [];
+    return buildCategories(readyColumns);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bothReady, readyColumns]);
 
   const amenityUnion = useMemo(() => {
-    if (!venueA || !venueB) return [];
-    const a = new Set(collectAmenities(venueA).map(normalizeLabel));
-    const b = new Set(collectAmenities(venueB).map(normalizeLabel));
+    if (!bothReady) return [];
+    const perVenue = readyColumns.map((c) => new Set(collectAmenities(c.venue).map(normalizeLabel)));
     const display = new Map<string, string>();
-    [...collectAmenities(venueA), ...collectAmenities(venueB)].forEach((label) => {
-      display.set(normalizeLabel(label), label);
+    readyColumns.forEach((c) => {
+      collectAmenities(c.venue).forEach((label) => display.set(normalizeLabel(label), label));
     });
     return Array.from(display.entries())
-      .map(([key, label]) => ({
-        label,
-        a: a.has(key),
-        b: b.has(key),
-      }))
-      .sort((x, y) => x.label.localeCompare(y.label));
-  }, [venueA, venueB]);
+      .map(([key, label]) => ({ label, present: perVenue.map((set) => set.has(key)) }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [bothReady, readyColumns]);
 
-  const bothReady = Boolean(venueA && venueB);
+  const gridStyle = { gridTemplateColumns: `220px repeat(${readyColumns.length}, minmax(220px, 1fr))` };
 
   return (
     <main className="page compare-page">
@@ -480,191 +549,163 @@ export function CompareClient() {
         <span className="kicker">SIDE BY SIDE</span>
         <h1>Compare venues.</h1>
         <p>
-          Line up two venues — even from different properties — on capacity, pricing,
-          amenities, rooms and location, so the right choice is obvious rather than a
-          guess.
+          Line up 2 to {MAX_COMPARE} venues — even different spaces at the same property, or
+          venues from entirely different properties — on capacity, pricing, amenities, rooms
+          and location.
         </p>
       </div>
 
       {/* =========================================================
-          HEADER ROW -- two cards or pickers
+          TOP ROW -- venue cards + pickers + add-venue slot
           ========================================================= */}
 
-      <div className="compareHeadRow">
-        {venueA ? (
-          <VenueHeaderCard
-            venue={venueA}
-            venues={allVenues}
-            onChange={(slug) => updateParam('a', slug)}
-            onRemove={() => updateParam('a', null)}
-          />
-        ) : (
-          <div className="comparePickerCard">
-            {errorA && <p className="compareError">{errorA}</p>}
-            {loadingA ? (
-              <p>Loading…</p>
-            ) : (
-              <VenuePicker
-                venues={allVenues}
-                loading={loadingList}
-                excludeId={slugB}
-                label="Choose the first venue"
-                onSelect={(slug) => updateParam('a', slug)}
-              />
-            )}
-          </div>
-        )}
+      <div className="compareCardsRow">
+        {columnRefs.map((ref, index) => {
+          const column = columns[index];
+          const isLoading = loadingSlugs.has(ref.slug);
 
-        {venueB ? (
-          <VenueHeaderCard
-            venue={venueB}
-            venues={allVenues}
-            onChange={(slug) => updateParam('b', slug)}
-            onRemove={() => updateParam('b', null)}
-          />
-        ) : (
-          <div className="comparePickerCard">
-            {errorB && <p className="compareError">{errorB}</p>}
-            {loadingB ? (
-              <p>Loading…</p>
-            ) : (
+          if (column) {
+            return (
+              <VenueCardColumn
+                key={`${ref.slug}-${index}`}
+                column={column}
+                allVenues={allVenues}
+                onChangeVenue={(slug) => updateVenueAt(index, slug)}
+                onChangeSpace={(spaceId) => updateSpaceAt(index, spaceId)}
+                onRemove={() => removeAt(index)}
+              />
+            );
+          }
+
+          return (
+            <div className="comparePickerCard" key={`${ref.slug}-${index}`}>
+              {isLoading ? <p>Loading…</p> : <p className="compareError">That venue could not be found.</p>}
+              <button type="button" className="outlineBtn" onClick={() => removeAt(index)}>
+                Remove
+              </button>
+            </div>
+          );
+        })}
+
+        {columnRefs.length < 2 &&
+          Array.from({ length: 2 - columnRefs.length }).map((_, i) => (
+            <div className="comparePickerCard" key={`empty-${i}`}>
               <VenuePicker
                 venues={allVenues}
                 loading={loadingList}
-                excludeId={slugA}
-                label="Choose the second venue"
-                onSelect={(slug) => updateParam('b', slug)}
+                label={columnRefs.length === 0 && i === 0 ? 'Choose the first venue' : 'Choose a venue'}
+                onSelect={addVenue}
               />
-            )}
+            </div>
+          ))}
+
+        {columnRefs.length >= 2 && columnRefs.length < MAX_COMPARE && (
+          <div className="comparePickerCard compareAddCard">
+            <VenuePicker
+              venues={allVenues}
+              loading={loadingList}
+              label={`Add another venue (${columnRefs.length}/${MAX_COMPARE})`}
+              onSelect={addVenue}
+            />
           </div>
         )}
       </div>
 
-      {!bothReady && (
+      {!bothReady && !anyLoading && columnRefs.length >= 2 && (
+        <p className="compareHint">Loading your comparison…</p>
+      )}
+
+      {columnRefs.length === 0 && (
         <p className="compareHint">
-          Pick a venue on each side to see the full comparison — or use the ⇄ Compare
-          button on any venue card while browsing{' '}
-          <Link href="/explore">Explore</Link>.
+          Pick two venues above to see the full comparison — or use the ⇄ Compare button on
+          any venue card while browsing <Link href="/explore">Explore</Link>.
         </p>
       )}
 
       {/* =========================================================
-          FULL COMPARISON -- desktop table + mobile swipe panels
+          COMPARISON TABLE -- sticky first column, horizontal
+          scroll on mobile, category sections
           ========================================================= */}
 
-      {bothReady && venueA && venueB && (
-        <>
-          {/* ---------- DESKTOP: 3-column table ---------- */}
-          <div className="compareTable">
+      {bothReady && (
+        <div className="compareTableWrap">
+          <div className="compareTable" style={gridStyle}>
             {categories.map((category) => (
-              <section className="compareCategory" key={category.key}>
-                <h2>{category.title}</h2>
-                {category.rows.map((r) => (
-                  <div
-                    className={`compareRow${
-                      !r.skipDiff && r.a !== r.b ? ' diffRow' : ''
-                    }`}
-                    key={r.label}
-                  >
-                    <span className="compareRowLabel">{r.label}</span>
-                    <span className="compareRowValue">{r.a}</span>
-                    <span className="compareRowValue">{r.b}</span>
-                  </div>
-                ))}
-              </section>
-            ))}
-
-            <section className="compareCategory">
-              <h2>Amenities</h2>
-              {amenityUnion.length === 0 && (
-                <p className="compareEmptyNote">No amenity data available for either venue yet.</p>
-              )}
-              {amenityUnion.map((item) => (
-                <div
-                  className={`compareRow amenityRow${item.a !== item.b ? ' diffRow' : ''}`}
-                  key={item.label}
-                >
-                  <span className="compareRowLabel">{item.label}</span>
-                  <span className={`amenityMark ${item.a ? 'yes' : 'no'}`}>
-                    {item.a ? '✓' : '—'}
-                  </span>
-                  <span className={`amenityMark ${item.b ? 'yes' : 'no'}`}>
-                    {item.b ? '✓' : '—'}
-                  </span>
+              <div className="compareCategoryBlock" key={category.key}>
+                <div className="compareCategoryHeading" style={gridStyle}>
+                  <span>{category.title}</span>
                 </div>
-              ))}
-            </section>
 
-            <section className="compareCategory">
-              <h2>Event Suitability</h2>
-              <div className="compareRow">
-                <span className="compareRowLabel">Best for</span>
-                <span className="compareRowValue">
-                  <div className="compareBestFor">
-                    {bestForTags(venueA).map((tag) => (
-                      <span className="compareBestForTag" key={tag}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </span>
-                <span className="compareRowValue">
-                  <div className="compareBestFor">
-                    {bestForTags(venueB).map((tag) => (
-                      <span className="compareBestForTag" key={tag}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </span>
-              </div>
-            </section>
-          </div>
-
-          {/* ---------- MOBILE: swipeable side panels ---------- */}
-          <div className="compareSwipe">
-            {[venueA, venueB].map((venue, index) => (
-              <div className="compareSwipePanel" key={venue.id}>
-                <h3>{venue.name}</h3>
-
-                {categories.map((category) => (
-                  <div className="compareSwipeCategory" key={category.key}>
-                    <h4>{category.title}</h4>
-                    {category.rows.map((r) => (
-                      <div className="compareSwipeRow" key={r.label}>
-                        <span>{r.label}</span>
-                        <b>{index === 0 ? r.a : r.b}</b>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-
-                <div className="compareSwipeCategory">
-                  <h4>Amenities</h4>
-                  {amenityUnion.map((item) => (
-                    <div className="compareSwipeRow" key={item.label}>
-                      <span>{item.label}</span>
-                      <b className={index === 0 ? (item.a ? 'yes' : 'no') : item.b ? 'yes' : 'no'}>
-                        {(index === 0 ? item.a : item.b) ? '✓ Available' : '— Not listed'}
-                      </b>
+                {category.rows.map((r) => {
+                  const allEqual = r.values.every((v) => v === r.values[0]);
+                  return (
+                    <div
+                      className={`compareRow${!r.skipDiff && !allEqual ? ' diffRow' : ''}`}
+                      style={gridStyle}
+                      key={r.label}
+                    >
+                      <span className="compareRowLabel">{r.label}</span>
+                      {r.values.map((v, i) => (
+                        <span className="compareRowValue" key={i}>
+                          {v}
+                        </span>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
+              </div>
+            ))}
 
-                <div className="compareSwipeCategory">
-                  <h4>Best for</h4>
-                  <div className="compareBestFor">
-                    {bestForTags(venue).map((tag) => (
-                      <span className="compareBestForTag" key={tag}>
-                        {tag}
+            {/* Amenities -- union checklist across every column */}
+            <div className="compareCategoryBlock">
+              <div className="compareCategoryHeading" style={gridStyle}>
+                <span>Amenities</span>
+              </div>
+              {amenityUnion.length === 0 && (
+                <div className="compareRow" style={gridStyle}>
+                  <span className="compareRowLabel">—</span>
+                  <span className="compareRowValue" style={{ gridColumn: `2 / span ${readyColumns.length}` }}>
+                    No amenity data available yet for these venues.
+                  </span>
+                </div>
+              )}
+              {amenityUnion.map((item) => {
+                const allEqual = item.present.every((p) => p === item.present[0]);
+                return (
+                  <div className={`compareRow amenityRow${!allEqual ? ' diffRow' : ''}`} style={gridStyle} key={item.label}>
+                    <span className="compareRowLabel">{item.label}</span>
+                    {item.present.map((p, i) => (
+                      <span className={`amenityMark ${p ? 'yes' : 'no'}`} key={i}>
+                        {p ? '✓ Available' : `— ${NOT_AVAILABLE}`}
                       </span>
                     ))}
                   </div>
-                </div>
+                );
+              })}
+            </div>
+
+            {/* Best for -- event suitability summary */}
+            <div className="compareCategoryBlock">
+              <div className="compareCategoryHeading" style={gridStyle}>
+                <span>Best For</span>
               </div>
-            ))}
+              <div className="compareRow" style={gridStyle}>
+                <span className="compareRowLabel">Best for</span>
+                {readyColumns.map((c, i) => (
+                  <span className="compareRowValue" key={i}>
+                    <div className="compareBestFor">
+                      {bestForTags(c.venue).map((tag) => (
+                        <span className="compareBestForTag" key={tag}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
-        </>
+        </div>
       )}
     </main>
   );

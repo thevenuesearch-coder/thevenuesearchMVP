@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { isInCompare, toggleCompare, type CompareEntry } from '../lib/compare';
+import { isInCompare, toggleCompare, MAX_COMPARE, type CompareEntry } from '../lib/compare';
 
 type CompareToggleButtonProps = CompareEntry & {
   className?: string;
@@ -20,6 +20,7 @@ export function CompareToggleButton({
   activeLabel = 'Comparing',
 }: CompareToggleButtonProps) {
   const [active, setActive] = useState(false);
+  const [full, setFull] = useState(false);
 
   useEffect(() => {
     setActive(isInCompare(id));
@@ -35,19 +36,33 @@ export function CompareToggleButton({
   function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
-    toggleCompare({ id, name, image, city });
+
+    const result = toggleCompare({ id, name, image, city });
+
+    if (!result.applied) {
+      setFull(true);
+      window.setTimeout(() => setFull(false), 2200);
+    }
+  }
+
+  if (full) {
+    return (
+      <button
+        type="button"
+        className={`compareToggle full-warning${className ? ` ${className}` : ''}`}
+        onClick={handleClick}
+      >
+        Remove one to add another (max {MAX_COMPARE})
+      </button>
+    );
   }
 
   return (
     <button
       type="button"
-      className={`compareToggle${active ? ' active' : ''}${
-        className ? ` ${className}` : ''
-      }`}
+      className={`compareToggle${active ? ' active' : ''}${className ? ` ${className}` : ''}`}
       aria-pressed={active}
-      aria-label={
-        active ? `Remove ${name} from comparison` : `Add ${name} to comparison`
-      }
+      aria-label={active ? `Remove ${name} from comparison` : `Add ${name} to comparison`}
       onClick={handleClick}
     >
       <span className="compareToggleIcon" aria-hidden="true">

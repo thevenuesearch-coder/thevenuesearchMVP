@@ -1,23 +1,20 @@
 /*
  * ============================================================
- * COMPARE SELECTION
+ * COMPARE SELECTION (v2 — up to 4 venues)
  * ============================================================
  *
- * Lightweight, client-only "shortlist for comparison" -- up to
- * two venues at a time, stored in localStorage rather than a new
- * Supabase table. Unlike the wishlist (which is tied to a signed-in
- * user and needs auth), comparison is meant to work instantly for
- * anyone browsing, logged in or not, so localStorage is the right
- * tool here rather than another RLS-guarded table.
+ * Client-only shortlist, stored in localStorage rather than a new
+ * Supabase table -- works instantly whether or not someone's
+ * signed in, and survives navigating away to Explore and back.
  *
- * A custom 'tvs-compare-change' event is dispatched on every write
- * so every mounted toggle button / the floating compare bar can
- * react immediately, in the same tab (the native `storage` event
- * only fires in *other* tabs).
+ * A custom 'tvs-compare-change' event fires on every write so any
+ * mounted toggle button / the floating tray reacts immediately in
+ * the same tab (the native `storage` event only fires cross-tab).
  */
 
-const STORAGE_KEY = 'tvs_compare_v1';
-export const MAX_COMPARE = 2;
+const STORAGE_KEY = 'tvs_compare_v2';
+export const MAX_COMPARE = 4;
+export const MIN_COMPARE = 2;
 
 export type CompareEntry = {
   id: string; // venue slug -- matches /venues/[id] and fetchVenueBySlug
@@ -37,10 +34,7 @@ function readList(): CompareEntry[] {
     if (!Array.isArray(parsed)) return [];
 
     return parsed
-      .filter(
-        (entry): entry is CompareEntry =>
-          entry && typeof entry.id === 'string'
-      )
+      .filter((entry): entry is CompareEntry => entry && typeof entry.id === 'string')
       .slice(0, MAX_COMPARE);
   } catch {
     return [];
@@ -62,26 +56,47 @@ export function isInCompare(id: string): boolean {
   return readList().some((entry) => entry.id === id);
 }
 
+export type ToggleResult = {
+  entries: CompareEntry[];
+  /** false only when the shortlist was already full and this was
+   *  an attempt to add a 5th venue -- nothing changed. */
+  applied: boolean;
+};
+
 /**
- * Adds or removes a venue from the comparison shortlist.
- * If two are already selected and a third is added, the oldest
- * selection is dropped in its favour -- comparison is always
- * exactly "the last two you picked", never a silent no-op.
+ * Adds or removes a venue from the comparison shortlist. Unlike
+ * the earlier 2-slot version, this does NOT silently evict the
+ * oldest pick once full -- comparing up to 4 is a deliberate
+ * choice, so at capacity the caller is told nothing happened and
+ * can prompt the person to remove one first.
  */
-export function toggleCompare(entry: CompareEntry): CompareEntry[] {
+export function toggleCompare(entry: CompareEntry): ToggleResult {
   const current = readList();
   const exists = current.some((item) => item.id === entry.id);
 
-  const next = exists
-    ? current.filter((item) => item.id !== entry.id)
-    : [...current, entry].slice(-MAX_COMPARE);
+  if (exists) {
+    const next = current.filter((item) => item.id !== entry.id);
+    writeList(next);
+    return { entries: next, applied: true };
+  }
 
+  if (current.length >= MAX_COMPARE) {
+    return { entries: current, applied: false };
+  }
+
+  const next = [...current, entry];
   writeList(next);
-  return next;
+  return { entries: next, applied: true };
 }
 
 export function removeFromCompare(id: string): CompareEntry[] {
   const next = readList().filter((item) => item.id !== id);
+  writeList(next);
+  return next;
+}
+
+export function setCompareList(entries: CompareEntry[]): CompareEntry[] {
+  const next = entries.slice(0, MAX_COMPARE);
   writeList(next);
   return next;
 }
