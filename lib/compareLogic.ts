@@ -213,15 +213,30 @@ export function buildCategories(columns: Column[]): Category[] {
 
 export type AmenityRow = { label: string; present: boolean[] };
 
+/**
+ * A small, curated shortlist rather than every raw tag/feature
+ * string in the database -- the full union was technically
+ * accurate but unreadable (dozens of granular room-level entries).
+ * Each is still only marked present when that word genuinely
+ * appears somewhere in the venue's own tags/amenities/features/
+ * services text -- nothing here is assumed or invented, just
+ * scoped down to what's actually worth scanning at a glance.
+ */
+const AMENITY_SHORTLIST: { label: string; pattern: RegExp }[] = [
+  { label: 'Parking', pattern: /\bparking\b/i },
+  { label: 'Wi-Fi', pattern: /wi-?fi|internet/i },
+  { label: 'Swimming Pool', pattern: /\bpool\b/i },
+  { label: 'Power Backup', pattern: /power backup|generator/i },
+  { label: 'Catering / Dining', pattern: /catering|restaurant|dining/i },
+];
+
 export function buildAmenityUnion(venues: Venue[]): AmenityRow[] {
-  const perVenue = venues.map((v) => new Set(collectAmenities(v).map(normalizeLabel)));
-  const display = new Map<string, string>();
-  venues.forEach((v) => {
-    collectAmenities(v).forEach((label) => display.set(normalizeLabel(label), label));
-  });
-  return Array.from(display.entries())
-    .map(([key, label]) => ({ label, present: perVenue.map((set) => set.has(key)) }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+  const pools = venues.map((v) => collectAmenities(v).join(' ').toLowerCase());
+
+  return AMENITY_SHORTLIST.map(({ label, pattern }) => ({
+    label,
+    present: pools.map((text) => pattern.test(text)),
+  }));
 }
 
 /**
