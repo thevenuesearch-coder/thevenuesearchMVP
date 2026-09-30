@@ -81,6 +81,7 @@ export function VenueCompareSection({ venue }: { venue: Venue }) {
         </Link>
       </div>
 
+      <div className="compareUnit">
       <div className="compareCardsRow venueCompareCardsRow">
         {columns.map((col, index) => (
           <div className="compareHeaderCard" key={`${col.venue.id}-${index}`}>
@@ -141,6 +142,20 @@ export function VenueCompareSection({ venue }: { venue: Venue }) {
 
       <div className="compareTableWrap">
         <div className="compareTable" style={gridStyle}>
+          <div className="compareStickyHeader" style={gridStyle}>
+            <div className="compareStickyCorner" />
+            {columns.map((c, i) => (
+              <div className="compareStickyCell" key={i}>
+                {c.venue.image ? (
+                  <img src={c.venue.image} alt="" />
+                ) : (
+                  <div className="compareStickyImgFallback" />
+                )}
+                <span>{c.venue.name}</span>
+              </div>
+            ))}
+          </div>
+
           {categories.map((category) => (
             <div className="compareCategoryBlock" key={category.key}>
               <div className="compareCategoryHeading" style={gridStyle}>
@@ -197,6 +212,7 @@ export function VenueCompareSection({ venue }: { venue: Venue }) {
             })}
           </div>
         </div>
+      </div>
       </div>
     </section>
   );

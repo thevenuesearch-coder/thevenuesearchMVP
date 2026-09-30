@@ -323,8 +323,9 @@ export function CompareClient() {
           TOP ROW -- venue cards + pickers + add-venue slot
           ========================================================= */}
 
-      <div className="compareCardsRow">
-        {columnRefs.map((ref, index) => {
+      <div className="compareUnit">
+        <div className="compareCardsRow">
+          {columnRefs.map((ref, index) => {
           const column = columns[index];
           const isLoading = loadingSlugs.has(ref.slug);
 
@@ -373,27 +374,42 @@ export function CompareClient() {
             />
           </div>
         )}
-      </div>
+        </div>
 
-      {!bothReady && !anyLoading && columnRefs.length >= 2 && (
-        <p className="compareHint">Loading your comparison…</p>
-      )}
+        {!bothReady && !anyLoading && columnRefs.length >= 2 && (
+          <p className="compareHint">Loading your comparison…</p>
+        )}
 
-      {columnRefs.length === 0 && (
-        <p className="compareHint">
-          Pick two venues above to see the full comparison — or use the ⇄ Compare button on
-          any venue card while browsing <Link href="/explore">Explore</Link>.
-        </p>
-      )}
+        {columnRefs.length === 0 && (
+          <p className="compareHint">
+            Pick two venues above to see the full comparison — or use the ⇄ Compare button on
+            any venue card while browsing <Link href="/explore">Explore</Link>.
+          </p>
+        )}
 
-      {/* =========================================================
-          COMPARISON TABLE -- sticky first column, horizontal
-          scroll on mobile, category sections
-          ========================================================= */}
+        {/* =========================================================
+            COMPARISON TABLE -- sticky first column, horizontal
+            scroll on mobile, category sections
+            ========================================================= */}
 
-      {bothReady && (
+        {bothReady && (
         <div className="compareTableWrap">
           <div className="compareTable" style={gridStyle}>
+
+            <div className="compareStickyHeader" style={gridStyle}>
+              <div className="compareStickyCorner" />
+              {readyColumns.map((c, i) => (
+                <div className="compareStickyCell" key={i}>
+                  {(c.space?.image || c.venue.image) ? (
+                    <img src={c.space?.image || c.venue.image} alt="" />
+                  ) : (
+                    <div className="compareStickyImgFallback" />
+                  )}
+                  <span>{c.space?.name || c.venue.name}</span>
+                </div>
+              ))}
+            </div>
+
             {categories.map((category) => (
               <div className="compareCategoryBlock" key={category.key}>
                 <div className="compareCategoryHeading" style={gridStyle}>
@@ -470,7 +486,8 @@ export function CompareClient() {
             </div>
           </div>
         </div>
-      )}
+        )}
+      </div>
     </main>
   );
 }

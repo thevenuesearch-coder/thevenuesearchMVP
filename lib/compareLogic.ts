@@ -175,7 +175,7 @@ export function buildCategories(columns: Column[]): Category[] {
   const val = (fn: (c: Column) => string): string[] => columns.map(fn);
 
   const propertyInfo: Row[] = [
-    { label: 'Property name', values: val((c) => c.venue.name) },
+    { label: 'Property name', values: val((c) => c.venue.name), skipDiff: true },
     {
       label: 'Location',
       values: val(
@@ -184,6 +184,7 @@ export function buildCategories(columns: Column[]): Category[] {
             c.venue.country && c.venue.country !== c.venue.city ? `, ${c.venue.country}` : ''
           }`
       ),
+      skipDiff: true,
     },
     { label: 'Venue type', values: val((c) => c.venue.type || NOT_AVAILABLE) },
     {
@@ -203,7 +204,7 @@ export function buildCategories(columns: Column[]): Category[] {
   ];
 
   const venueDetails: Row[] = [
-    { label: 'Venue / space name', values: val((c) => c.space?.name || c.venue.name) },
+    { label: 'Venue / space name', values: val((c) => c.space?.name || c.venue.name), skipDiff: true },
     {
       label: 'Capacity',
       values: val((c) => {
