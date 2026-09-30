@@ -6,7 +6,6 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 import type { Venue } from '../lib/data';
 import { fetchVenues, fetchVenueBySlug } from '../lib/venues';
-import { CompareToggleButton } from './CompareToggleButton';
 import { MAX_COMPARE, MIN_COMPARE } from '../lib/compare';
 import {
   NOT_AVAILABLE,
@@ -144,25 +143,10 @@ function VenueCardColumn({
         </div>
 
         <div className="compareHeaderCtas">
-          <Link
-            data-cursor="open"
-            className="primaryBtn"
-            href={`/book?venue=${venue.id}${space ? `&space=${space.id}` : ''}`}
-          >
-            Check Availability
-          </Link>
           <Link className="outlineBtn" href={`/venues/${venue.id}`}>
             View Venue
           </Link>
         </div>
-
-        <CompareToggleButton
-          id={venue.id}
-          name={venue.name}
-          image={venue.image}
-          city={venue.city}
-          className="full"
-        />
       </div>
     </div>
   );
