@@ -2,14 +2,18 @@
 
 import { useState } from 'react';
 import type { RoomCategory } from '../lib/data';
+import { RoomFullDetails } from './PublicVenueDetails';
 
 type RoomCardProps = {
   room: RoomCategory;
+  /* Used to give the room photo descriptive alt text. */
+  venueName?: string;
   onViewDetails: () => void;
 };
 
 export function RoomCard({
   room,
+  venueName,
   onViewDetails,
 }: RoomCardProps) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -37,7 +41,11 @@ export function RoomCard({
         {room.image && !imageFailed ? (
           <img
             src={room.image}
-            alt={room.name}
+            alt={
+              venueName
+                ? `${room.name} at ${venueName}`
+                : room.name
+            }
             onError={() => setImageFailed(true)}
           />
         ) : (
@@ -69,6 +77,8 @@ export function RoomCard({
             ))}
           </ul>
         )}
+
+        <RoomFullDetails room={room} />
 
         <button
           type="button"

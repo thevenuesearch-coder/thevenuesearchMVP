@@ -1,33 +1,37 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { fetchVenues } from '../../lib/venues';
+import { fetchVenuesServer } from '../../lib/venues';
 import type { Venue } from '../../lib/data';
 
-export default function Collections() {
-  const [venues, setVenues] = useState<Venue[]>([]);
-  const [loading, setLoading] = useState(true);
+export const metadata: Metadata = {
+  title: 'Curated Wedding Venue Collections',
+  description:
+    'Browse curated collections of verified destination wedding venues in Hyderabad and across India, from palaces to luxury hotels and resorts.',
+};
 
-  useEffect(() => {
-    let mounted = true;
+/*
+ * Rendered per-request so the collections always reflect the
+ * venues currently published in Supabase (same approach as
+ * app/page.tsx and app/explore/page.tsx).
+ */
+export const dynamic = 'force-dynamic';
 
-    fetchVenues()
-      .then((data) => {
-        if (mounted) setVenues(data);
-      })
-      .catch((err) => {
-        console.error('Failed to load venues:', err);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
+/*
+ * Server Component: venues are fetched here, server-side, so the
+ * collection cards are present in the initial HTML. This page used
+ * to be a client component that fetched /api/venues in a
+ * useEffect, so the HTML only ever contained "Loading
+ * collections…". The markup and styling below are unchanged.
+ */
+export default async function Collections() {
+  let venues: Venue[] = [];
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  try {
+    venues = await fetchVenuesServer();
+  } catch (err) {
+    console.error('Failed to load venues:', err);
+  }
 
   const featured = venues.slice(0, 4);
 
@@ -42,11 +46,7 @@ export default function Collections() {
         </p>
       </div>
 
-      {loading ? (
-        <div className="emptyState">
-          <p>Loading collections…</p>
-        </div>
-      ) : featured.length === 0 ? (
+      {featured.length === 0 ? (
         <div className="emptyState">
           <p>No venues are published yet — check back soon.</p>
         </div>
@@ -58,7 +58,14 @@ export default function Collections() {
               href={`/venues/${v.id}`}
               key={v.id}
             >
-              <img src={v.image} alt={v.name} />
+              <img
+                src={v.image}
+                alt={
+                  v.city
+                    ? `${v.name}, ${v.city}`
+                    : v.name
+                }
+              />
               <div>
                 <span className="kicker">COLLECTION</span>
                 <h2>{v.name}</h2>
