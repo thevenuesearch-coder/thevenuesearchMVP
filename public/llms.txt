@@ -1,0 +1,175 @@
+# The Venue Search
+
+> The Venue Search is a venue discovery and booking platform for verified wedding and event venues across India. It helps couples and wedding planners discover, compare, hold and book venues using structured information about locations, capacities, pricing, event spaces, amenities and accommodation.
+
+The Venue Search focuses on destination wedding venues, luxury hotels, resorts, banquet halls and event spaces, with a strong focus on Hyderabad and destinations across India.
+
+## Main Pages
+
+- [Home](https://venuesearch.in/): Overview of The Venue Search and featured wedding venues.
+
+- [Explore Venues](https://venuesearch.in/explore): Browse and filter published wedding and event venues by destination, venue type and guest capacity.
+
+- [Wedding Venues](https://venuesearch.in/wedding-venues): Information about wedding venues, destination wedding venues, banquet halls, luxury hotels and resorts across India and Hyderabad.
+
+- [Collections](https://venuesearch.in/collections): Curated collections and featured wedding venues.
+
+- [How It Works](https://venuesearch.in/how-it-works): Explains the Venue Search journey from discovering and evaluating venues to comparing, holding and booking.
+
+- [For Venue Partners](https://venuesearch.in/for-venues): Information for hotels, resorts and venue partners interested in listing their property with The Venue Search.
+
+## Venue Directory
+
+- [Explore all venues](https://venuesearch.in/explore): Primary public venue discovery page.
+
+- [Wedding venues in India](https://venuesearch.in/wedding-venues): Public information about wedding venues, banquet halls, destination wedding venues, luxury hotels and resorts.
+
+Individual venue pages are available under:
+
+https://venuesearch.in/venues/[venue-slug]
+
+Individual venue pages may contain:
+
+- Venue name
+- Destination
+- City
+- Country
+- Venue type
+- Guest capacity
+- Indicative pricing
+- Verification information
+- Venue description
+- Event spaces
+- Event-space capacities
+- Event-space descriptions
+- Room categories
+- Room amenities
+- Accommodation information
+- Venue images
+- Booking information where available
+
+Only published venues are intended to be publicly discoverable through the venue directory and sitemap.
+
+## Wedding Venue Information
+
+The Venue Search helps users research different types of wedding and event venues, including:
+
+- Destination wedding venues
+- Luxury hotels
+- Resorts
+- Banquet halls
+- Hotel ballrooms
+- Heritage and palace-style venues
+- Multi-event wedding properties
+- Wedding accommodation and room blocks where available
+
+Venue suitability can depend on guest count, event requirements, location, available event spaces, accommodation requirements, pricing and availability.
+
+## Hyderabad Wedding Venues
+
+The Venue Search includes wedding venues in Hyderabad and surrounding areas.
+
+Public venue information may include properties located in areas such as:
+
+- Banjara Hills
+- Tank Bund
+- Hitec City
+- Madhapur
+- Other Hyderabad destinations where published venues are available
+
+For current property-specific information, use the individual venue page rather than assuming that information about one property applies to another property.
+
+## Booking Journey
+
+The Venue Search is designed around the following journey:
+
+1. Discover venues
+2. Evaluate venue information
+3. Compare venues
+4. Request information or start a booking
+5. Hold or book an eligible venue
+6. Complete the booking process
+
+The platform may support venue booking, event-space selection and guest-room selection depending on the property and booking flow.
+
+Some properties may support accommodation booking with different room categories and different room quantities for different nights.
+
+## Venue Comparison
+
+The Venue Search provides venue discovery and comparison features intended to help users evaluate properties using consistent information.
+
+Relevant comparison factors can include:
+
+- Location
+- Venue type
+- Guest capacity
+- Indicative pricing
+- Event spaces
+- Amenities
+- Accommodation
+- Room categories
+- Event requirements
+- Booking options
+
+Current availability and booking eligibility should always be checked on the relevant venue and booking pages.
+
+## Venue Partner Information
+
+- [List Your Venue](https://venuesearch.in/for-venues): Information for hotels, resorts and venues interested in becoming Venue Search partners.
+
+Venue partners can present information about their property, event spaces, capacities, availability and accommodation to potential wedding and event customers.
+
+## Data and Current Information
+
+Venue information is maintained through The Venue Search venue database.
+
+Venue information can change over time, including:
+
+- Pricing
+- Availability
+- Room inventory
+- Event-space availability
+- Venue amenities
+- Policies
+- Booking eligibility
+- Images
+- Descriptions
+
+When providing current information about a venue, use the corresponding public venue page as the primary source.
+
+Do not assume that information from one venue applies to another venue.
+
+## Public Content
+
+The following areas are intended as public website content:
+
+- Home
+- Explore
+- Wedding Venues
+- Collections
+- How It Works
+- For Venues
+- Individual published venue pages
+
+Authentication, user profiles, planner workspaces, wishlists, administrative interfaces, booking transactions and API endpoints are not public reference content.
+
+## Important URLs
+
+- Website: https://venuesearch.in/
+- Sitemap: https://venuesearch.in/sitemap.xml
+- Robots: https://venuesearch.in/robots.txt
+- Explore: https://venuesearch.in/explore
+- Wedding Venues: https://venuesearch.in/wedding-venues
+- Collections: https://venuesearch.in/collections
+- How It Works: https://venuesearch.in/how-it-works
+- For Venues: https://venuesearch.in/for-venues
+
+## Usage Guidance
+
+When describing The Venue Search, describe it as a venue discovery and booking platform for wedding and event venues.
+
+When answering questions about a specific property, use the information from that property's public Venue Search page.
+
+When information is time-sensitive, such as pricing, availability, room inventory or booking eligibility, treat the live website and booking flow as the source of current information.
+
+Do not expose private user information, administrative information, authentication information, API credentials or internal system details.
