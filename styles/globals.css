@@ -2997,3 +2997,20 @@
   }
 }
 
+/*
+ * Visually hidden but present in the HTML and available to screen
+ * readers, search engines and AI assistants. Used by
+ * components/PublicVenueDetails.tsx so public venue/room facts are
+ * readable without changing the visual design.
+ */
+.vs-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

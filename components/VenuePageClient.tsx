@@ -6,6 +6,10 @@ import Link from 'next/link';
 import type { Venue, RoomCategory } from '../lib/data';
 import { RoomCard } from './RoomCard';
 import { RoomDetailsModal } from './RoomDetailsModal';
+import {
+  VenueFacts,
+  AllVenueSpaces,
+} from './PublicVenueDetails';
 
 type VenuePageClientProps = {
   initialVenue: Venue | null;
@@ -86,6 +90,31 @@ export function VenuePageClient({
   const currentImage =
     galleryImages[activeImage] || venue.image;
 
+  /*
+   * Descriptive alt text for gallery images: spaces are named after
+   * the space they show, the main image after the venue itself.
+   */
+  function describeImage(
+    image: string,
+    index: number
+  ) {
+    const space = spaces.find(
+      (item) => item.image === image
+    );
+
+    if (space) {
+      return `${space.name} at ${venue!.name}`;
+    }
+
+    if (image === venue!.image) {
+      return venue!.city
+        ? `${venue!.name}, ${venue!.city}`
+        : venue!.name;
+    }
+
+    return `${venue!.name} photo ${index + 1}`;
+  }
+
   function previousImage() {
     setActiveImage((current) =>
       current === 0
@@ -129,10 +158,10 @@ export function VenuePageClient({
 
         <img
           src={currentImage}
-          alt={
-            currentSpace?.name ||
-            venue.name
-          }
+          alt={describeImage(
+            currentImage,
+            activeImage
+          )}
           className="hero-image"
         />
 
@@ -182,7 +211,7 @@ export function VenuePageClient({
         )}
 
         {/* HERO TEXT */}
-        <div className="hero-content">
+        <header className="hero-content">
 
           <p className="hero-location">
             {venue.city},{' '}
@@ -204,7 +233,7 @@ export function VenuePageClient({
             {venue.desc}
           </p>
 
-        </div>
+        </header>
 
         {/* =================================================
             HERO ARROWS
@@ -261,9 +290,10 @@ export function VenuePageClient({
                 >
                   <img
                     src={image}
-                    alt={`${venue.name} ${
-                      index + 1
-                    }`}
+                    alt={describeImage(
+                      image,
+                      index
+                    )}
                   />
                 </button>
               )
@@ -296,6 +326,8 @@ export function VenuePageClient({
           <p className="lead">
             {venue.desc}
           </p>
+
+          <VenueFacts venue={venue} />
 
           {/* Tags */}
 
@@ -346,7 +378,7 @@ export function VenuePageClient({
 
                   <img
                     src={currentSpace.image}
-                    alt={currentSpace.name}
+                    alt={`${currentSpace.name} at ${venue.name}`}
                   />
 
                 </div>
@@ -443,6 +475,8 @@ export function VenuePageClient({
 
           </section>
 
+          <AllVenueSpaces venue={venue} />
+
           {/* =================================================
               ROOMS & ACCOMMODATION
               ================================================= */}
@@ -478,6 +512,7 @@ export function VenuePageClient({
                   <RoomCard
                     key={room.id}
                     room={room}
+                    venueName={venue.name}
                     onViewDetails={() =>
                       setActiveRoom(room)
                     }
