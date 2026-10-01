@@ -2,6 +2,10 @@ import type { Metadata } from 'next';
 
 import { fetchVenuesServer } from '../../lib/venues';
 import { ExploreClient } from '../../components/ExploreClient';
+import {
+  buildVenueListJsonLd,
+  serializeJsonLd,
+} from '../../lib/structured-data';
 
 export const metadata: Metadata = {
   title: 'Explore Wedding Venues',
@@ -35,7 +39,20 @@ export default async function ExplorePage() {
       'We could not load venues right now. Please refresh the page.';
   }
 
+  const listJsonLd = buildVenueListJsonLd(venues);
+
   return (
-    <ExploreClient initialVenues={venues} initialError={error} />
+    <>
+      {listJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeJsonLd(listJsonLd),
+          }}
+        />
+      )}
+
+      <ExploreClient initialVenues={venues} initialError={error} />
+    </>
   );
 }

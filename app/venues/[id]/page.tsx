@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 
 import { fetchVenueBySlugServer } from '../../../lib/venues';
+import {
+  buildVenueJsonLd,
+  fetchVenueLocationServer,
+  serializeJsonLd,
+} from '../../../lib/structured-data';
 import { VenuePageClient } from '../../../components/VenuePageClient';
 
 /*
@@ -94,11 +99,31 @@ export default async function VenuePage({
 }: VenuePageProps) {
   const { id } = await params;
 
-  const venue = await fetchVenueBySlugServer(id);
+  /*
+   * The location (address / coordinates) is fetched in parallel
+   * and is best-effort -- see fetchVenueLocationServer.
+   */
+  const [venue, location] = await Promise.all([
+    fetchVenueBySlugServer(id),
+    fetchVenueLocationServer(id),
+  ]);
 
   return (
-    <VenuePageClient
-      initialVenue={venue}
-    />
+    <>
+      {venue && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeJsonLd(
+              buildVenueJsonLd(venue, location)
+            ),
+          }}
+        />
+      )}
+
+      <VenuePageClient
+        initialVenue={venue}
+      />
+    </>
   );
 }
