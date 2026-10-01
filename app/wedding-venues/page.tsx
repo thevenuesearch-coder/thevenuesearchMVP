@@ -62,7 +62,7 @@ const hyderabadVenues: [string, string, string][] = [
 
 export default function WeddingVenuesPage() {
   return (
-    <main className="page narrow">
+    <main id="main-content" className="page narrow">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}

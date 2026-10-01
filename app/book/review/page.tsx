@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ModalFocus } from '../../../components/ModalFocus';
 import { Suspense, useEffect, useState } from 'react';
 
 import { useBookingVenue } from '../../../lib/use-booking-venue';
@@ -787,7 +788,7 @@ function ReviewPageContent() {
     !draftChecked
   ) {
     return (
-      <main className="page">
+      <main id="main-content" className="page">
         <section
           className="section"
           style={{
@@ -818,7 +819,7 @@ function ReviewPageContent() {
     !draft
   ) {
     return (
-      <main className="page">
+      <main id="main-content" className="page">
         <section className="section">
           <div className="emptyState">
             <span className="kicker">
@@ -857,7 +858,7 @@ function ReviewPageContent() {
   ========================================================== */
 
   return (
-    <main className="page">
+    <main id="main-content" className="page">
       <section className="section bookPage">
 
         {/* ====================================================
@@ -1787,7 +1788,7 @@ function ReviewPageContent() {
               ================================================= */}
 
               {error && (
-                <div className="bookingError">
+                <div className="bookingError" role="alert">
                   {error}
                 </div>
               )}
@@ -1868,11 +1869,9 @@ function ReviewPageContent() {
 
         {documentRequestSuccess && (
 
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="document-request-title"
-            onClick={() =>
+          <ModalFocus
+            labelledBy="document-request-title"
+            onClose={() =>
               setDocumentRequestSuccess(
                 false
               )
@@ -1905,9 +1904,6 @@ function ReviewPageContent() {
           >
 
             <div
-              onClick={(event) =>
-                event.stopPropagation()
-              }
               style={{
                 width:
                   'min(520px, 100%)',
@@ -2030,7 +2026,7 @@ function ReviewPageContent() {
 
             </div>
 
-          </div>
+          </ModalFocus>
         )}
 
         {/* ====================================================
@@ -2039,10 +2035,8 @@ function ReviewPageContent() {
 
         {paymentSuccess && (
 
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="payment-success-title"
+          <ModalFocus
+            labelledBy="payment-success-title"
             style={{
               position:
                 'fixed',
@@ -2297,7 +2291,7 @@ function ReviewPageContent() {
 
             </div>
 
-          </div>
+          </ModalFocus>
         )}
 
       </section>

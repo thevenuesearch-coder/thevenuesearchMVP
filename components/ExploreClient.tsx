@@ -211,7 +211,7 @@ export function ExploreClient({
   ===================================================== */
 
   return (
-    <main className="page">
+    <main id="main-content" className="page">
 
       {/* =================================================
           HERO
@@ -239,7 +239,11 @@ export function ExploreClient({
           FILTER BAR
       ================================================= */}
 
-      <div className="filterBar">
+      <div
+        className="filterBar"
+        role="search"
+        aria-label="Filter venues"
+      >
 
         {/* DESTINATION */}
 
@@ -355,7 +359,7 @@ export function ExploreClient({
 
       <div className="resultHead">
 
-        <span>
+        <span role="status" aria-live="polite">
           <b>
             {filteredVenues.length}
           </b>{' '}
@@ -392,6 +396,7 @@ export function ExploreClient({
           {filteredVenues.map(
             (venue) => (
               <VenueCard
+                headingLevel={2}
                 key={venue.id}
                 v={{
                   ...venue,

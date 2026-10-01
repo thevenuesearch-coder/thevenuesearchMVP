@@ -103,15 +103,16 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
           HERO SEARCH
       ================================================= */}
 
-      <div className="searchBox">
+      <div className="searchBox" role="search" aria-label="Find a venue">
         {/* =================================================
             DESTINATION
         ================================================= */}
 
         <div>
-          <small>Destination</small>
+          <label htmlFor="hero-search-destination">Destination</label>
 
           <select
+            id="hero-search-destination"
             value={destination}
             onChange={(e) =>
               handleDestinationChange(e.target.value)
@@ -132,9 +133,10 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
         ================================================= */}
 
         <div>
-          <small>Venue</small>
+          <label htmlFor="hero-search-venue">Venue</label>
 
           <select
+            id="hero-search-venue"
             value={venue}
             onChange={(e) => setVenue(e.target.value)}
           >
@@ -157,9 +159,10 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
         ================================================= */}
 
         <div>
-          <small>Guests</small>
+          <label htmlFor="hero-search-guests">Guests</label>
 
           <select
+            id="hero-search-guests"
             value={guests}
             onChange={(e) => setGuests(e.target.value)}
           >

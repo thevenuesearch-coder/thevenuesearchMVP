@@ -36,7 +36,7 @@ export default async function Collections() {
   const featured = venues.slice(0, 4);
 
   return (
-    <main className="page">
+    <main id="main-content" className="page">
       <div className="centerIntro">
         <span className="kicker">CURATED COLLECTIONS</span>
         <h1>Choose the mood before the menu.</h1>

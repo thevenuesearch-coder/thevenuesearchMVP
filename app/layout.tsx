@@ -64,6 +64,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
+        <a href="#main-content" className="vs-skip-link">
+          Skip to main content
+        </a>
         <Cursor />
         <Header />
         {children}

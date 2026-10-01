@@ -34,7 +34,7 @@ export default async function Home() {
   const venues = await fetchVenuesServer();
 
   return (
-    <main>
+    <main id="main-content">
       {/* =====================================================
           HERO
       ===================================================== */}
@@ -42,6 +42,8 @@ export default async function Home() {
       <section className="hero">
         <div className="heroVideo">
           <video
+            aria-hidden="true"
+            tabIndex={-1}
             autoPlay
             muted
             loop

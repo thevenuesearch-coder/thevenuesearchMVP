@@ -36,7 +36,7 @@ export function VenuePageClient({
 
   if (!venue) {
     return (
-      <main className="not-found">
+      <main id="main-content" className="not-found">
         <div>
           <h1>Venue not found</h1>
 
@@ -148,7 +148,7 @@ export function VenuePageClient({
   }
 
   return (
-    <main className="venue-page">
+    <main id="main-content" className="venue-page">
 
       {/* =====================================================
           HERO
@@ -186,6 +186,7 @@ export function VenuePageClient({
             setSaved((value) => !value)
           }
           aria-label="Save venue"
+          aria-pressed={saved}
         >
           {saved ? '♥' : '♡'}
         </button>
@@ -284,6 +285,9 @@ export function VenuePageClient({
                       ? 'active'
                       : ''
                   }`}
+                  aria-pressed={
+                    activeImage === index
+                  }
                   onClick={() =>
                     setActiveImage(index)
                   }
@@ -446,6 +450,9 @@ export function VenuePageClient({
                           ? 'selected'
                           : ''
                       }
+                      aria-pressed={
+                        selectedSpace === index
+                      }
                       onClick={() =>
                         selectSpace(index)
                       }
@@ -543,6 +550,8 @@ export function VenuePageClient({
               <button
                 type="button"
                 className="card-heart"
+                aria-label="Save venue"
+                aria-pressed={saved}
                 onClick={() =>
                   setSaved(
                     (value) => !value

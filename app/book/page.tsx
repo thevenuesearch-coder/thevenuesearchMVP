@@ -380,7 +380,7 @@ function BookPageContent() {
 
   if (loading) {
     return (
-      <main className="page">
+      <main id="main-content" className="page">
         <section
           className="section"
           style={{
@@ -401,7 +401,7 @@ function BookPageContent() {
 
   if (!venue) {
     return (
-      <main className="page">
+      <main id="main-content" className="page">
         <section className="section">
           <div className="emptyState">
             <span className="kicker">VENUE NOT FOUND</span>
@@ -460,7 +460,7 @@ function BookPageContent() {
     includesVenue ? 'events' : 'rooms';
 
   return (
-    <main className="page">
+    <main id="main-content" className="page">
       <section className="section bookPage">
         {/* ====================================================
             HEADER
@@ -542,7 +542,10 @@ function BookPageContent() {
                     Choose what you need
                   </h2>
 
-                  <div className="bookingTypeRow">
+                  <fieldset className="bookingTypeRow vs-fieldset">
+                    <legend className="vs-sr-only">
+                      What are you booking?
+                    </legend>
 
                     {(
                       [
@@ -572,6 +575,10 @@ function BookPageContent() {
                             ? 'bookingTypeCard active'
                             : 'bookingTypeCard'
                         }
+                        aria-pressed={
+                          bookingType ===
+                          option.value
+                        }
                         onClick={() =>
                           setBookingType(
                             option.value
@@ -587,7 +594,7 @@ function BookPageContent() {
                       </button>
                     ))}
 
-                  </div>
+                  </fieldset>
 
                 </div>
 
@@ -1236,11 +1243,11 @@ function BookPageContent() {
 
 
               {error && (
-                <div className="bookingError">{error}</div>
+                <div className="bookingError" role="alert">{error}</div>
               )}
 
               {loadError && (
-                <div className="bookingError">{loadError}</div>
+                <div className="bookingError" role="alert">{loadError}</div>
               )}
 
               <div className="bookingActionRow">
