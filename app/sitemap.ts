@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 import { fetchVenuesServer } from '../lib/venues';
 
 const BASE_URL = 'https://venuesearch.in';
-
+ 
 const staticRoutes: {
   path: string;
   priority: number;
