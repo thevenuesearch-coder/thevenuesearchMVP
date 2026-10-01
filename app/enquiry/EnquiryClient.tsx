@@ -270,7 +270,7 @@ export default function EnquiryClient({
 
   if (venueLoading) {
     return (
-      <main
+      <main id="main-content"
         style={{
           minHeight: '100vh',
           display: 'grid',
@@ -286,7 +286,7 @@ export default function EnquiryClient({
 
   if (venueError) {
     return (
-      <main
+      <main id="main-content"
         style={{
           minHeight: '100vh',
           display: 'grid',
@@ -308,7 +308,7 @@ export default function EnquiryClient({
 
   if (!venue) {
     return (
-      <main
+      <main id="main-content"
         style={{
           minHeight: '100vh',
           display: 'grid',
@@ -330,7 +330,7 @@ export default function EnquiryClient({
 
   if (submitted) {
     return (
-      <main className="success-page">
+      <main id="main-content" className="success-page">
         <div className="success-card">
 
           <div className="success-icon">
@@ -508,7 +508,7 @@ export default function EnquiryClient({
   }
 
   return (
-    <main className="page">
+    <main id="main-content" className="page">
 
       <header className="header">
 
@@ -655,11 +655,11 @@ export default function EnquiryClient({
 
             <div className="field">
 
-              <label>
+              <label htmlFor="enquiry-fullName">
                 Full Name *
               </label>
 
-              <input
+              <input id="enquiry-fullName" name="fullName" aria-required="true" autoComplete="name"
                 type="text"
                 value={form.fullName}
                 onChange={(e) =>
@@ -678,11 +678,11 @@ export default function EnquiryClient({
 
               <div className="field">
 
-                <label>
+                <label htmlFor="enquiry-email">
                   Email Address *
                 </label>
 
-                <input
+                <input id="enquiry-email" name="email" aria-required="true" autoComplete="email"
                   type="email"
                   value={form.email}
                   onChange={(e) =>
@@ -699,11 +699,11 @@ export default function EnquiryClient({
 
               <div className="field">
 
-                <label>
+                <label htmlFor="enquiry-mobile">
                   Mobile Number *
                 </label>
 
-                <input
+                <input id="enquiry-mobile" name="mobile" aria-required="true" autoComplete="tel"
                   type="tel"
                   value={form.mobile}
                   onChange={(e) =>
@@ -724,11 +724,11 @@ export default function EnquiryClient({
 
               <div className="field">
 
-                <label>
+                <label htmlFor="enquiry-eventDate">
                   Event Date *
                 </label>
 
-                <input
+                <input id="enquiry-eventDate" name="eventDate" aria-required="true"
                   type="date"
                   value={form.eventDate}
                   onChange={(e) =>
@@ -744,11 +744,11 @@ export default function EnquiryClient({
 
               <div className="field">
 
-                <label>
+                <label htmlFor="enquiry-eventType">
                   Event Type *
                 </label>
 
-                <select
+                <select id="enquiry-eventType" name="eventType" aria-required="true"
                   value={form.eventType}
                   onChange={(e) =>
                     updateField(
@@ -795,11 +795,11 @@ export default function EnquiryClient({
 
               <div className="field">
 
-                <label>
+                <label htmlFor="enquiry-guestCount">
                   Number of Guests *
                 </label>
 
-                <input
+                <input id="enquiry-guestCount" name="guestCount" aria-required="true"
                   type="number"
                   min="1"
                   value={form.guestCount}
@@ -817,11 +817,11 @@ export default function EnquiryClient({
 
               <div className="field">
 
-                <label>
+                <label htmlFor="enquiry-budget">
                   Estimated Budget *
                 </label>
 
-                <select
+                <select id="enquiry-budget" name="budget" aria-required="true"
                   value={form.budget}
                   onChange={(e) =>
                     updateField(
@@ -864,11 +864,11 @@ export default function EnquiryClient({
 
             <div className="field">
 
-              <label>
+              <label htmlFor="enquiry-notes">
                 Additional Requirements
               </label>
 
-              <textarea
+              <textarea id="enquiry-notes" name="notes"
                 rows={5}
                 value={form.notes}
                 onChange={(e) =>
@@ -884,7 +884,7 @@ export default function EnquiryClient({
 
 
             {error && (
-              <div className="error">
+              <div className="error" role="alert">
                 {error}
               </div>
             )}

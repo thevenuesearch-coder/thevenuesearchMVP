@@ -36,7 +36,7 @@ export default function Wishlist() {
    */
   if (loading) {
     return (
-      <main className="page narrow">
+      <main id="main-content" className="page narrow">
         <div className="centerIntro">
           <span className="kicker">YOUR SHORTLIST</span>
           <h1>Loading your shortlist.</h1>
@@ -53,7 +53,7 @@ export default function Wishlist() {
    */
   if (!user) {
     return (
-      <main className="page narrow">
+      <main id="main-content" className="page narrow">
         <div className="centerIntro">
           <span className="kicker">
             YOUR SHORTLIST
@@ -84,7 +84,7 @@ export default function Wishlist() {
    * User IS logged in
    */
   return (
-    <main className="page narrow">
+    <main id="main-content" className="page narrow">
       <div className="centerIntro">
 
         <span className="kicker">

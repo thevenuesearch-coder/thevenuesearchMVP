@@ -25,9 +25,18 @@ type VenueCardData = {
 
 export function VenueCard({
   v,
+  headingLevel = 3,
 }: {
   v: VenueCardData;
+  /*
+   * Heading level for the venue name. 3 suits cards under a section
+   * heading (home page); pass 2 where the cards sit directly under
+   * the page's <h1> (explore page) so the outline has no gaps.
+   */
+  headingLevel?: 2 | 3;
 }) {
+  const Heading = `h${headingLevel}` as 'h2' | 'h3';
+
   const router = useRouter();
 
   const [saved, setSaved] =
@@ -298,43 +307,6 @@ export function VenueCard({
    * ========================================================
    */
 
-  function handleCardClick(
-    event: React.MouseEvent<HTMLElement>
-  ) {
-    /*
-     * Do not redirect when clicking an existing
-     * link or interactive element inside the card.
-     */
-    const target =
-      event.target as HTMLElement;
-
-    if (
-      target.closest('a') ||
-      target.closest('button')
-    ) {
-      return;
-    }
-
-    router.push(
-      `/venues/${v.slug}`
-    );
-  }
-
-  function handleCardKeyDown(
-    event: React.KeyboardEvent<HTMLElement>
-  ) {
-    if (
-      event.key === 'Enter' ||
-      event.key === ' '
-    ) {
-      event.preventDefault();
-
-      router.push(
-        `/venues/${v.slug}`
-      );
-    }
-  }
-
 
   /*
    * ========================================================
@@ -343,20 +315,7 @@ export function VenueCard({
    */
 
   return (
-    <article
-      className="venueCard"
-      onClick={
-        handleCardClick
-      }
-      onKeyDown={
-        handleCardKeyDown
-      }
-      role="link"
-      tabIndex={0}
-      style={{
-        cursor: 'pointer',
-      }}
-    >
+    <article className="venueCard">
 
       <div className="venueImg">
 
@@ -364,7 +323,11 @@ export function VenueCard({
 
           <img
             src={v.image}
-            alt={v.name}
+            alt={
+              v.city
+                ? `${v.name}, ${v.city}`
+                : v.name
+            }
             loading="lazy"
           />
 
@@ -434,12 +397,20 @@ export function VenueCard({
         </div>
 
 
+        {/*
+          * The title link is stretched over the whole card with CSS
+          * (.venueCardLink::after in globals.css), so clicking
+          * anywhere on the card still opens the venue -- without a
+          * click handler on a non-interactive element, and with a
+          * single keyboard tab stop for the card.
+          */}
         <Link
+          className="venueCardLink"
           href={`/venues/${v.slug}`}
         >
-          <h3>
+          <Heading>
             {v.name}
-          </h3>
+          </Heading>
         </Link>
 
 

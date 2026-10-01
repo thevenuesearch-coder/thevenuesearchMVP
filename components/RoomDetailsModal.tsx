@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { RoomCategory } from '../lib/data';
+import { useDialogA11y } from '../lib/use-dialog-a11y';
 
 type RoomDetailsModalProps = {
   room: RoomCategory;
@@ -76,6 +77,8 @@ export function RoomDetailsModal({
   room,
   onClose,
 }: RoomDetailsModalProps) {
+  const panelRef = useDialogA11y<HTMLDivElement>(onClose);
+
   const gallery = room.image
     ? [room.image, ...room.gallery.filter((g) => g !== room.image)]
     : room.gallery;
@@ -106,15 +109,20 @@ export function RoomDetailsModal({
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="room-modal-title"
+      role="presentation"
       className="room-modal-overlay"
-      onClick={onClose}
+      onClick={(e) => {
+        // Backdrop click only -- not clicks inside the panel.
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="room-modal-title"
+        tabIndex={-1}
         className="room-modal"
-        onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
@@ -157,7 +165,8 @@ export function RoomDetailsModal({
                   onClick={() =>
                     setActiveImage(index)
                   }
-                  aria-label={`Image ${index + 1}`}
+                  aria-label={`Image ${index + 1} of ${gallery.length}`}
+                  aria-current={index === activeImage}
                 />
               ))}
             </div>

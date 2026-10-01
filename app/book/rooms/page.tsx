@@ -379,7 +379,7 @@ function RoomsPageContent() {
 
   if (loading || !draftChecked) {
     return (
-      <main className="page">
+      <main id="main-content" className="page">
         <section
           className="section"
           style={{
@@ -400,7 +400,7 @@ function RoomsPageContent() {
 
   if (!venue || !draft) {
     return (
-      <main className="page">
+      <main id="main-content" className="page">
         <section className="section">
           <div className="emptyState">
             <span className="kicker">VENUE NOT FOUND</span>
@@ -452,7 +452,7 @@ function RoomsPageContent() {
   ];
 
   return (
-    <main className="page">
+    <main id="main-content" className="page">
       <section className="section bookPage">
         {/* ====================================================
             HEADER
@@ -534,7 +534,11 @@ function RoomsPageContent() {
 
                 <h2>Plan your stay</h2>
 
-                <div className="formGrid">
+                <fieldset className="formGrid vs-fieldset">
+                      <legend className="vs-sr-only">
+                        Stay dates
+                      </legend>
+
                       {/* CHECK-IN DATE */}
 
                       <label>
@@ -611,7 +615,7 @@ function RoomsPageContent() {
                         />
                       </label>
 
-                    </div>
+                    </fieldset>
 
                     {/* ROOM CATEGORY SELECTION, PER NIGHT */}
 
@@ -773,7 +777,7 @@ function RoomsPageContent() {
               </div>
 
               {error && (
-                <div className="bookingError">{error}</div>
+                <div className="bookingError" role="alert">{error}</div>
               )}
 
               {loadError && (

@@ -702,7 +702,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <main className="profilePage">
+      <main id="main-content" className="profilePage">
         <div className="profilePageLoading">
           Loading your profile...
         </div>
@@ -740,7 +740,7 @@ export default function ProfilePage() {
    */
 
   return (
-    <main className="profilePage">
+    <main id="main-content" className="profilePage">
 
       <div className="profilePageInner">
 

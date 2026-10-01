@@ -314,7 +314,7 @@ export default function Login() {
   }
 
   return (
-    <main className="auth">
+    <main id="main-content" className="auth">
       <div className="authCard">
 
         {/* Logo */}
@@ -505,14 +505,14 @@ export default function Login() {
 
         {/* Success/info message */}
         {message && (
-          <small className="authMessage">
+          <small className="authMessage" role="status">
             {message}
           </small>
         )}
 
         {/* Error message */}
         {error && (
-          <small className="error">
+          <small className="error" role="alert">
             {error}
           </small>
         )}

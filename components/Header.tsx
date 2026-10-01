@@ -85,6 +85,29 @@ export function Header() {
   }, []);
 
   /*
+   * Close the dropdown with Escape and return focus to its trigger,
+   * so keyboard users are never stranded inside it.
+   */
+  useEffect(() => {
+    if (!profileOpen) return;
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setProfileOpen(false);
+        profileRef.current
+          ?.querySelector<HTMLElement>('.profileTrigger')
+          ?.focus();
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [profileOpen]);
+
+  /*
    * Close dropdown when clicking outside
    */
   useEffect(() => {
@@ -192,7 +215,7 @@ export function Header() {
           MAIN NAVIGATION
          ========================================= */}
 
-      <nav>
+      <nav aria-label="Main">
         <Link href="/explore">
           Explore
         </Link>
@@ -305,6 +328,8 @@ export function Header() {
                 >
                   <span className="profileMenuIcon">
                     <svg
+                      aria-hidden="true"
+                      focusable="false"
                       width="18"
                       height="18"
                       viewBox="0 0 24 24"
@@ -345,6 +370,8 @@ export function Header() {
                 >
                   <span className="profileMenuIcon">
                     <svg
+                      aria-hidden="true"
+                      focusable="false"
                       width="18"
                       height="18"
                       viewBox="0 0 24 24"
@@ -377,6 +404,8 @@ export function Header() {
                 >
                   <span className="profileMenuIcon">
                     <svg
+                      aria-hidden="true"
+                      focusable="false"
                       width="18"
                       height="18"
                       viewBox="0 0 24 24"
@@ -424,6 +453,8 @@ export function Header() {
                     >
                       <span className="profileMenuIcon">
                         <svg
+                          aria-hidden="true"
+                          focusable="false"
                           width="18"
                           height="18"
                           viewBox="0 0 24 24"
@@ -488,6 +519,8 @@ export function Header() {
                 >
                   <span className="profileMenuIcon">
                     <svg
+                      aria-hidden="true"
+                      focusable="false"
                       width="18"
                       height="18"
                       viewBox="0 0 24 24"
