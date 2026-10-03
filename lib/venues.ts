@@ -1,6 +1,7 @@
 import { cache } from 'react';
 
 import { resolveVenueSlug } from './venue-slugs';
+import { toCapacity } from './capacity';
 
 import type {
   Venue,
@@ -63,6 +64,7 @@ type DbVenue = {
   city: string | null;
   country: string | null;
   type: string | null;
+  capacity_min: number | null;
   capacity_max: number | null;
   indicative_price: number | null;
   hold_fee: number | null;
@@ -96,7 +98,7 @@ function normalizeSpace(space: DbVenueSpace): VenueSpace {
   return {
     id: space.slug || space.id,
     name: space.name,
-    capacity: space.capacity || 0,
+    capacity: toCapacity(space.capacity) ?? 0,
     image: space.image_url || '',
     description: space.description || '',
     tags: space.tags || [],
@@ -138,7 +140,8 @@ function normalizeVenue(row: DbVenue): Venue {
     city: row.city || '',
     country: row.country || 'India',
     type: row.type || '',
-    capacity: row.capacity_max || 0,
+    capacity: toCapacity(row.capacity_max) ?? 0,
+    capacityMin: toCapacity(row.capacity_min),
     price: row.indicative_price || 0,
     hold: row.hold_fee ?? null,
     rating: row.rating ?? null,
@@ -195,6 +198,7 @@ export async function fetchVenuesServer(): Promise<Venue[]> {
         city,
         country,
         type,
+        capacity_min,
         capacity_max,
         indicative_price,
         hold_fee,
@@ -296,6 +300,7 @@ async function queryVenueBySlug(
         city,
         country,
         type,
+        capacity_min,
         capacity_max,
         indicative_price,
         hold_fee,

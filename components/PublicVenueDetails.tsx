@@ -1,4 +1,9 @@
 import type { Venue, RoomCategory } from '../lib/data';
+import {
+  formatCapacityMax,
+  formatCapacityRange,
+  formatGuests,
+} from '../lib/capacity';
 
 /*
  * Public, crawler- and assistant-readable venue content.
@@ -87,10 +92,18 @@ export function VenueFacts({ venue }: { venue: Venue }) {
           </>
         )}
 
-        {venue.capacity > 0 && (
+        {formatCapacityRange(venue.capacityMin, venue.capacity) && (
           <>
-            <dt>Maximum guest capacity</dt>
-            <dd>Up to {venue.capacity.toLocaleString('en-IN')} guests</dd>
+            <dt>
+              {/* "Maximum" only when the text really is a maximum ("Up to N guests"). */}
+              {formatCapacityRange(venue.capacityMin, venue.capacity) ===
+              formatCapacityMax(venue.capacity)
+                ? 'Maximum guest capacity'
+                : 'Guest capacity'}
+            </dt>
+            <dd>
+              {formatCapacityRange(venue.capacityMin, venue.capacity)}
+            </dd>
           </>
         )}
 
@@ -156,10 +169,9 @@ export function AllVenueSpaces({ venue }: { venue: Venue }) {
         <article key={space.id}>
           <h4>{space.name}</h4>
 
-          {space.capacity > 0 && (
+          {formatGuests(space.capacity) && (
             <p>
-              Capacity: up to{' '}
-              {space.capacity.toLocaleString('en-IN')} guests
+              Capacity: up to {formatGuests(space.capacity)}
             </p>
           )}
 

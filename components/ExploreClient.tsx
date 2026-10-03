@@ -408,9 +408,6 @@ export function ExploreClient({
 
                   slug: venue.id,
 
-                  capacityMin:
-                    venue.capacity,
-
                   description:
                     venue.desc,
                 }}

@@ -1,6 +1,7 @@
 import type { Venue } from '../lib/data';
 
 import { imgProps } from '../lib/image';
+import { formatCapacityRange, CAPACITY_UNKNOWN_LABEL } from '../lib/capacity';
 type BookingVenueCardProps = {
   venue: Venue;
 };
@@ -37,7 +38,8 @@ export function BookingVenueCard({
 
         <div className="bookingVenueMeta">
           <span>
-            Up to {venue.capacity.toLocaleString()} guests
+            {formatCapacityRange(venue.capacityMin, venue.capacity) ??
+              CAPACITY_UNKNOWN_LABEL}
           </span>
 
           {venue.rating && <span>★ {venue.rating}</span>}

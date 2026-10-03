@@ -6,6 +6,7 @@ import { FormEvent, Suspense, useEffect, useState } from 'react';
 
 import { useBookingVenue } from '../../lib/use-booking-venue';
 import { BookingVenueCard } from '../../components/BookingVenueCard';
+import { formatGuests } from '../../lib/capacity';
 import {
   type BookingForm,
   type BookingType,
@@ -336,7 +337,9 @@ function BookPageContent() {
             Number(currentEvent.guestCount)
         ) {
           setError(
-            `${selectedSpace.name} can accommodate up to ${selectedSpace.capacity} guests. Please select a larger venue space for Event ${index + 1}.`
+            formatGuests(selectedSpace.capacity)
+              ? `${selectedSpace.name} can accommodate up to ${formatGuests(selectedSpace.capacity)}. Please select a larger venue space for Event ${index + 1}.`
+              : `The capacity of ${selectedSpace.name} has not been confirmed. Please select another venue space for Event ${index + 1}, or send us an enquiry.`
           );
           return;
         }
@@ -1093,8 +1096,8 @@ function BookPageContent() {
                                         value={space.id}
                                       >
                                         {space.name}
-                                        {space.capacity
-                                          ? ` (up to ${space.capacity} guests)`
+                                        {formatGuests(space.capacity)
+                                          ? ` (up to ${formatGuests(space.capacity)})`
                                           : ''}
                                       </option>
                                     )

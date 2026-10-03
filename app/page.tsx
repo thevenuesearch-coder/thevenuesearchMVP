@@ -149,7 +149,6 @@ export default async function Home() {
                 v={{
                   ...toVenueSummary(v),
                   slug: v.id,
-                  capacityMin: v.capacity,
                   description: v.desc,
                 }}
               />

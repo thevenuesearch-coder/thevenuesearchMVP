@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { imgProps } from '../../lib/image';
+import { formatCapacityRange } from '../../lib/capacity';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '../../lib/supabase-browser';
@@ -1633,27 +1634,16 @@ export default function ProfilePage() {
 
                       <div className="profileVenueMeta">
 
-                        {(
-                          venue.capacity_min ||
+                        {formatCapacityRange(
+                          venue.capacity_min,
                           venue.capacity_max
                         ) && (
-
                           <span>
-
-                            {venue.capacity_min
-                              ? venue.capacity_min.toLocaleString()
-                              : '—'}
-
-                            {' – '}
-
-                            {venue.capacity_max
-                              ? venue.capacity_max.toLocaleString()
-                              : '—'}
-
-                            {' guests'}
-
+                            {formatCapacityRange(
+                              venue.capacity_min,
+                              venue.capacity_max
+                            )}
                           </span>
-
                         )}
 
                         {venue.rating &&

@@ -7,6 +7,10 @@ import {
 } from 'react';
 
 import { imgProps } from '../../lib/image';
+import {
+  CAPACITY_UNKNOWN_LABEL,
+  formatCapacityMax,
+} from '../../lib/capacity';
 import { createClient } from '../../lib/supabase-browser';
 
 type Wedding = {
@@ -946,9 +950,8 @@ export default function Planner() {
                     </span>
 
                     <em>
-                      {item.venue?.capacity_max
-                        ? `Up to ${item.venue.capacity_max} guests`
-                        : 'Capacity on request'}
+                      {formatCapacityMax(item.venue?.capacity_max) ??
+                        CAPACITY_UNKNOWN_LABEL}
                     </em>
 
                     {item.venue?.slug ? (

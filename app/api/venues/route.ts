@@ -13,6 +13,7 @@ export async function GET() {
         city,
         country,
         type,
+        capacity_min,
         capacity_max,
         indicative_price,
         hold_fee,
