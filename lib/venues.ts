@@ -62,6 +62,7 @@ type DbVenue = {
   hero_image: string | null;
   tags: string[] | null;
   description: string | null;
+  updated_at?: string | null;
   venue_spaces: DbVenueSpace[] | null;
   venue_rooms: DbVenueRoom[] | null;
 };
@@ -75,9 +76,9 @@ type DbVenue = {
  * app has always used, so existing pages/components didn't need
  * to be rewritten -- only their data source changed.
  *
- * `id` stays the human-readable slug (e.g. "hyderabad-1") so
- * every existing /venues/[id], /book?venue=, /enquiry?venue=
- * link keeps working unchanged. `dbId` carries the real
+ * `id` stays the human-readable slug so every existing
+ * /venues/[id], /book?venue=, /enquiry?venue= link uses the
+ * current public venue slug. `dbId` carries the real
  * Supabase UUID for anywhere that needs a foreign key
  * (booking_requests.venue_id, enquiries.venue_id, etc.).
  */
@@ -136,6 +137,7 @@ function normalizeVenue(row: DbVenue): Venue {
     image: row.hero_image || '',
     tags: row.tags || [],
     desc: row.description || '',
+    updatedAt: row.updated_at || undefined,
     venueSpaces: (row.venue_spaces || []).map(normalizeSpace),
     rooms: (row.venue_rooms || []).map(normalizeRoom),
   };
@@ -192,6 +194,7 @@ export async function fetchVenuesServer(): Promise<Venue[]> {
         hero_image,
         tags,
         description,
+        updated_at,
         venue_spaces (
           id,
           slug,
@@ -270,6 +273,7 @@ export async function fetchVenueBySlugServer(
         hero_image,
         tags,
         description,
+        updated_at,
         venue_spaces (
           id,
           slug,
