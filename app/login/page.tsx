@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { imgProps } from '../../lib/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase-browser';
 
@@ -319,8 +320,7 @@ export default function Login() {
 
         {/* Logo */}
         <img
-          src="/logo.png"
-          alt="The Venue Search"
+          {...imgProps('/logo.png', 'The Venue Search', { width: 70, height: 42, sizes: '70px' })}
         />
 
         {/* Page label */}

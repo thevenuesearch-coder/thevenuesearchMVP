@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { imgProps } from '../../lib/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '../../lib/supabase-browser';
@@ -1577,9 +1578,12 @@ export default function ProfilePage() {
                       {venue.image ? (
 
                         <img
-                          src={venue.image}
-                          alt={venue.name}
-                          loading="lazy"
+                          {...imgProps(venue.image, venue.name, {
+                            width: 640,
+                            height: 420,
+                            sizes:
+                              '(max-width: 600px) 100vw, 320px',
+                          })}
                         />
 
                       ) : (

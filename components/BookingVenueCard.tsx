@@ -1,5 +1,6 @@
 import type { Venue } from '../lib/data';
 
+import { imgProps } from '../lib/image';
 type BookingVenueCardProps = {
   venue: Venue;
 };
@@ -11,7 +12,13 @@ export function BookingVenueCard({
     <aside className="bookingVenueCard">
       <div className="bookingVenueImage">
         {venue.image ? (
-          <img src={venue.image} alt={venue.name} />
+          <img
+            {...imgProps(venue.image, venue.name, {
+              width: 640,
+              height: 420,
+              sizes: '(max-width: 900px) 100vw, 380px',
+            })}
+          />
         ) : (
           <div>The Venue Search</div>
         )}

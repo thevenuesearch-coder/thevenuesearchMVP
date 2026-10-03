@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '../../../../lib/supabase';
+import { resolveVenueSlug } from '../../../../lib/venue-slugs';
 
 export async function GET(
   request: Request,
@@ -70,7 +71,7 @@ export async function GET(
         )
       `
     )
-    .eq('slug', slug)
+    .eq('slug', resolveVenueSlug(slug))
     .eq('status', 'published')
     .maybeSingle();
 

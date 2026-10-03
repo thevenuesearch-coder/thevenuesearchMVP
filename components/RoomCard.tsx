@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { RoomCategory } from '../lib/data';
 import { RoomFullDetails } from './PublicVenueDetails';
+import { imgProps } from '../lib/image';
 
 type RoomCardProps = {
   room: RoomCategory;
@@ -40,12 +41,18 @@ export function RoomCard({
       <div className="room-card-image">
         {room.image && !imageFailed ? (
           <img
-            src={room.image}
-            alt={
+            {...imgProps(
+              room.image,
               venueName
                 ? `${room.name} at ${venueName}`
-                : room.name
-            }
+                : room.name,
+              {
+                width: 640,
+                height: 480,
+                sizes:
+                  '(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 400px',
+              }
+            )}
             onError={() => setImageFailed(true)}
           />
         ) : (

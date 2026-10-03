@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabase-browser';
+import { imgProps } from '../lib/image';
 
 type VenueCardData = {
   id: string;
@@ -322,13 +323,18 @@ export function VenueCard({
         {v.image ? (
 
           <img
-            src={v.image}
-            alt={
+            {...imgProps(
+              v.image,
               v.city
                 ? `${v.name}, ${v.city}`
-                : v.name
-            }
-            loading="lazy"
+                : v.name,
+              {
+                width: 800,
+                height: 620,
+                sizes:
+                  '(max-width: 600px) 100vw, (max-width: 900px) 50vw, 410px',
+              }
+            )}
           />
 
         ) : (
@@ -450,6 +456,7 @@ export function VenueCard({
             data-cursor="view"
             className="smallBtn"
             href={`/venues/${v.slug}`}
+            aria-label={`View venue: ${v.name}`}
           >
             View venue
           </Link>

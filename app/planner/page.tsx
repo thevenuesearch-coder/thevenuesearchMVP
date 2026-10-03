@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react';
 
+import { imgProps } from '../../lib/image';
 import { createClient } from '../../lib/supabase-browser';
 
 type Wedding = {
@@ -597,8 +598,7 @@ export default function Planner() {
       <aside className="side">
 
         <img
-          src="/logo.png"
-          alt="The Venue Search"
+          {...imgProps('/logo.png', 'The Venue Search', { width: 70, height: 42, sizes: '70px' })}
         />
 
         <b>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { imgProps } from '../../../lib/image';
 import { useRouter } from 'next/navigation';
 import { ModalFocus } from '../../../components/ModalFocus';
 import { Suspense, useEffect, useState } from 'react';
@@ -2113,8 +2114,11 @@ function ReviewPageContent() {
               >
 
                 <img
-                  src="/logo.png"
-                  alt="The Venue Search"
+                  {...imgProps('/logo.png', 'The Venue Search', {
+                    width: 76,
+                    height: 45,
+                    sizes: '76px',
+                  })}
                   style={{
                     width:
                       '76px',

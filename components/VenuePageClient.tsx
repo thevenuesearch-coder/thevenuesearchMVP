@@ -10,13 +10,23 @@ import {
   VenueFacts,
   AllVenueSpaces,
 } from './PublicVenueDetails';
+import { imgProps } from '../lib/image';
+
+type RelatedVenue = {
+  id: string;
+  name: string;
+  city: string;
+  type: string;
+};
 
 type VenuePageClientProps = {
   initialVenue: Venue | null;
+  relatedVenues?: RelatedVenue[];
 };
 
 export function VenuePageClient({
   initialVenue,
+  relatedVenues = [],
 }: VenuePageClientProps) {
   /*
    * The venue is fetched server-side in
@@ -157,10 +167,19 @@ export function VenuePageClient({
       <section className="hero">
 
         <img
-          src={currentImage}
-          alt={describeImage(
+          {...imgProps(
             currentImage,
-            activeImage
+            describeImage(
+              currentImage,
+              activeImage
+            ),
+            {
+              width: 1920,
+              height: 1080,
+              sizes: '100vw',
+              /* The hero photo is the page's LCP element. */
+              priority: true,
+            }
           )}
           className="hero-image"
         />
@@ -293,10 +312,17 @@ export function VenuePageClient({
                   }
                 >
                   <img
-                    src={image}
-                    alt={describeImage(
+                    {...imgProps(
                       image,
-                      index
+                      describeImage(
+                        image,
+                        index
+                      ),
+                      {
+                        width: 160,
+                        height: 110,
+                        sizes: '160px',
+                      }
                     )}
                   />
                 </button>
@@ -312,6 +338,32 @@ export function VenuePageClient({
       {/* =====================================================
           VENUE CONTENT
           ===================================================== */}
+
+      <nav
+        className="breadcrumbs"
+        aria-label="Breadcrumb"
+      >
+        <ol>
+          <li>
+            <Link href="/">Home</Link>
+          </li>
+          <li>
+            <Link href="/explore">
+              Wedding venues
+            </Link>
+          </li>
+          <li>
+            <Link
+              href={`/explore?destination=${encodeURIComponent(
+                venue.destination || venue.city
+              )}`}
+            >
+              {venue.destination || venue.city}
+            </Link>
+          </li>
+          <li aria-current="page">{venue.name}</li>
+        </ol>
+      </nav>
 
       <section className="venue-content">
 
@@ -381,8 +433,16 @@ export function VenuePageClient({
                 <div className="space-image">
 
                   <img
-                    src={currentSpace.image}
-                    alt={`${currentSpace.name} at ${venue.name}`}
+                    {...imgProps(
+                      currentSpace.image,
+                      `${currentSpace.name} at ${venue.name}`,
+                      {
+                        width: 900,
+                        height: 600,
+                        sizes:
+                          '(max-width: 900px) 100vw, 50vw',
+                      }
+                    )}
                   />
 
                 </div>
@@ -657,6 +717,37 @@ export function VenuePageClient({
         </aside>
 
       </section>
+
+      {relatedVenues.length > 0 && (
+        <nav
+          className="related-venues"
+          aria-label="More wedding venues"
+        >
+          <h2>More wedding venues</h2>
+
+          <ul>
+            {relatedVenues.map((other) => (
+              <li key={other.id}>
+                <Link href={`/venues/${other.id}`}>
+                  <strong>{other.name}</strong>
+                  <span>
+                    {[other.type, other.city]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <Link
+            className="related-venues-all"
+            href="/explore"
+          >
+            Explore all wedding venues →
+          </Link>
+        </nav>
+      )}
 
 
       {/* =====================================================

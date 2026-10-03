@@ -1,8 +1,30 @@
 import '../styles/globals.css';
 import type { Metadata } from 'next';
+import { DM_Sans, Playfair_Display } from 'next/font/google';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
-import Cursor from '../components/Cursor';
+import CursorLoader from '../components/CursorLoader';
+import StyledJsxRegistry from '../components/StyledJsxRegistry';
+
+/*
+ * Fonts are self-hosted by next/font: no render-blocking request to
+ * fonts.googleapis.com, no second hop to fonts.gstatic.com, and a
+ * size-adjusted fallback font so text doesn't shift when they load.
+ * Same families as before; exposed as CSS variables used by
+ * --sans / --serif in globals.css.
+ */
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dm-sans',
+});
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-playfair',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://venuesearch.in'),
@@ -17,6 +39,7 @@ export const metadata: Metadata = {
     siteName: 'The Venue Search',
     type: 'website',
     locale: 'en_IN',
+    images: [{ url: '/logo.png', alt: 'The Venue Search' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -45,19 +68,11 @@ const websiteJsonLd = {
   '@type': 'WebSite',
   name: 'The Venue Search',
   url: 'https://venuesearch.in',
-  potentialAction: {
-    '@type': 'SearchAction',
-    target: {
-      '@type': 'EntryPoint',
-      urlTemplate: 'https://venuesearch.in/explore?destination={search_term_string}',
-    },
-    'query-input': 'required name=search_term_string',
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${dmSans.variable} ${playfair.variable}`}>
       <body>
         <script
           type="application/ld+json"
@@ -70,10 +85,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main-content" className="vs-skip-link">
           Skip to main content
         </a>
-        <Cursor />
-        <Header />
-        {children}
-        <Footer />
+        <StyledJsxRegistry>
+          <CursorLoader />
+          <Header />
+          {children}
+          <Footer />
+        </StyledJsxRegistry>
       </body>
     </html>
   );

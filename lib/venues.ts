@@ -1,6 +1,15 @@
-import type { Venue, VenueSpace, RoomCategory } from './data';
+import { cache } from 'react';
 
-export type { Venue, VenueSpace, RoomCategory };
+import { resolveVenueSlug } from './venue-slugs';
+
+import type {
+  Venue,
+  VenueSpace,
+  VenueSummary,
+  RoomCategory,
+} from './data';
+
+export type { Venue, VenueSpace, VenueSummary, RoomCategory };
 
 /*
  * ============================================================
@@ -247,10 +256,32 @@ export async function fetchVenueBySlug(
  * content server-side and to power generateMetadata (per-venue
  * SEO title/description/OG tags).
  */
-export async function fetchVenueBySlugServer(
-  slug: string
-): Promise<Venue | null> {
-  if (!slug) return null;
+export const fetchVenueBySlugServer = cache(
+  async (slug: string): Promise<Venue | null> =>
+    (await fetchVenueResultServer(slug)).venue
+);
+
+/*
+ * Same query, but reports whether the lookup itself failed so the
+ * page can tell "this venue doesn't exist" (a real 404) apart from
+ * "Supabase hiccuped" (which must not be served as a 404 to
+ * search engines). React cache() de-duplicates the call within a
+ * request: generateMetadata and the page used to run this query
+ * twice per view.
+ */
+export const fetchVenueResultServer = cache(
+  async (
+    slug: string
+  ): Promise<{ venue: Venue | null; failed: boolean }> =>
+    queryVenueBySlug(slug)
+);
+
+async function queryVenueBySlug(
+  requestedSlug: string
+): Promise<{ venue: Venue | null; failed: boolean }> {
+  if (!requestedSlug) return { venue: null, failed: false };
+
+  const slug = resolveVenueSlug(requestedSlug);
 
   const { supabase } = await import('./supabase');
 
@@ -317,10 +348,10 @@ export async function fetchVenueBySlugServer(
 
   if (error) {
     console.error('fetchVenueBySlugServer error:', error.message);
-    return null;
+    return { venue: null, failed: true };
   }
 
-  if (!data) return null;
+  if (!data) return { venue: null, failed: false };
 
   /*
    * Same post-query filtering the API route does -- a nested
@@ -334,8 +365,23 @@ export async function fetchVenueBySlugServer(
         (a.sort_order || 0) - (b.sort_order || 0)
     );
 
-  return normalizeVenue({
-    ...(data as DbVenue),
-    venue_rooms: publishedRooms,
-  } as DbVenue);
+  return {
+    venue: normalizeVenue({
+      ...(data as DbVenue),
+      venue_rooms: publishedRooms,
+    } as DbVenue),
+    failed: false,
+  };
+}
+
+/*
+ * Strips a full Venue down to what list/card components need
+ * (see VenueSummary in ./data).
+ */
+export function toVenueSummary(venue: Venue): VenueSummary {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { dbId, price, hold, venueSpaces, rooms, ...summary } =
+    venue;
+
+  return summary;
 }

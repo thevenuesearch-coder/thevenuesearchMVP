@@ -2,6 +2,12 @@ import type { MetadataRoute } from 'next';
 
 import { fetchVenuesServer } from '../lib/venues';
 
+/*
+ * Regenerate hourly so newly published / unpublished venues reach
+ * the sitemap without a redeploy (it was frozen at build time).
+ */
+export const revalidate = 3600;
+
 const BASE_URL = 'https://venuesearch.in';
  
 const staticRoutes: {

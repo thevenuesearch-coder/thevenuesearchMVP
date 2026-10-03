@@ -1,17 +1,22 @@
 import type { Metadata } from 'next';
+import { pageMetadata } from '../../lib/seo';
 
-import { fetchVenuesServer } from '../../lib/venues';
+import {
+  fetchVenuesServer,
+  toVenueSummary,
+} from '../../lib/venues';
 import { ExploreClient } from '../../components/ExploreClient';
 import {
   buildVenueListJsonLd,
   serializeJsonLd,
 } from '../../lib/structured-data';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Explore Wedding Venues',
   description:
     'Browse verified destination wedding venues by location, venue type and guest capacity. Palaces, luxury hotels and resorts across Hyderabad and India.',
-};
+  path: '/explore',
+});
 
 /*
  * Rendered per-request rather than statically at build time --
@@ -52,7 +57,10 @@ export default async function ExplorePage() {
         />
       )}
 
-      <ExploreClient initialVenues={venues} initialError={error} />
+      <ExploreClient
+        initialVenues={venues.map(toVenueSummary)}
+        initialError={error}
+      />
     </>
   );
 }
