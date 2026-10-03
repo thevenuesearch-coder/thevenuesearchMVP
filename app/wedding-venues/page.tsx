@@ -63,10 +63,10 @@ const faqJsonLd = {
 };
 
 const hyderabadVenues: [string, string, string][] = [
-  ['Park Hyatt Hyderabad', 'Banjara Hills', '/venues/hyderabad-10'],
-  ['Hyderabad Marriott Hotel & Convention Centre', 'Tank Bund', '/venues/hyderabad-9'],
-  ['Taj Krishna', 'Banjara Hills', '/venues/hyderabad-8'],
-  ['The Westin Hyderabad Mindspace', 'Hitec City', '/venues/hyderabad-7'],
+  ['Park Hyatt Hyderabad', 'Banjara Hills', '/venues/park-hyatt-hyderabad'],
+  ['Hyderabad Marriott Hotel & Convention Centre', 'Tank Bund', '/venues/hyderabad-marriott-hotel-convention-centre'],
+  ['Taj Krishna', 'Banjara Hills', '/venues/taj-krishna-hyderabad'],
+  ['The Westin Hyderabad Mindspace', 'Hitec City', '/venues/westin-hyderabad-mindspace'],
 ];
 
 export default function WeddingVenuesPage() {
