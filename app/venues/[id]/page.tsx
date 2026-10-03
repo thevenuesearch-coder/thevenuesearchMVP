@@ -66,6 +66,10 @@ export async function generateMetadata({
     title,
     description,
 
+    alternates: {
+      canonical: `/venues/${encodeURIComponent(id)}`,
+    },
+
     openGraph: {
       title,
       description,
