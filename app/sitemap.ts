@@ -85,6 +85,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter((venue) => Boolean(venue.id))
       .map((venue) => ({
         url: `${BASE_URL}/venues/${encodeURIComponent(venue.id)}`,
+        lastModified: venue.updatedAt
+          ? new Date(venue.updatedAt)
+          : undefined,
         changeFrequency: 'weekly' as const,
         priority: 0.8,
       }));
