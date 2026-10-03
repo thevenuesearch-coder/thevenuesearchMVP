@@ -60,6 +60,7 @@ export type Venue = {
   image: string;
   tags: string[];
   desc: string;
+  updatedAt?: string;
   venueSpaces: VenueSpace[];
   rooms: RoomCategory[];
 };
