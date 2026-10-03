@@ -63,3 +63,13 @@ export type Venue = {
   venueSpaces: VenueSpace[];
   rooms: RoomCategory[];
 };
+
+/*
+ * The fields list/card UIs actually need. Client components get this
+ * instead of the full Venue so the nested spaces/rooms (which can be
+ * large) aren't serialised into the page for every venue.
+ */
+export type VenueSummary = Omit<
+  Venue,
+  'dbId' | 'price' | 'hold' | 'venueSpaces' | 'rooms'
+>;

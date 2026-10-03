@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { LazyMotion, domAnimation, m } from 'framer-motion';
 import { useState } from 'react';
 
 import type { Venue } from '../lib/data';
 
+type SearchVenue = Pick<Venue, 'id' | 'name' | 'destination'>;
+
 type HeroSearchBoxProps = {
-  venues: Venue[];
+  venues: SearchVenue[];
 };
 
 export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
@@ -79,7 +81,8 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
   }
 
   return (
-    <motion.div
+    <LazyMotion features={domAnimation}>
+    <m.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
@@ -191,6 +194,7 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
           Explore venues →
         </Link>
       </div>
-    </motion.div>
+    </m.div>
+    </LazyMotion>
   );
 }

@@ -1,15 +1,21 @@
 import type { Metadata } from 'next';
+import { pageMetadata } from '../lib/seo';
 import Link from 'next/link';
 
-import { fetchVenuesServer } from '../lib/venues';
+import {
+  fetchVenuesServer,
+  toVenueSummary,
+} from '../lib/venues';
 import { VenueCard } from '../components/VenueCard';
 import { HeroSearchBox } from '../components/HeroSearchBox';
+import { imgProps, optimizedUrl } from '../lib/image';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Verified Destination Wedding Venues in Hyderabad & India',
   description:
     'Find and book verified destination wedding venues, palaces and luxury hotels in Hyderabad and across India. Transparent decisions, instant holds, and a booking journey built around certainty.',
-};
+  path: '/',
+});
 
 /*
  * Rendered per-request rather than statically at build time --
@@ -48,7 +54,11 @@ export default async function Home() {
             muted
             loop
             playsInline
-            poster={venues[0]?.image}
+            poster={
+              venues[0]?.image
+                ? optimizedUrl(venues[0].image, 1080)
+                : undefined
+            }
             src={
               process.env.NEXT_PUBLIC_HERO_VIDEO_URL || undefined
             }
@@ -58,7 +68,13 @@ export default async function Home() {
         <div className="heroShade" />
 
         <div className="heroContent">
-          <HeroSearchBox venues={venues} />
+          <HeroSearchBox
+            venues={venues.map(({ id, name, destination }) => ({
+              id,
+              name,
+              destination,
+            }))}
+          />
         </div>
 
         <div className="heroNote">
@@ -131,7 +147,7 @@ export default async function Home() {
               <VenueCard
                 key={v.id}
                 v={{
-                  ...v,
+                  ...toVenueSummary(v),
                   slug: v.id,
                   capacityMin: v.capacity,
                   description: v.desc,
@@ -213,7 +229,15 @@ export default async function Home() {
               className="collection"
               key={v.id}
             >
-              {v.image && <img src={v.image} alt={v.name} />}
+              {v.image && (
+                <img
+                  {...imgProps(v.image, v.name, {
+                    width: 300,
+                    height: 420,
+                    sizes: '300px',
+                  })}
+                />
+              )}
 
               <div>
                 <small>0{index + 1}</small>

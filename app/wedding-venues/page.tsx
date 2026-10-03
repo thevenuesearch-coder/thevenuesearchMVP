@@ -1,18 +1,27 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { pageMetadata } from '../../lib/seo';
 
-export const metadata: Metadata = {
+const baseMetadata = pageMetadata({
   title: 'Wedding Venues in India & Hyderabad',
   description:
     'Find and book verified wedding venues, banquet halls, luxury hotels and destination wedding venues across India and Hyderabad. Transparent pricing, instant holds, and a booking journey built around certainty.',
-  alternates: {
-    canonical: '/wedding-venues',
-  },
+  path: '/wedding-venues',
+});
+
+/* Keeps this page's original, shorter social-share description. */
+const ogDescription =
+  'Discover verified wedding venues, banquet halls and destination wedding venues across India. Compare, hold, and book with transparent pricing.';
+
+export const metadata: Metadata = {
+  ...baseMetadata,
   openGraph: {
-    title: 'Wedding Venues in India & Hyderabad | The Venue Search',
-    description:
-      'Discover verified wedding venues, banquet halls and destination wedding venues across India. Compare, hold, and book with transparent pricing.',
-    url: '/wedding-venues',
+    ...baseMetadata.openGraph,
+    description: ogDescription,
+  },
+  twitter: {
+    ...baseMetadata.twitter,
+    description: ogDescription,
   },
 };
 

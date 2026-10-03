@@ -1,17 +1,25 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
-import { fetchVenueBySlugServer } from '../../../lib/venues';
+import {
+  fetchVenueResultServer,
+  fetchVenuesServer,
+} from '../../../lib/venues';
 import {
   buildVenueJsonLd,
   fetchVenueLocationServer,
   serializeJsonLd,
 } from '../../../lib/structured-data';
+import {
+  clip,
+  pageMetadata,
+  socialImage,
+} from '../../../lib/seo';
 import { VenuePageClient } from '../../../components/VenuePageClient';
 
 /*
- * Rendered per-request rather than statically at build time.
- * This also applies to generateMetadata so that venue SEO data
- * always reflects the latest venue information.
+ * Rendered per-request so venue data (and therefore SEO metadata)
+ * always reflects what is currently published.
  */
 export const dynamic = 'force-dynamic';
 
@@ -20,93 +28,91 @@ type VenuePageProps = {
 };
 
 /*
- * Per-venue SEO metadata.
- *
- * The metadata is generated from the actual venue data:
- * - venue name
- * - city / destination
- * - venue type
- * - venue description
+ * Per-venue SEO metadata, generated from the venue's own data:
+ * name, city/destination, type and description. Adds the canonical
+ * URL and a 1200px social image (the originals are several MB).
  */
 export async function generateMetadata({
   params,
 }: VenuePageProps): Promise<Metadata> {
   const { id } = await params;
 
-  const venue = await fetchVenueBySlugServer(id);
+  const { venue } = await fetchVenueResultServer(id);
 
   if (!venue) {
     return {
       title: 'Venue not found',
+      robots: { index: false, follow: true },
     };
   }
 
-  const location =
-    venue.city ||
-    venue.destination ||
-    'India';
+  const location = venue.city || venue.destination || 'India';
 
   const venueType = venue.type
     ? venue.type.toLowerCase()
     : 'wedding venue';
 
-  const title =
-    `${venue.name}, ${location} — Wedding Venue`;
-
-  const trimmedDesc = venue.desc
-    ? venue.desc.length > 140
-      ? `${venue.desc.slice(0, 140).trim()}…`
-      : venue.desc
+  const intro = venue.desc
+    ? clip(venue.desc, 140)
     : `A verified ${venueType} in ${location} for destination weddings and celebrations.`;
 
-  const description =
-    `${venue.name} — a verified ${venueType} in ${location}. ${trimmedDesc}`;
-
-  return {
-    title,
-    description,
-
-    openGraph: {
-      title,
-      description,
-      images: venue.image
-        ? [venue.image]
-        : undefined,
-      type: 'website',
-    },
-
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: venue.image
-        ? [venue.image]
-        : undefined,
-    },
-  };
+  return pageMetadata({
+    title: `${venue.name}, ${location} — Wedding Venue`,
+    description: clip(
+      `${venue.name} — a verified ${venueType} in ${location}. ${intro}`,
+      160
+    ),
+    path: `/venues/${encodeURIComponent(venue.id)}`,
+    image: socialImage(
+      venue.image,
+      `${venue.name}, ${location}`
+    ),
+  });
 }
 
 /*
- * Server Component.
- *
- * The venue is fetched server-side so that:
- * 1. Metadata has access to the real venue data.
- * 2. VenuePageClient receives the venue immediately.
- * 3. Venue content is available during the initial render.
+ * Server Component: the venue is fetched here so metadata and the
+ * page body share one (de-duplicated) query, and an unknown slug
+ * returns a real HTTP 404 instead of a 200 "not found" page.
+ * A failed lookup (Supabase unavailable) is NOT turned into a 404,
+ * so a temporary outage can never get a venue de-indexed.
  */
 export default async function VenuePage({
   params,
 }: VenuePageProps) {
   const { id } = await params;
 
+  const [{ venue, failed }, location, allVenues] =
+    await Promise.all([
+      fetchVenueResultServer(id),
+      fetchVenueLocationServer(id),
+      fetchVenuesServer(),
+    ]);
+
+  if (!venue && !failed) {
+    notFound();
+  }
+
   /*
-   * The location (address / coordinates) is fetched in parallel
-   * and is best-effort -- see fetchVenueLocationServer.
+   * Other venues for the "Explore more venues" links: same
+   * destination first, then the rest, max 3.
    */
-  const [venue, location] = await Promise.all([
-    fetchVenueBySlugServer(id),
-    fetchVenueLocationServer(id),
-  ]);
+  const related = venue
+    ? [...allVenues]
+        .filter((other) => other.id !== venue.id)
+        .sort(
+          (a, b) =>
+            Number(b.destination === venue.destination) -
+            Number(a.destination === venue.destination)
+        )
+        .slice(0, 3)
+        .map(({ id, name, city, type }) => ({
+          id,
+          name,
+          city,
+          type,
+        }))
+    : [];
 
   return (
     <>
@@ -123,6 +129,7 @@ export default async function VenuePage({
 
       <VenuePageClient
         initialVenue={venue}
+        relatedVenues={related}
       />
     </>
   );

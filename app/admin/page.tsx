@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { imgProps } from '../../lib/image';
 type AdminEnquiry = {
   id: string;
   booking_type: 'venue' | 'room' | 'venue_room';
@@ -143,7 +144,7 @@ export default function AdminPage() {
 
       <aside className="side">
 
-        <img src="/logo.png" alt="The Venue Search" />
+        <img {...imgProps('/logo.png', 'The Venue Search', { width: 70, height: 42, sizes: '70px' })} />
 
         <b>Admin Console</b>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { imgProps } from '../lib/image';
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '../lib/supabase-browser';
 
@@ -200,8 +201,7 @@ export function Header() {
         className="brand"
       >
         <img
-          src="/logo.png"
-          alt="The Venue Search"
+          {...imgProps('/logo.png', 'The Venue Search', { width: 42, height: 25, sizes: '42px' })}
         />
 
         <span>

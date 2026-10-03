@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import { imgProps } from '../../lib/image';
 import Link from 'next/link';
 
 import { createClient } from '../../lib/supabase-browser';
@@ -564,11 +565,16 @@ export default function EnquiryClient({
           <div className="venue-card">
 
             <img
-              src={
+              {...imgProps(
                 selectedSpace?.image ||
-                venue.image
-              }
-              alt={venue.name}
+                  venue.image,
+                venue.name,
+                {
+                  width: 480,
+                  height: 320,
+                  sizes: '(max-width: 900px) 100vw, 320px',
+                }
+              )}
             />
 
             <div>

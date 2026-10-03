@@ -1,14 +1,17 @@
 import type { Metadata } from 'next';
+import { pageMetadata } from '../../lib/seo';
 import Link from 'next/link';
 
 import { fetchVenuesServer } from '../../lib/venues';
 import type { Venue } from '../../lib/data';
+import { imgProps } from '../../lib/image';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Curated Wedding Venue Collections',
   description:
     'Browse curated collections of verified destination wedding venues in Hyderabad and across India, from palaces to luxury hotels and resorts.',
-};
+  path: '/collections',
+});
 
 /*
  * Rendered per-request so the collections always reflect the
@@ -59,12 +62,17 @@ export default async function Collections() {
               key={v.id}
             >
               <img
-                src={v.image}
-                alt={
+                {...imgProps(
+                  v.image,
                   v.city
                     ? `${v.name}, ${v.city}`
-                    : v.name
-                }
+                    : v.name,
+                  {
+                    width: 900,
+                    height: 460,
+                    sizes: '(max-width: 900px) 100vw, 50vw',
+                  }
+                )}
               />
               <div>
                 <span className="kicker">COLLECTION</span>

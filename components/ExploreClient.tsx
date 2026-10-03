@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import type { Venue } from '../lib/data';
+import type { VenueSummary } from '../lib/data';
 
 import { VenueCard } from './VenueCard';
 
 type ExploreClientProps = {
-  initialVenues: Venue[];
+  initialVenues: VenueSummary[];
   initialError?: string;
 };
 

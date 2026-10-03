@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { RoomCategory } from '../lib/data';
 import { useDialogA11y } from '../lib/use-dialog-a11y';
+import { imgProps } from '../lib/image';
 
 type RoomDetailsModalProps = {
   room: RoomCategory;
@@ -136,8 +137,11 @@ export function RoomDetailsModal({
         <div className="room-modal-gallery">
           {gallery.length > 0 && activeSrc ? (
             <img
-              src={activeSrc}
-              alt={room.name}
+              {...imgProps(activeSrc, room.name, {
+                width: 920,
+                height: 620,
+                sizes: '(max-width: 720px) 100vw, 920px',
+              })}
               onError={() =>
                 setFailedImages(
                   (current) =>
