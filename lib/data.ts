@@ -52,7 +52,10 @@ export type Venue = {
   city: string;
   country: string;
   type: string;
+  /* Maximum guests; 0 means "not provided" (see lib/capacity.ts). */
   capacity: number;
+  /* Minimum guests from the database; null when not provided. */
+  capacityMin: number | null;
   price: number;
   hold: number | null;
   rating: number | null;

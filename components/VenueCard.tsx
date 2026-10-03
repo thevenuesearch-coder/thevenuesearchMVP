@@ -8,6 +8,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabase-browser';
 import { imgProps } from '../lib/image';
+import { formatCapacityRange, CAPACITY_UNKNOWN_LABEL } from '../lib/capacity';
 
 type VenueCardData = {
   id: string;
@@ -428,13 +429,8 @@ export function VenueCard({
         <div className="meta">
 
           <span>
-            {v.capacityMin
-              ? `${v.capacityMin} – `
-              : 'Up to '}
-
-            {v.capacity.toLocaleString()}
-
-            {' guests'}
+            {formatCapacityRange(v.capacityMin, v.capacity) ??
+              CAPACITY_UNKNOWN_LABEL}
           </span>
 
           {v.rating && (

@@ -1,4 +1,5 @@
 import { fetchVenuesServer } from '../../lib/venues';
+import { formatCapacityRange } from '../../lib/capacity';
 
 /*
  * /llms.txt, generated from the published venues so it never goes
@@ -17,9 +18,7 @@ export async function GET() {
     const facts = [
       venue.type,
       [venue.city, venue.country].filter(Boolean).join(', '),
-      venue.capacity > 0
-        ? `up to ${venue.capacity.toLocaleString('en-IN')} guests`
-        : '',
+      formatCapacityRange(venue.capacityMin, venue.capacity) ?? '',
       venue.venueSpaces.length > 0
         ? `${venue.venueSpaces.length} event space${
             venue.venueSpaces.length === 1 ? '' : 's'

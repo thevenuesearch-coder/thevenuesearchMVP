@@ -11,6 +11,7 @@ import {
   AllVenueSpaces,
 } from './PublicVenueDetails';
 import { imgProps } from '../lib/image';
+import { formatCapacityMax, formatGuests } from '../lib/capacity';
 
 type RelatedVenue = {
   id: string;
@@ -469,9 +470,8 @@ export function VenuePageClient({
                     </span>
 
                     <strong>
-                      Up to{' '}
-                      {currentSpace.capacity}{' '}
-                      guests
+                      {formatCapacityMax(currentSpace.capacity) ??
+                        'On request'}
                     </strong>
 
                   </div>
@@ -528,10 +528,11 @@ export function VenuePageClient({
                         {space.name}
                       </strong>
 
-                      <small>
-                        Up to{' '}
-                        {space.capacity}
-                      </small>
+                      {formatCapacityMax(space.capacity) && (
+                        <small>
+                          {formatCapacityMax(space.capacity)}
+                        </small>
+                      )}
 
                     </button>
                   )
