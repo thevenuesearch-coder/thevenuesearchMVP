@@ -1,5 +1,7 @@
 import { cache } from 'react';
 
+import { resolveVenueSlug } from './venue-slugs';
+
 import type {
   Venue,
   VenueSpace,
@@ -275,9 +277,11 @@ export const fetchVenueResultServer = cache(
 );
 
 async function queryVenueBySlug(
-  slug: string
+  requestedSlug: string
 ): Promise<{ venue: Venue | null; failed: boolean }> {
-  if (!slug) return { venue: null, failed: false };
+  if (!requestedSlug) return { venue: null, failed: false };
+
+  const slug = resolveVenueSlug(requestedSlug);
 
   const { supabase } = await import('./supabase');
 

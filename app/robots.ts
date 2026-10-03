@@ -7,14 +7,19 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: '/',
         disallow: [
+          /*
+           * No trailing slashes on the private paths: "/book/"
+           * does not match "/book?venue=..." (the main booking
+           * URL), nor "/planner" or "/wishlist" themselves.
+           */
           '/api/',
-          '/admin/',
-          '/auth/',
+          '/admin',
+          '/auth',
           '/login',
           '/profile',
-          '/planner/',
-          '/wishlist/',
-          '/book/',
+          '/planner',
+          '/wishlist',
+          '/book',
           '/enquiry',
         ],
       },

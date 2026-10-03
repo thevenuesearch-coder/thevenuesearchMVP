@@ -68,14 +68,6 @@ const websiteJsonLd = {
   '@type': 'WebSite',
   name: 'The Venue Search',
   url: 'https://venuesearch.in',
-  potentialAction: {
-    '@type': 'SearchAction',
-    target: {
-      '@type': 'EntryPoint',
-      urlTemplate: 'https://venuesearch.in/explore?destination={search_term_string}',
-    },
-    'query-input': 'required name=search_term_string',
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
