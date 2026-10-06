@@ -16,9 +16,13 @@ export type CompareVenue = {
   isCurrent: boolean;
 };
 
+/* How a row's values are drawn: plain text, a big number, pills, or stacked lines. */
+export type CompareVariant = 'text' | 'stat' | 'chips' | 'lines';
+
 export type CompareRow = {
   key: string;
   label: string;
+  variant: CompareVariant;
   cells: CompareCell[]; /* same order and length as venues */
 };
 

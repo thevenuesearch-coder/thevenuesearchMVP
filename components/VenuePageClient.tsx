@@ -594,12 +594,6 @@ export function VenuePageClient({
             </section>
           )}
 
-          {/* =================================================
-              COMPARE SIMILAR VENUES (directly after Rooms)
-              ================================================= */}
-
-          {comparison}
-
         </div>
 
 
@@ -725,6 +719,14 @@ export function VenuePageClient({
           </div>
 
         </aside>
+
+        {/* =================================================
+            COMPARE SIMILAR VENUES
+            Full-width row of this grid, directly below the
+            Rooms section (the section sets grid-column: 1 / -1).
+            ================================================= */}
+
+        {comparison}
 
       </section>
 

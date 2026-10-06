@@ -5,6 +5,7 @@ import type {
   CompareModel,
   CompareRoom,
   CompareRow,
+  CompareVariant,
   CompareVenue,
 } from './types';
 
@@ -130,27 +131,45 @@ export function buildComparison(
   const defs: Array<{
     key: string;
     label: string;
+    variant: CompareVariant;
     get: (v: Venue) => CompareCell;
   }> = [
-    { key: 'type', label: 'Venue Type', get: (v) => cleanString(v.type) },
+    {
+      key: 'type',
+      label: 'Venue Type',
+      variant: 'text',
+      get: (v) => cleanString(v.type),
+    },
     {
       key: 'capacity',
       label: 'Guest Capacity',
+      variant: 'stat',
       get: (v) => formatCapacityRange(v.capacityMin, v.capacity),
     },
     {
       key: 'rooms',
       label: 'Room Categories',
+      variant: 'chips',
       get: (v) => roomCategories(roomsByVenue[v.dbId]),
     },
-    { key: 'spaces', label: 'Event & Function Spaces', get: eventSpaces },
+    {
+      key: 'spaces',
+      label: 'Event & Function Spaces',
+      variant: 'lines',
+      get: eventSpaces,
+    },
   ];
 
   const rows: CompareRow[] = [];
   for (const def of defs) {
     const cells = ordered.map((v) => def.get(v));
     if (cells.filter((c) => c !== null).length >= 2) {
-      rows.push({ key: def.key, label: def.label, cells });
+      rows.push({
+        key: def.key,
+        label: def.label,
+        variant: def.variant,
+        cells,
+      });
     }
   }
 
