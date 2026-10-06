@@ -16,6 +16,8 @@ import {
   socialImage,
 } from '../../../lib/seo';
 import { VenuePageClient } from '../../../components/VenuePageClient';
+import { CompareSimilarVenues } from '../../../components/compare/CompareSimilarVenues';
+import { getComparison } from '../../../lib/compare/get-comparison';
 
 /*
  * Rendered per-request so venue data (and therefore SEO metadata)
@@ -114,6 +116,15 @@ export default async function VenuePage({
         }))
     : [];
 
+  /*
+   * "Compare Similar Venues": this venue + up to 3 comparable ones,
+   * chosen from the venue list already loaded above. Resolves to
+   * null (section omitted) if anything fails -- never breaks the page.
+   */
+  const comparison = venue
+    ? await getComparison(venue, allVenues)
+    : null;
+
   return (
     <>
       {venue && (
@@ -130,6 +141,7 @@ export default async function VenuePage({
       <VenuePageClient
         initialVenue={venue}
         relatedVenues={related}
+        comparison={<CompareSimilarVenues model={comparison} />}
       />
     </>
   );

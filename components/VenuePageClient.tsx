@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 
 import type { Venue, RoomCategory } from '../lib/data';
@@ -23,11 +23,14 @@ type RelatedVenue = {
 type VenuePageClientProps = {
   initialVenue: Venue | null;
   relatedVenues?: RelatedVenue[];
+  /* Server-rendered "Compare Similar Venues" section. */
+  comparison?: ReactNode;
 };
 
 export function VenuePageClient({
   initialVenue,
   relatedVenues = [],
+  comparison = null,
 }: VenuePageClientProps) {
   /*
    * The venue is fetched server-side in
@@ -590,6 +593,12 @@ export function VenuePageClient({
 
             </section>
           )}
+
+          {/* =================================================
+              COMPARE SIMILAR VENUES (directly after Rooms)
+              ================================================= */}
+
+          {comparison}
 
         </div>
 
