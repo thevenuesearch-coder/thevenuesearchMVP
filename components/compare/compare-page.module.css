@@ -1,0 +1,447 @@
+/* /compare page. Site tokens: --ink --paper --white --blue --cyan --purple --muted --line --serif --sans */
+
+.page {
+  width: min(1400px, calc(100% - 100px));
+  margin: 0 auto;
+  padding: 150px 0 120px;
+  font-family: var(--sans);
+  color: var(--ink);
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  max-width: 760px;
+  margin: 0 0 36px;
+}
+
+.kicker {
+  display: block;
+  color: #888;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.title {
+  margin: 12px 0 14px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(36px, 4.4vw, 58px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+/* ---------- Picker panel ---------- */
+
+.panel {
+  display: grid;
+  gap: 22px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--white);
+  box-shadow: 0 30px 70px -36px rgba(15, 16, 24, 0.22);
+}
+
+.picker {
+  position: relative;
+}
+
+.pickerLabel {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.inputWrap {
+  position: relative;
+}
+
+.inputWrap[data-pending='true'] {
+  opacity: 0.7;
+}
+
+.searchIcon {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/*
+ * The input itself is the pill, so the site-wide keyboard focus ring
+ * (globals.css: input:focus-visible) wraps the pill cleanly. We keep
+ * that ring rather than overriding it.
+ */
+.input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 17px 76px 17px 48px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.input:focus {
+  border-color: var(--cyan);
+  background: var(--white);
+}
+
+.input::placeholder {
+  color: #8a8a93;
+}
+
+.input:disabled {
+  cursor: not-allowed;
+}
+
+.counter {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.listbox {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  max-height: 340px;
+  margin: 0;
+  padding: 8px;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: 0 30px 60px -20px rgba(15, 16, 24, 0.35);
+}
+
+.option {
+  display: grid;
+  gap: 2px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.option[data-active='true'] {
+  background: rgba(40, 185, 211, 0.12);
+}
+
+.optionName {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.optionMeta {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.rankHint {
+  padding: 8px 14px 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.noMatch,
+.moreHint {
+  padding: 12px 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------- Selected slots ---------- */
+
+.slots {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 10px 14px 10px 10px;
+  border-radius: 16px;
+}
+
+.slot[data-filled='true'] {
+  border: 1px solid rgba(40, 185, 211, 0.4);
+  background: rgba(40, 185, 211, 0.07);
+}
+
+.slot[data-filled='false'] {
+  border: 1px dashed var(--line);
+  background: transparent;
+}
+
+.slotImage {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: var(--paper);
+}
+
+.slotPlus {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  font-size: 22px;
+}
+
+.slotText {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+  padding-right: 26px;
+}
+
+.slotName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.slotMeta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.slotEmpty {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.slotRemove {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.slotRemove:hover,
+.slotRemove:focus-visible {
+  border-color: var(--ink);
+}
+
+/* ---------- Suggestions ---------- */
+
+.suggest {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.suggestLabel {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.suggestList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.suggestChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 600;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.suggestChip:hover,
+.suggestChip:focus-visible {
+  border-color: var(--cyan);
+  transform: translateY(-1px);
+}
+
+/* ---------- Results / empty state ---------- */
+
+.results {
+  margin-top: 56px;
+}
+
+.resultsHeading {
+  margin: 0 0 22px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(26px, 3vw, 36px);
+  letter-spacing: -0.01em;
+}
+
+.emptyState {
+  margin-top: 40px;
+  padding: 56px 28px;
+  border: 1px dashed var(--line);
+  border-radius: 22px;
+  text-align: center;
+}
+
+.emptyTitle {
+  margin: 0 0 10px;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(22px, 2.4vw, 30px);
+}
+
+.emptyText {
+  max-width: 520px;
+  margin: 0 auto 22px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.emptyLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.emptyLink:hover,
+.emptyLink:focus-visible {
+  background: var(--blue);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1000px) {
+  .slots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .page {
+    width: calc(100% - 36px);
+    padding: 120px 0 80px;
+  }
+
+  .panel {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .slots {
+    grid-template-columns: 1fr;
+  }
+
+  .results {
+    margin-top: 40px;
+  }
+
+  .emptyState {
+    padding: 40px 18px;
+  }
+
+  .suggest {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .suggestChip,
+  .input {
+    transition: none;
+  }
+
+  .suggestChip:hover,
+  .suggestChip:focus-visible {
+    transform: none;
+  }
+}
