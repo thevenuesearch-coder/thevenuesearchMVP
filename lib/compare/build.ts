@@ -117,16 +117,31 @@ function eventSpaces(venue: Venue): string[] | null {
   return capList(unique(items));
 }
 
-export function buildComparison(
-  current: Venue,
-  similar: Venue[],
+export type BuildOptions = {
+  /* Hide prices unless the site-wide flag allows them. */
+  showPrice?: boolean;
+  /* Mark the first venue as "this venue" (venue-page widget). */
+  highlightFirst?: boolean;
+  /* A row is shown when at least this many venues have a value. */
+  minFilledPerRow?: number;
+};
+
+/*
+ * Compare any set of venues (the standalone /compare page).
+ */
+export function buildComparisonFor(
+  ordered: Venue[],
   /* Published room rows keyed by Venue.dbId. */
   roomsByVenue: Record<string, CompareRoom[]>,
-  { showPrice = false }: { showPrice?: boolean } = {}
+  {
+    showPrice = false,
+    highlightFirst = false,
+    minFilledPerRow = 2,
+  }: BuildOptions = {}
 ): CompareModel {
-  const ordered = [current, ...similar];
-
-  const venues = ordered.map((v, i) => toCompareVenue(v, i === 0, showPrice));
+  const venues = ordered.map((v, i) =>
+    toCompareVenue(v, highlightFirst && i === 0, showPrice)
+  );
 
   const defs: Array<{
     key: string;
@@ -163,7 +178,7 @@ export function buildComparison(
   const rows: CompareRow[] = [];
   for (const def of defs) {
     const cells = ordered.map((v) => def.get(v));
-    if (cells.filter((c) => c !== null).length >= 2) {
+    if (cells.filter((c) => c !== null).length >= minFilledPerRow) {
       rows.push({
         key: def.key,
         label: def.label,
@@ -174,4 +189,19 @@ export function buildComparison(
   }
 
   return { venues, rows };
+}
+
+/*
+ * Venue-page widget: this venue + its similar venues.
+ */
+export function buildComparison(
+  current: Venue,
+  similar: Venue[],
+  roomsByVenue: Record<string, CompareRoom[]>,
+  { showPrice = false }: { showPrice?: boolean } = {}
+): CompareModel {
+  return buildComparisonFor([current, ...similar], roomsByVenue, {
+    showPrice,
+    highlightFirst: true,
+  });
 }

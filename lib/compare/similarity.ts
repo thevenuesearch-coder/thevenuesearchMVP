@@ -16,6 +16,12 @@ import type { Venue } from '../data';
  * remaining weights are renormalised, so missing data is never
  * treated as a match or a mismatch. Accommodation can only add to a
  * score: "no published rooms" means unknown, not "no accommodation".
+ *
+ * Skipping alone isn't enough: a venue with almost no data would
+ * score a perfect 1.0 on location alone. So a pair needs enough
+ * comparable evidence (MIN_EVIDENCE of the total weight, e.g. location
+ * + venue type, or location + capacity + price) to be called similar
+ * at all; otherwise the score is 0.
  */
 
 const WEIGHTS = {
@@ -25,6 +31,9 @@ const WEIGHTS = {
   price: 0.15,
   accommodation: 0.1,
 };
+
+/* Share of the total weight that must be comparable before a score counts. */
+const MIN_EVIDENCE = 0.55;
 
 const STAY_NOUNS = ['palace', 'resort', 'hotel', 'fort', 'haveli', 'villa', 'lodge'];
 const OTHER_NOUNS = ['farmhouse', 'farm', 'banquet', 'lawn', 'garden', 'beach'];
@@ -91,9 +100,9 @@ export function similarityScore(
   const known = dims.filter((d): d is [number, number] => d[1] !== null);
   const totalWeight = known.reduce((sum, [w]) => sum + w, 0);
 
-  return totalWeight === 0
-    ? 0
-    : known.reduce((sum, [w, v]) => sum + w * v, 0) / totalWeight;
+  if (totalWeight < MIN_EVIDENCE - 1e-9) return 0;
+
+  return known.reduce((sum, [w, v]) => sum + w * v, 0) / totalWeight;
 }
 
 /* Never the current venue; no duplicates by slug or database id. */

@@ -31,6 +31,11 @@ const staticRoutes: {
     changeFrequency: 'weekly',
   },
   {
+    path: '/compare',
+    priority: 0.6,
+    changeFrequency: 'monthly',
+  },
+  {
     path: '/collections',
     priority: 0.8,
     changeFrequency: 'weekly',
