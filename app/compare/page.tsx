@@ -7,6 +7,7 @@ import {
   type PickerOption,
 } from '../../components/compare/VenuePicker';
 import styles from '../../components/compare/compare-page.module.css';
+import { MAX_COMPARE_VENUES } from '../../lib/compare/constants';
 import { getSelectionComparison } from '../../lib/compare/get-comparison';
 import {
   shortlistSimilar,
@@ -26,7 +27,7 @@ import { fetchVenuesServer } from '../../lib/venues';
  */
 export const dynamic = 'force-dynamic';
 
-const MAX_VENUES = 4;
+const MAX_VENUES = MAX_COMPARE_VENUES;
 
 type ComparePageProps = {
   searchParams: Promise<{ v?: string | string[] }>;

@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabase-browser';
 import { imgProps } from '../lib/image';
 import { formatCapacityRange, CAPACITY_UNKNOWN_LABEL } from '../lib/capacity';
+import compareStyles from './compare/compare-select.module.css';
 
 type VenueCardData = {
   id: string;
@@ -25,11 +26,24 @@ type VenueCardData = {
   tags: string[];
 };
 
+/*
+ * Optional "Compare" checkbox. Only the Explore page passes this, so
+ * cards elsewhere (home page) are unchanged.
+ */
+export type VenueCardCompare = {
+  selected: boolean;
+  /* True when four other venues are already selected. */
+  disabled: boolean;
+  onToggle: () => void;
+};
+
 export function VenueCard({
   v,
   headingLevel = 3,
+  compare,
 }: {
   v: VenueCardData;
+  compare?: VenueCardCompare;
   /*
    * Heading level for the venue name. 3 suits cards under a section
    * heading (home page); pass 2 where the cards sit directly under
@@ -393,6 +407,27 @@ export function VenueCard({
               ? '♥'
               : '♡'}
         </button>
+
+        {compare && (
+          <label
+            className={compareStyles.toggle}
+            title={
+              compare.disabled && !compare.selected
+                ? 'You can compare up to 4 venues. Remove one to add another.'
+                : undefined
+            }
+          >
+            <input
+              type="checkbox"
+              className={compareStyles.box}
+              checked={compare.selected}
+              disabled={compare.disabled && !compare.selected}
+              onChange={compare.onToggle}
+              aria-label={`Compare ${v.name}`}
+            />
+            Compare
+          </label>
+        )}
 
       </div>
 
