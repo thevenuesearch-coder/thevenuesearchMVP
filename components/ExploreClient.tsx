@@ -2,9 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { MAX_COMPARE_VENUES } from '../lib/compare/constants';
 import type { VenueSummary } from '../lib/data';
 
+import { CompareTray } from './compare/CompareTray';
+import compareStyles from './compare/compare-select.module.css';
 import { VenueCard } from './VenueCard';
+
+/* Keeps the picks when the visitor opens /compare and comes back. */
+const COMPARE_STORAGE_KEY = 'vs-compare-venues';
 
 type ExploreClientProps = {
   initialVenues: VenueSummary[];
@@ -19,6 +25,9 @@ export function ExploreClient({
   const [venueType, setVenueType] = useState('');
   const [capacity, setCapacity] = useState('');
 
+  /* Venues picked for comparison (public slugs, max 4). */
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+
   /*
    * Venues arrive already loaded from the server -- fetched in
    * app/explore/page.tsx (a Server Component) so the grid is
@@ -29,6 +38,56 @@ export function ExploreClient({
    */
   const venues = initialVenues;
   const venuesError = initialError || '';
+
+  /* =====================================================
+     COMPARE SELECTION
+  ===================================================== */
+
+  useEffect(() => {
+    try {
+      const raw = window.sessionStorage.getItem(COMPARE_STORAGE_KEY);
+      const saved: unknown = raw ? JSON.parse(raw) : [];
+
+      if (Array.isArray(saved)) {
+        /* Only restore venues that still exist in the list. */
+        const valid = saved.filter(
+          (id): id is string =>
+            typeof id === 'string' && venues.some((v) => v.id === id)
+        );
+        if (valid.length > 0) {
+          setCompareIds(valid.slice(0, MAX_COMPARE_VENUES));
+        }
+      }
+    } catch {
+      /* Storage blocked or corrupted: start with an empty selection. */
+    }
+  }, [venues]);
+
+  function updateCompare(next: string[]) {
+    setCompareIds(next);
+
+    try {
+      window.sessionStorage.setItem(
+        COMPARE_STORAGE_KEY,
+        JSON.stringify(next)
+      );
+    } catch {
+      /* Not essential: the selection still works for this visit. */
+    }
+  }
+
+  function toggleCompare(id: string) {
+    if (compareIds.includes(id)) {
+      updateCompare(compareIds.filter((x) => x !== id));
+    } else if (compareIds.length < MAX_COMPARE_VENUES) {
+      updateCompare([...compareIds, id]);
+    }
+  }
+
+  const compareVenues = compareIds.flatMap((id) => {
+    const match = venues.find((v) => v.id === id);
+    return match ? [{ id: match.id, name: match.name }] : [];
+  });
 
   /* =====================================================
      DESTINATIONS (derived from live venue data)
@@ -211,7 +270,15 @@ export function ExploreClient({
   ===================================================== */
 
   return (
-    <main id="main-content" className="page">
+    <main
+      id="main-content"
+      className="page"
+      style={
+        compareVenues.length > 0
+          ? { paddingBottom: 'calc(100px + 5.5rem)' }
+          : undefined
+      }
+    >
 
       {/* =================================================
           HERO
@@ -374,6 +441,13 @@ export function ExploreClient({
 
       </div>
 
+      {!venuesError && filteredVenues.length > 1 && (
+        <p className={compareStyles.hint}>
+          Tick <b>Compare</b> on up to {MAX_COMPARE_VENUES} venues to see
+          their capacity, rooms and event spaces side by side.
+        </p>
+      )}
+
       {/* =================================================
           VENUE GRID
       ================================================= */}
@@ -411,6 +485,12 @@ export function ExploreClient({
                   description:
                     venue.desc,
                 }}
+                compare={{
+                  selected: compareIds.includes(venue.id),
+                  disabled:
+                    compareIds.length >= MAX_COMPARE_VENUES,
+                  onToggle: () => toggleCompare(venue.id),
+                }}
               />
             )
           )}
@@ -445,6 +525,12 @@ export function ExploreClient({
         </div>
 
       )}
+
+      <CompareTray
+        venues={compareVenues}
+        onRemove={toggleCompare}
+        onClear={() => updateCompare([])}
+      />
 
     </main>
   );
