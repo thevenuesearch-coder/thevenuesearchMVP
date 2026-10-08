@@ -71,7 +71,7 @@ function isHttpUrl(value: unknown): boolean {
   }
 }
 
-async function fetchPublishedFeatures(
+export async function fetchPublishedFeatures(
   venueIds: string[]
 ): Promise<Record<string, CompareFeature[]>> {
   const features: Record<string, CompareFeature[]> = {};
@@ -115,7 +115,7 @@ async function fetchPublishedFeatures(
  * Database rows win. A venue the database has no rows for yet falls back
  * to the verified data bundled with the app (never to a guess).
  */
-function withBundledFallback(
+export function withBundledFallback(
   venues: Venue[],
   fromDb: Record<string, CompareFeature[]>
 ): Record<string, CompareFeature[]> {
