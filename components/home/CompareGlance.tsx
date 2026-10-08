@@ -24,6 +24,22 @@ import styles from './glance.module.css';
 
 const VENUE_COUNT = 3;
 
+/* How comparing works, in plain words (the live preview below is step 2). */
+const STEPS = [
+  {
+    title: 'Pick venues',
+    body: 'Choose up to four venues to compare side by side.',
+  },
+  {
+    title: 'Switch categories',
+    body: 'Overview, rooms, event spaces, amenities and services, one at a time.',
+  },
+  {
+    title: 'Open the full comparison',
+    body: 'See every verified detail and share the link.',
+  },
+];
+
 /* Which engine groups each tab shows. Dining sits with amenities; wedding &
    event services sit with hotel services. */
 const CATEGORIES: Array<{
@@ -133,7 +149,25 @@ export async function CompareGlance({ venues }: { venues: Venue[] }) {
         </Link>
       </div>
 
-      {model && <GlanceTabs tabs={buildTabs(model)} />}
+      {model && (
+        <>
+          <ol className={styles.steps} aria-label="How comparing works">
+            {STEPS.map((step, i) => (
+              <li key={step.title} className={styles.step}>
+                <span className={styles.stepNum} aria-hidden="true">
+                  {i + 1}
+                </span>
+                <span>
+                  <strong>{step.title}</strong>
+                  <span>{step.body}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+
+          <GlanceTabs tabs={buildTabs(model)} />
+        </>
+      )}
     </section>
   );
 }
