@@ -153,8 +153,6 @@ export const venueFeaturesData = [
         ),
         features: [
           ['laundry', 'Additional amenities: "Laundry service"'],
-          ['bar_lounge', 'Dining: "Bar"'],
-          ['restaurant', 'Dining: "On-site restaurant(s)"'],
           ['fitness_centre', 'Fitness & Wellness: "Fitness center"'],
           ['swimming_pool', 'Fitness & Wellness: "Outdoor pool"'],
           ['spa', 'Fitness & Wellness: "On-site spa and wellness facility"'],
@@ -162,6 +160,31 @@ export const venueFeaturesData = [
           ['concierge', 'Key hotel services: "Concierge service"'],
           ['wifi', 'Key hotel services: "Free Wi-Fi"'],
         ],
+      },
+      {
+        ...src('https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city'),
+        features: [
+          [
+            'restaurant',
+            'Restaurants and bars: Cascade ("one of our three on-site restaurants"), Chama Gaucha',
+            'Cascade, Chama Gaucha',
+          ],
+          [
+            'cuisines',
+            'Cascade: "Indian and international fare"; Chama Gaucha: "authentic Brazilian and Mexican cuisine"',
+            'Indian · International · Brazilian · Mexican',
+          ],
+          [
+            'bar_lounge',
+            'Zyng: "a café by day, a bar after sunset"; "Velocity on 15, our rooftop bar"',
+            'Zyng, Velocity on 15 (rooftop)',
+          ],
+          ['dining_24h', 'Restaurants and bars: "Indian and international fare 24 hours a day at Cascade"'],
+        ],
+      },
+      {
+        ...src('https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city/restaurant-bar'),
+        features: [['room_service', 'Key dining features: "Room service"']],
       },
     ],
   },
@@ -276,6 +299,23 @@ export const venueFeaturesData = [
           ['swimming_pool', 'FAQ: "has a refreshing outdoor swimming pool"'],
           ['spa', 'Facilities: "J Wellness Circle Spa"'],
           ['airport_transfer', 'FAQ: "we offer convenient airport pickup and drop-off services"'],
+        ],
+      },
+      {
+        ...src(
+          'https://www.tajhotels.com/en-in/blog/travel-inspiration/explore-hyderabad-with-taj-hotels'
+        ),
+        features: [
+          [
+            'restaurant',
+            'Taj blog: "Golden Dragon\'s Chinese delicacies, Firdaus\' rich Indian flavours, and Encounters\' global fare"',
+            'Golden Dragon, Firdaus, Encounters',
+          ],
+          [
+            'cuisines',
+            'Taj blog: Golden Dragon (Chinese), Firdaus (Indian), Encounters (global fare)',
+            'Chinese · Indian · Global',
+          ],
         ],
       },
     ],
