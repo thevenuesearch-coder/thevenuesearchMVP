@@ -11,6 +11,9 @@
  *   npm run seed:features            upsert into Supabase
  *   npm run seed:features -- --sql   write supabase/seed_venue_features.sql
  *                                    (paste into the Supabase SQL editor)
+ *   npm run seed:features -- --json  write lib/compare/verified-features.json
+ *                                    (bundled fallback the app uses until the
+ *                                    database has rows for a venue)
  *   npm run seed:features -- --check validate the data file only
  *
  * Validation (always runs): known feature_key, https source_url,
@@ -85,6 +88,26 @@ console.log(
 );
 
 if (args.has('--check')) process.exit(0);
+
+/* ---------- --json: bundled fallback used by the app ---------- */
+if (args.has('--json')) {
+  const bySlug = {};
+  for (const r of rows) {
+    (bySlug[r.slug] ??= []).push({
+      key: r.feature_key,
+      detail: r.detail,
+      sourceUrl: r.source_url,
+      sourceType: r.source_type,
+      verifiedAt: r.verified_at,
+    });
+  }
+  writeFileSync(
+    new URL('../lib/compare/verified-features.json', import.meta.url),
+    JSON.stringify(bySlug, null, 2) + '\n'
+  );
+  console.log('Wrote lib/compare/verified-features.json');
+  process.exit(0);
+}
 
 /* ---------- --sql: generate an editor-ready file ---------- */
 if (args.has('--sql')) {

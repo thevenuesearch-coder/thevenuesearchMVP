@@ -40,7 +40,7 @@ export const COMPARE_GROUP_LABELS: Record<CompareGroup, string> = {
   amenities: 'Amenities',
   dining: 'Dining',
   wedding: 'Wedding & Event Services',
-  services: 'Hotel Services',
+  services: 'Services',
 };
 
 export type CompareRow = {

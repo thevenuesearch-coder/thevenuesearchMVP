@@ -1,0 +1,692 @@
+{
+  "taj-falaknuma-palace-hyderabad": [
+    {
+      "key": "swimming_pool",
+      "detail": null,
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "spa",
+      "detail": null,
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "fitness_centre",
+      "detail": "24-hour",
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "wifi",
+      "detail": null,
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "parking",
+      "detail": "Up to 350 cars",
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "restaurant",
+      "detail": "Adaa, Celeste, Gol Bungalow",
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "cuisines",
+      "detail": "Indian (Hyderabadi) · Italian · International · Multi-cuisine",
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "bar_lounge",
+      "detail": "Hookah Bar",
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "accessibility",
+      "detail": null,
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "business_centre",
+      "detail": "24-hour",
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "concierge",
+      "detail": null,
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "room_service",
+      "detail": "24-hour",
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "laundry",
+      "detail": "24-hour",
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "airport_transfer",
+      "detail": null,
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "travel_desk",
+      "detail": null,
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "doctor_on_call",
+      "detail": "24-hour",
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "safe_deposit_lockers",
+      "detail": null,
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    }
+  ],
+  "hilton-hyderabad-genome-valley-resort-spa": [
+    {
+      "key": "restaurant",
+      "detail": null,
+      "sourceUrl": "https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa/hotel-info/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "room_service",
+      "detail": null,
+      "sourceUrl": "https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa/hotel-info/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "swimming_pool",
+      "detail": null,
+      "sourceUrl": "https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa/hotel-info/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "fitness_centre",
+      "detail": null,
+      "sourceUrl": "https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa/hotel-info/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "spa",
+      "detail": null,
+      "sourceUrl": "https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa/hotel-info/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "concierge",
+      "detail": null,
+      "sourceUrl": "https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa/hotel-info/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "ev_charging",
+      "detail": null,
+      "sourceUrl": "https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa/hotel-info/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "wifi",
+      "detail": null,
+      "sourceUrl": "https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa/hotel-info/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "parking",
+      "detail": null,
+      "sourceUrl": "https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa/hotel-info/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "valet_parking",
+      "detail": null,
+      "sourceUrl": "https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa/hotel-info/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "bar_lounge",
+      "detail": "Pool bar",
+      "sourceUrl": "https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "cuisines",
+      "detail": "Asian (regional)",
+      "sourceUrl": "https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    }
+  ],
+  "novotel-hyderabad-convention-centre": [
+    {
+      "key": "swimming_pool",
+      "detail": null,
+      "sourceUrl": "https://all.accor.com/hotel/6182/index.en.shtml",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "parking",
+      "detail": null,
+      "sourceUrl": "https://all.accor.com/hotel/6182/index.en.shtml",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "restaurant",
+      "detail": "Food Exchange, Permit To Grill, Le Cafe",
+      "sourceUrl": "https://all.accor.com/hotel/6182/index.en.shtml",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "cuisines",
+      "detail": "Multi-cuisine · Grills & wood-fired pizza",
+      "sourceUrl": "https://all.accor.com/hotel/6182/index.en.shtml",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "accessibility",
+      "detail": null,
+      "sourceUrl": "https://all.accor.com/hotel/6182/index.en.shtml",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "fitness_centre",
+      "detail": null,
+      "sourceUrl": "https://all.accor.com/hotel/6182/index.en.shtml",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "wifi",
+      "detail": null,
+      "sourceUrl": "https://all.accor.com/hotel/6182/index.en.shtml",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "bar_lounge",
+      "detail": "The Bar",
+      "sourceUrl": "https://all.accor.com/hotel/6182/index.en.shtml",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "room_service",
+      "detail": null,
+      "sourceUrl": "https://all.accor.com/hotel/6182/index.en.shtml",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "spa",
+      "detail": null,
+      "sourceUrl": "https://all.accor.com/hotel/6182/index.en.shtml",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    }
+  ],
+  "radisson-hotel-hyderabad-hitec-city": [
+    {
+      "key": "laundry",
+      "detail": null,
+      "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city/services",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "fitness_centre",
+      "detail": null,
+      "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city/services",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "swimming_pool",
+      "detail": null,
+      "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city/services",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "spa",
+      "detail": null,
+      "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city/services",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "accessibility",
+      "detail": null,
+      "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city/services",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "concierge",
+      "detail": null,
+      "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city/services",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "wifi",
+      "detail": null,
+      "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city/services",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "restaurant",
+      "detail": "Cascade, Chama Gaucha",
+      "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "cuisines",
+      "detail": "Indian · International · Brazilian · Mexican",
+      "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "bar_lounge",
+      "detail": "Zyng, Velocity on 15 (rooftop)",
+      "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "dining_24h",
+      "detail": null,
+      "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "room_service",
+      "detail": null,
+      "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city/restaurant-bar",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    }
+  ],
+  "itc-kohenur-hyderabad": [
+    {
+      "key": "spa",
+      "detail": null,
+      "sourceUrl": "https://www.itchotels.com/in/en/itckohenur-hyderabad/wellbeing",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "fitness_centre",
+      "detail": null,
+      "sourceUrl": "https://www.itchotels.com/in/en/itckohenur-hyderabad/wellbeing",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "swimming_pool",
+      "detail": null,
+      "sourceUrl": "https://www.itchotels.com/in/en/itckohenur-hyderabad/wellbeing",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "parking",
+      "detail": null,
+      "sourceUrl": "https://www.marriott.com/en-us/hotels/hydlk-itc-kohenur-a-luxury-collection-hotel-hyderabad/overview/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "wifi",
+      "detail": null,
+      "sourceUrl": "https://www.marriott.com/en-us/hotels/hydlk-itc-kohenur-a-luxury-collection-hotel-hyderabad/overview/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "accessibility",
+      "detail": null,
+      "sourceUrl": "https://www.marriott.com/en-us/hotels/hydlk-itc-kohenur-a-luxury-collection-hotel-hyderabad/overview/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "restaurant",
+      "detail": "Golconda Pavilion, Yi Jing, Ottimo, Dum Pukht Begum's, Peshawri",
+      "sourceUrl": "https://www.marriott.com/en-us/hotels/hydlk-itc-kohenur-a-luxury-collection-hotel-hyderabad/dining/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "cuisines",
+      "detail": "Multi-cuisine · Chinese · Italian · Indian",
+      "sourceUrl": "https://www.marriott.com/en-us/hotels/hydlk-itc-kohenur-a-luxury-collection-hotel-hyderabad/dining/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "bar_lounge",
+      "detail": "Peacock Bar, SkyPoint",
+      "sourceUrl": "https://www.marriott.com/en-us/hotels/hydlk-itc-kohenur-a-luxury-collection-hotel-hyderabad/dining/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "dining_24h",
+      "detail": null,
+      "sourceUrl": "https://www.marriott.com/en-us/hotels/hydlk-itc-kohenur-a-luxury-collection-hotel-hyderabad/dining/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "valet_parking",
+      "detail": null,
+      "sourceUrl": "https://www.hotelassociationofindia.com/pdf/Hyderabad/ITC%20Kohenur.pdf",
+      "sourceType": "authoritative",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "room_service",
+      "detail": "24-hour",
+      "sourceUrl": "https://www.hotelassociationofindia.com/pdf/Hyderabad/ITC%20Kohenur.pdf",
+      "sourceType": "authoritative",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "laundry",
+      "detail": null,
+      "sourceUrl": "https://www.hotelassociationofindia.com/pdf/Hyderabad/ITC%20Kohenur.pdf",
+      "sourceType": "authoritative",
+      "verifiedAt": "2026-10-08"
+    }
+  ],
+  "westin-hyderabad-mindspace": [
+    {
+      "key": "swimming_pool",
+      "detail": null,
+      "sourceUrl": "https://www.marriott.com/en-us/hotels/hydwi-the-westin-hyderabad-mindspace/overview/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "spa",
+      "detail": null,
+      "sourceUrl": "https://www.marriott.com/en-us/hotels/hydwi-the-westin-hyderabad-mindspace/overview/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "parking",
+      "detail": null,
+      "sourceUrl": "https://www.marriott.com/en-us/hotels/hydwi-the-westin-hyderabad-mindspace/overview/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "valet_parking",
+      "detail": null,
+      "sourceUrl": "https://www.marriott.com/en-us/hotels/hydwi-the-westin-hyderabad-mindspace/overview/",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "restaurant",
+      "detail": "Seasonal Tastes, Prego, Kangan, Casbah, Splash",
+      "sourceUrl": "https://marriott.com/en-us/hotels/hydwi-the-westin-hyderabad-mindspace/dining",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "cuisines",
+      "detail": "Multi-cuisine · Italian · Mediterranean · Peshawari & Hyderabadi",
+      "sourceUrl": "https://marriott.com/en-us/hotels/hydwi-the-westin-hyderabad-mindspace/dining",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "bar_lounge",
+      "detail": "Mix, Casbah, Splash (poolside)",
+      "sourceUrl": "https://marriott.com/en-us/hotels/hydwi-the-westin-hyderabad-mindspace/dining",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "room_service",
+      "detail": null,
+      "sourceUrl": "https://marriott.com/en-us/hotels/hydwi-the-westin-hyderabad-mindspace/dining",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "fitness_centre",
+      "detail": null,
+      "sourceUrl": "https://www.marriott.com/en-us/hotels/hydwi-the-westin-hyderabad-mindspace/photos",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    }
+  ],
+  "taj-krishna-hyderabad": [
+    {
+      "key": "swimming_pool",
+      "detail": null,
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-krishna-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "spa",
+      "detail": null,
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-krishna-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "airport_transfer",
+      "detail": null,
+      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-krishna-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "restaurant",
+      "detail": "Golden Dragon, Firdaus, Encounters",
+      "sourceUrl": "https://www.tajhotels.com/en-in/blog/travel-inspiration/explore-hyderabad-with-taj-hotels",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "cuisines",
+      "detail": "Chinese · Indian · Global",
+      "sourceUrl": "https://www.tajhotels.com/en-in/blog/travel-inspiration/explore-hyderabad-with-taj-hotels",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    }
+  ],
+  "hyderabad-marriott-hotel-convention-centre": [
+    {
+      "key": "spa",
+      "detail": null,
+      "sourceUrl": "https://www.marriott.com/hi/hotels/travel/hydmc",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "fitness_centre",
+      "detail": "24-hour",
+      "sourceUrl": "https://www.marriott.com/hi/hotels/travel/hydmc",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "swimming_pool",
+      "detail": null,
+      "sourceUrl": "https://www.marriott.com/hi/hotels/travel/hydmc",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "wifi",
+      "detail": null,
+      "sourceUrl": "https://www.marriott.com/hi/hotels/travel/hydmc",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "restaurant",
+      "detail": "Okra, Hyderabad Baking Company",
+      "sourceUrl": "https://marriott.com/en-us/hotels/hydmc-hyderabad-marriott-hotel-and-convention-centre/dining",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "cuisines",
+      "detail": "Indian · International",
+      "sourceUrl": "https://marriott.com/en-us/hotels/hydmc-hyderabad-marriott-hotel-and-convention-centre/dining",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "bar_lounge",
+      "detail": "Lounge bar",
+      "sourceUrl": "https://marriott.com/en-us/hotels/hydmc-hyderabad-marriott-hotel-and-convention-centre/dining",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "room_service",
+      "detail": null,
+      "sourceUrl": "https://marriott.com/en-us/hotels/hydmc-hyderabad-marriott-hotel-and-convention-centre/dining",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    }
+  ],
+  "park-hyatt-hyderabad": [
+    {
+      "key": "fitness_centre",
+      "detail": null,
+      "sourceUrl": "https://www.hyatt.com/park-hyatt/en-US/hydph-park-hyatt-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "parking",
+      "detail": null,
+      "sourceUrl": "https://www.hyatt.com/park-hyatt/en-US/hydph-park-hyatt-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "valet_parking",
+      "detail": null,
+      "sourceUrl": "https://www.hyatt.com/park-hyatt/en-US/hydph-park-hyatt-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "swimming_pool",
+      "detail": null,
+      "sourceUrl": "https://www.hyatt.com/park-hyatt/en-US/hydph-park-hyatt-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "spa",
+      "detail": null,
+      "sourceUrl": "https://www.hyatt.com/park-hyatt/en-US/hydph-park-hyatt-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "catering",
+      "detail": null,
+      "sourceUrl": "https://www.hyatt.com/park-hyatt/en-US/hydph-park-hyatt-hyderabad",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "restaurant",
+      "detail": "Rika, Tre-Forni, The Dining Room, The Living Room",
+      "sourceUrl": "https://www.hyatt.com/park-hyatt/en-US/hydph-park-hyatt-hyderabad/dining",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "cuisines",
+      "detail": "Indian · Italian · Modern Asian",
+      "sourceUrl": "https://www.hyatt.com/park-hyatt/en-US/hydph-park-hyatt-hyderabad/dining",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "room_service",
+      "detail": "24-hour",
+      "sourceUrl": "https://www.hyatt.com/park-hyatt/en-US/hydph-park-hyatt-hyderabad/dining",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    },
+    {
+      "key": "dining_24h",
+      "detail": null,
+      "sourceUrl": "https://www.hyattrestaurants.com/en/hyderabad/restaurant/the-dining-room-2",
+      "sourceType": "official",
+      "verifiedAt": "2026-10-08"
+    }
+  ]
+}

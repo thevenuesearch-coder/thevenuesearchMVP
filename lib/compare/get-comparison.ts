@@ -2,6 +2,7 @@ import type { Venue } from '../data';
 import { supabase } from '../supabase';
 import { SHOW_PUBLIC_STARTING_PRICE } from '../../components/PublicVenueDetails';
 import { buildComparison, buildComparisonFor } from './build';
+import { bundledFeatures } from './bundled-features';
 import { isFeatureKey, type CompareFeature } from './features';
 import { pickSimilar, shortlistSimilar } from './similarity';
 import type { CompareModel, CompareRoom } from './types';
@@ -111,6 +112,26 @@ async function fetchPublishedFeatures(
 }
 
 /*
+ * Database rows win. A venue the database has no rows for yet falls back
+ * to the verified data bundled with the app (never to a guess).
+ */
+function withBundledFallback(
+  venues: Venue[],
+  fromDb: Record<string, CompareFeature[]>
+): Record<string, CompareFeature[]> {
+  const merged = { ...fromDb };
+
+  for (const venue of venues) {
+    if (merged[venue.dbId]?.length) continue;
+
+    const bundled = bundledFeatures(venue.id);
+    if (bundled.length) merged[venue.dbId] = bundled;
+  }
+
+  return merged;
+}
+
+/*
  * Venue page: this venue + up to 3 comparable ones, chosen from the
  * venue list the page already loaded (no extra candidate query).
  */
@@ -130,10 +151,13 @@ export async function getComparison(
       sourceUrl: room.sourceUrl,
     }));
 
-    const featuresByVenue = await fetchPublishedFeatures([
-      current.dbId,
-      ...shortlist.map((v) => v.dbId),
-    ]);
+    const featuresByVenue = withBundledFallback(
+      [current, ...shortlist],
+      await fetchPublishedFeatures([
+        current.dbId,
+        ...shortlist.map((v) => v.dbId),
+      ])
+    );
 
     const similar = pickSimilar(
       current,
@@ -167,8 +191,9 @@ export async function getSelectionComparison(
       selected.map((v) => v.dbId)
     );
 
-    const featuresByVenue = await fetchPublishedFeatures(
-      selected.map((v) => v.dbId)
+    const featuresByVenue = withBundledFallback(
+      selected,
+      await fetchPublishedFeatures(selected.map((v) => v.dbId))
     );
 
     return buildComparisonFor(selected, roomsByVenue, featuresByVenue, {

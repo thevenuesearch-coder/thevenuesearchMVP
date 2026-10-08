@@ -197,6 +197,34 @@ export function buildComparisonFor(
     toCompareVenue(v, highlightFirst && i === 0, showPrice)
   );
 
+  /*
+   * One row per group listing every VERIFIED item for each venue, with its
+   * short factual detail where the source gave one ("Parking (Up to 350
+   * cars)"). A venue with nothing verified in the group is left blank.
+   */
+  const summaryRow = (group: CompareGroup, label: string) => ({
+    key: `group:${group}`,
+    group,
+    label,
+    variant: 'chips' as CompareVariant,
+    min: 1,
+    get: (v: Venue): CompareCell => {
+      const verified = featuresByVenue[v.dbId];
+      if (!verified?.length) return null;
+
+      const items = FEATURE_DEFS.filter((def) => def.group === group)
+        .map((def) => {
+          const found = verified.find((f) => f.key === def.key);
+          if (!found) return null;
+          const detail = cleanString(found.detail ?? '');
+          return detail ? `${def.label} (${detail})` : def.label;
+        })
+        .filter((item): item is string => item !== null);
+
+      return items.length ? items : null;
+    },
+  });
+
   const defs: Array<{
     key: string;
     group: CompareGroup;
@@ -261,8 +289,11 @@ export function buildComparisonFor(
       get: (v) => spacesByKind(v, 'outdoor'),
     },
 
-    /* ---- Amenities / wedding & event services / hotel services ---- */
-    ...FEATURE_DEFS.map((def) => ({
+    /* ---- Amenities: ONE row listing everything verified for each venue ---- */
+    summaryRow('amenities', 'Amenities Available'),
+
+    /* ---- Dining: restaurants, cuisines, bars, 24-hour dining ---- */
+    ...FEATURE_DEFS.filter((def) => def.group === 'dining').map((def) => ({
       key: `feature:${def.key}`,
       group: def.group as CompareGroup,
       label: def.label,
@@ -271,6 +302,10 @@ export function buildComparisonFor(
       get: (v: Venue): CompareCell =>
         featureCell(featuresByVenue[v.dbId], def.key, def.display),
     })),
+
+    /* ---- Wedding & event services, then general services: one row each ---- */
+    summaryRow('wedding', 'Wedding & Event Services'),
+    summaryRow('services', 'Services Available'),
   ];
 
   const rows: CompareRow[] = [];
