@@ -36,9 +36,7 @@
   box-shadow: 0 18px 40px #164a9b55;
 }
 
-.head :global(.primaryBtn):focus-visible,
-.tab:focus-visible,
-.tabActive:focus-visible {
+.head :global(.primaryBtn):focus-visible {
   outline: 2px solid #28b9d3;
   outline-offset: 3px;
 }
@@ -96,117 +94,10 @@
   }
 }
 
-/* ---- Category tabs + the real comparison table ------------------------ */
+/* ---- The real comparison table (Overview) ------------------------------ */
 .shell {
   max-width: 1240px;
   margin: 0 auto;
-}
-
-.tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 18px;
-  padding: 2px 2px 8px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.tab,
-.tabActive {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  gap: 3px;
-  min-height: 46px;
-  padding: 11px 20px;
-  border: 1px solid #0f101824;
-  border-radius: 99px;
-  background: #fff;
-  color: #3a3640;
-  text-align: left;
-  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease,
-    transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.tab:hover {
-  border-color: #09090d;
-  transform: translateY(-2px);
-}
-
-.tabActive {
-  border-color: #0b0b10;
-  background: #0b0b10;
-  color: #fff;
-  box-shadow: 0 12px 28px #0b0b1030;
-}
-
-.tabLabel {
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-/* Hints only where there is room for them. */
-.tabHint {
-  display: none;
-  font-size: 11.5px;
-  line-height: 1.35;
-  opacity: 0.65;
-}
-
-.panels {
-  min-width: 0;
-}
-
-.panel {
-  min-width: 0;
-  animation: fade 0.45s ease both;
-}
-
-.panel[hidden] {
-  display: none;
-}
-
-@keyframes fade {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-}
-
-.empty {
-  margin: 0;
-  padding: 56px 24px;
-  border-radius: 22px;
-  background: #fff;
-  color: #77727a;
-  font-size: 14px;
-  text-align: center;
-}
-
-@media (min-width: 62rem) {
-  .tabs {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 12px;
-    overflow: visible;
-  }
-
-  .tab,
-  .tabActive {
-    flex-direction: column;
-    width: 100%;
-    padding: 14px 20px;
-    border-radius: 20px;
-  }
-
-  .tabHint {
-    display: block;
-  }
 }
 
 @media (max-width: 37.5rem) {
@@ -217,12 +108,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel {
-    animation: none;
-  }
-
-  .tab,
-  .tabActive,
   .head :global(.primaryBtn) {
     transition: none;
   }

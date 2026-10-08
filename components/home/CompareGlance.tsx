@@ -5,7 +5,6 @@ import { bundledFeatures } from '../../lib/compare/bundled-features';
 import { getSelectionComparison } from '../../lib/compare/get-comparison';
 import type { CompareGroup, CompareModel } from '../../lib/compare/types';
 import { CompareTable } from '../compare/CompareTable';
-import { GlanceTabs, type GlanceTab } from './GlanceTabs';
 import styles from './glance.module.css';
 
 /*
@@ -14,25 +13,25 @@ import styles from './glance.module.css';
  * This is a preview of the real comparison engine, not a second one:
  *   - the model comes from getSelectionComparison (same loader, same
  *     verified data, same blank-cell rules as /compare);
- *   - each category is the existing <CompareTable> rendered with that
- *     category's rows;
+ *   - the table is the existing <CompareTable>, rendered with the
+ *     Overview rows (venue type, location, guest capacity);
  *   - nothing is hardcoded. The three venues are chosen from the
  *     published venues by how much real data they have.
  *
- * Server Component. The only client code is the tab switcher.
+ * Server Component with no client code of its own.
  */
 
 const VENUE_COUNT = 3;
 
-/* How comparing works, in plain words (the live preview below is step 2). */
+/* How comparing works, in plain words (the live preview below shows step 2). */
 const STEPS = [
   {
     title: 'Pick venues',
     body: 'Choose up to four venues to compare side by side.',
   },
   {
-    title: 'Switch categories',
-    body: 'Overview, rooms, event spaces, amenities and services, one at a time.',
+    title: 'See the basics',
+    body: 'Venue type, location and guest capacity, side by side.',
   },
   {
     title: 'Open the full comparison',
@@ -40,45 +39,8 @@ const STEPS = [
   },
 ];
 
-/* Which engine groups each tab shows. Dining sits with amenities; wedding &
-   event services sit with hotel services. */
-const CATEGORIES: Array<{
-  id: string;
-  label: string;
-  hint: string;
-  groups: CompareGroup[];
-}> = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    hint: 'Type, location, capacity',
-    groups: ['overview'],
-  },
-  {
-    id: 'accommodation',
-    label: 'Accommodation',
-    hint: 'Room categories',
-    groups: ['accommodation'],
-  },
-  {
-    id: 'spaces',
-    label: 'Event Spaces',
-    hint: 'Function, indoor, outdoor',
-    groups: ['spaces'],
-  },
-  {
-    id: 'amenities',
-    label: 'Amenities',
-    hint: 'Pool, spa, parking, dining',
-    groups: ['amenities', 'dining'],
-  },
-  {
-    id: 'services',
-    label: 'Services',
-    hint: 'Wedding and hotel services',
-    groups: ['wedding', 'services'],
-  },
-];
+/* The preview shows the Overview group of the real comparison. */
+const OVERVIEW: CompareGroup[] = ['overview'];
 
 /*
  * Show venues that have the most to compare: a photo, a capacity, event
@@ -100,34 +62,15 @@ function pickVenues(venues: Venue[]): Venue[] {
     .map((entry) => entry.venue);
 }
 
-function buildTabs(model: CompareModel): GlanceTab[] {
-  return CATEGORIES.map((category) => {
-    const rows = model.rows.filter((row) =>
-      category.groups.includes(row.group),
-    );
-
-    return {
-      id: category.id,
-      label: category.label,
-      hint: category.hint,
-      content:
-        rows.length > 0 ? (
-          <CompareTable model={{ venues: model.venues, rows }} />
-        ) : (
-          <p className={styles.empty}>
-            Verified details for this category will appear here as they become
-            available.
-          </p>
-        ),
-    };
-  });
-}
-
 export async function CompareGlance({ venues }: { venues: Venue[] }) {
   const model =
     venues.length >= 2
       ? await getSelectionComparison(pickVenues(venues))
       : null;
+
+  const overview = model
+    ? model.rows.filter((row) => OVERVIEW.includes(row.group))
+    : [];
 
   return (
     <section className={styles.section} aria-labelledby="glance-title">
@@ -165,7 +108,11 @@ export async function CompareGlance({ venues }: { venues: Venue[] }) {
             ))}
           </ol>
 
-          <GlanceTabs tabs={buildTabs(model)} />
+          {overview.length > 0 && (
+            <div className={styles.shell}>
+              <CompareTable model={{ venues: model.venues, rows: overview }} />
+            </div>
+          )}
         </>
       )}
     </section>
