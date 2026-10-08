@@ -224,8 +224,8 @@ export function Header() {
           Collections
         </Link>
 
-        <Link href="/collections">
-          Collections
+        <Link href="/compare">
+          Compare Venues
         </Link>
 
         <Link href="/how-it-works">
