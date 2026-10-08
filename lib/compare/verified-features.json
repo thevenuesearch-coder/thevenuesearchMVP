@@ -36,13 +36,6 @@
       "verifiedAt": "2026-10-08"
     },
     {
-      "key": "restaurant",
-      "detail": "Adaa, Celeste, Gol Bungalow",
-      "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
-      "sourceType": "official",
-      "verifiedAt": "2026-10-08"
-    },
-    {
       "key": "cuisines",
       "detail": "Indian (Hyderabadi) · Italian · International · Multi-cuisine",
       "sourceUrl": "https://www.tajhotels.com/en-in/hotels/taj-falaknuma-palace-hyderabad",
@@ -121,13 +114,6 @@
     }
   ],
   "hilton-hyderabad-genome-valley-resort-spa": [
-    {
-      "key": "restaurant",
-      "detail": null,
-      "sourceUrl": "https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa/hotel-info/",
-      "sourceType": "official",
-      "verifiedAt": "2026-10-08"
-    },
     {
       "key": "room_service",
       "detail": null,
@@ -217,13 +203,6 @@
     {
       "key": "parking",
       "detail": null,
-      "sourceUrl": "https://all.accor.com/hotel/6182/index.en.shtml",
-      "sourceType": "official",
-      "verifiedAt": "2026-10-08"
-    },
-    {
-      "key": "restaurant",
-      "detail": "Food Exchange, Permit To Grill, Le Cafe",
       "sourceUrl": "https://all.accor.com/hotel/6182/index.en.shtml",
       "sourceType": "official",
       "verifiedAt": "2026-10-08"
@@ -329,13 +308,6 @@
       "verifiedAt": "2026-10-08"
     },
     {
-      "key": "restaurant",
-      "detail": "Cascade, Chama Gaucha",
-      "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city",
-      "sourceType": "official",
-      "verifiedAt": "2026-10-08"
-    },
-    {
       "key": "cuisines",
       "detail": "Indian · International · Brazilian · Mexican",
       "sourceUrl": "https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city",
@@ -404,13 +376,6 @@
       "key": "accessibility",
       "detail": null,
       "sourceUrl": "https://www.marriott.com/en-us/hotels/hydlk-itc-kohenur-a-luxury-collection-hotel-hyderabad/overview/",
-      "sourceType": "official",
-      "verifiedAt": "2026-10-08"
-    },
-    {
-      "key": "restaurant",
-      "detail": "Golconda Pavilion, Yi Jing, Ottimo, Dum Pukht Begum's, Peshawri",
-      "sourceUrl": "https://www.marriott.com/en-us/hotels/hydlk-itc-kohenur-a-luxury-collection-hotel-hyderabad/dining/",
       "sourceType": "official",
       "verifiedAt": "2026-10-08"
     },
@@ -487,13 +452,6 @@
       "verifiedAt": "2026-10-08"
     },
     {
-      "key": "restaurant",
-      "detail": "Seasonal Tastes, Prego, Kangan, Casbah, Splash",
-      "sourceUrl": "https://marriott.com/en-us/hotels/hydwi-the-westin-hyderabad-mindspace/dining",
-      "sourceType": "official",
-      "verifiedAt": "2026-10-08"
-    },
-    {
       "key": "cuisines",
       "detail": "Multi-cuisine · Italian · Mediterranean · Peshawari & Hyderabadi",
       "sourceUrl": "https://marriott.com/en-us/hotels/hydwi-the-westin-hyderabad-mindspace/dining",
@@ -545,13 +503,6 @@
       "verifiedAt": "2026-10-08"
     },
     {
-      "key": "restaurant",
-      "detail": "Golden Dragon, Firdaus, Encounters",
-      "sourceUrl": "https://www.tajhotels.com/en-in/blog/travel-inspiration/explore-hyderabad-with-taj-hotels",
-      "sourceType": "official",
-      "verifiedAt": "2026-10-08"
-    },
-    {
       "key": "cuisines",
       "detail": "Chinese · Indian · Global",
       "sourceUrl": "https://www.tajhotels.com/en-in/blog/travel-inspiration/explore-hyderabad-with-taj-hotels",
@@ -585,13 +536,6 @@
       "key": "wifi",
       "detail": null,
       "sourceUrl": "https://www.marriott.com/hi/hotels/travel/hydmc",
-      "sourceType": "official",
-      "verifiedAt": "2026-10-08"
-    },
-    {
-      "key": "restaurant",
-      "detail": "Okra, Hyderabad Baking Company",
-      "sourceUrl": "https://marriott.com/en-us/hotels/hydmc-hyderabad-marriott-hotel-and-convention-centre/dining",
       "sourceType": "official",
       "verifiedAt": "2026-10-08"
     },
@@ -657,13 +601,6 @@
       "key": "catering",
       "detail": null,
       "sourceUrl": "https://www.hyatt.com/park-hyatt/en-US/hydph-park-hyatt-hyderabad",
-      "sourceType": "official",
-      "verifiedAt": "2026-10-08"
-    },
-    {
-      "key": "restaurant",
-      "detail": "Rika, Tre-Forni, The Dining Room, The Living Room",
-      "sourceUrl": "https://www.hyatt.com/park-hyatt/en-US/hydph-park-hyatt-hyderabad/dining",
       "sourceType": "official",
       "verifiedAt": "2026-10-08"
     },

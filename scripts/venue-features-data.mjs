@@ -46,11 +46,6 @@ export const venueFeaturesData = [
             'Up to 350 cars',
           ],
           [
-            'restaurant',
-            'Dining: Adaa, Celeste, Gol Bungalow ("3 restaurants and 1 bar")',
-            'Adaa, Celeste, Gol Bungalow',
-          ],
-          [
             'cuisines',
             'Dining: Adaa (Indian Hyderabadi), Celeste (Italian, International), Gol Bungalow (Indian, Italian, Multi-Cuisine)',
             'Indian (Hyderabadi) · Italian · International · Multi-cuisine',
@@ -78,7 +73,6 @@ export const venueFeaturesData = [
           'https://www.hilton.com/en/hotels/hydhdhi-hilton-hyderabad-genome-valley-resort-spa/hotel-info/'
         ),
         features: [
-          ['restaurant', 'Dining: "On-site restaurant"'],
           ['room_service', 'Dining: "Room service"'],
           ['swimming_pool', 'Fitness and recreation: "Outdoor pool"'],
           ['fitness_centre', 'Fitness and recreation: "Fitness center"'],
@@ -118,11 +112,6 @@ export const venueFeaturesData = [
         features: [
           ['swimming_pool', 'Hotel services, on site: "Swimming pool"'],
           ['parking', 'Hotel services, on site: "Car park"'],
-          [
-            'restaurant',
-            'Restaurants: Food Exchange, Permit To Grill, Le Cafe',
-            'Food Exchange, Permit To Grill, Le Cafe',
-          ],
           [
             'cuisines',
             'Food Exchange: "multi-cuisine restaurant serving food from around the globe"; Permit To Grill: "grills, wraps, burgers, and wood-fired pizzas"',
@@ -164,11 +153,6 @@ export const venueFeaturesData = [
       {
         ...src('https://www.radissonhotels.com/en-us/hotels/radisson-hyderabad-hitec-city'),
         features: [
-          [
-            'restaurant',
-            'Restaurants and bars: Cascade ("one of our three on-site restaurants"), Chama Gaucha',
-            'Cascade, Chama Gaucha',
-          ],
           [
             'cuisines',
             'Cascade: "Indian and international fare"; Chama Gaucha: "authentic Brazilian and Mexican cuisine"',
@@ -216,11 +200,6 @@ export const venueFeaturesData = [
         ),
         features: [
           [
-            'restaurant',
-            'Dining page: Golconda Pavilion, Yi Jing, Ottimo Cucina Italiana, Dum Pukht Begum\'s, Peshawri',
-            "Golconda Pavilion, Yi Jing, Ottimo, Dum Pukht Begum's, Peshawri",
-          ],
-          [
             'cuisines',
             'Dining page: Golconda Pavilion "Multiple cuisines"; Yi Jing "Chinese"; Ottimo "Italian"; Dum Pukht Begum\'s "Indian"',
             'Multi-cuisine · Chinese · Italian · Indian',
@@ -266,11 +245,6 @@ export const venueFeaturesData = [
         ...src('https://marriott.com/en-us/hotels/hydwi-the-westin-hyderabad-mindspace/dining'),
         features: [
           [
-            'restaurant',
-            'Dining page: Seasonal Tastes, Prego, Casbah, Splash (poolside); welcome text names Kangan',
-            'Seasonal Tastes, Prego, Kangan, Casbah, Splash',
-          ],
-          [
             'cuisines',
             'Dining page: Seasonal Tastes "Multiple cuisines" (local, Chinese, international); Prego "Italian"; Casbah "Mediterranean"; Kangan "Peshawari and Hyderabadi"',
             'Multi-cuisine · Italian · Mediterranean · Peshawari & Hyderabadi',
@@ -307,11 +281,6 @@ export const venueFeaturesData = [
         ),
         features: [
           [
-            'restaurant',
-            'Taj blog: "Golden Dragon\'s Chinese delicacies, Firdaus\' rich Indian flavours, and Encounters\' global fare"',
-            'Golden Dragon, Firdaus, Encounters',
-          ],
-          [
             'cuisines',
             'Taj blog: Golden Dragon (Chinese), Firdaus (Indian), Encounters (global fare)',
             'Chinese · Indian · Global',
@@ -336,11 +305,6 @@ export const venueFeaturesData = [
       {
         ...src('https://marriott.com/en-us/hotels/hydmc-hyderabad-marriott-hotel-and-convention-centre/dining'),
         features: [
-          [
-            'restaurant',
-            'Dining page: Okra; Indian restaurant; bakery deli ("Breakfast is served at Okra, Hyderabad Baking Company")',
-            'Okra, Hyderabad Baking Company',
-          ],
           [
             'cuisines',
             'Dining page: Okra "Indian and international cuisine"; "Specializing in Indian cuisine"',
@@ -374,11 +338,6 @@ export const venueFeaturesData = [
       {
         ...src('https://www.hyatt.com/park-hyatt/en-US/hydph-park-hyatt-hyderabad/dining'),
         features: [
-          [
-            'restaurant',
-            'Dining page: Rika, Tre-Forni, The Dining Room, The Living Room',
-            'Rika, Tre-Forni, The Dining Room, The Living Room',
-          ],
           [
             'cuisines',
             'Dining page: "fine dining in Indian, Italian and Modern Asian cuisines"',

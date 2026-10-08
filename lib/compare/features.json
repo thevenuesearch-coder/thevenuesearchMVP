@@ -10,7 +10,6 @@
   { "key": "kids_facilities", "label": "Kids Facilities", "group": "amenities" },
   { "key": "accessibility", "label": "Accessibility", "group": "amenities" },
 
-  { "key": "restaurant", "label": "Restaurants", "group": "dining" },
   { "key": "cuisines", "label": "Cuisines", "group": "dining", "display": "chips" },
   { "key": "bar_lounge", "label": "Bar / Lounge", "group": "dining" },
   { "key": "dining_24h", "label": "24-Hour Dining", "group": "dining" },
