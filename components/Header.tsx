@@ -224,6 +224,10 @@ export function Header() {
           Collections
         </Link>
 
+        <Link href="/collections">
+          Collections
+        </Link>
+
         <Link href="/how-it-works">
           How it works
         </Link>
