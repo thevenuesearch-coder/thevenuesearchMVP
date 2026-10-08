@@ -1,11 +1,12 @@
-import type { CSSProperties } from 'react';
+import { Fragment, type CSSProperties } from 'react';
 import Link from 'next/link';
 
 import { imgProps } from '../../lib/image';
-import type {
-  CompareCell,
-  CompareModel,
-  CompareVariant,
+import {
+  COMPARE_GROUP_LABELS,
+  type CompareCell,
+  type CompareModel,
+  type CompareVariant,
 } from '../../lib/compare/types';
 import styles from './compare.module.css';
 
@@ -15,7 +16,9 @@ import styles from './compare.module.css';
  * in the initial HTML for search engines and AI crawlers.
  *
  * Blank is intentional: a cell with no verified value renders
- * nothing -- never "No", "N/A" or "0".
+ * nothing -- never "No", "N/A" or "0". A verified yes renders a small
+ * check (optionally with a short factual detail, e.g. "Up to 350
+ * cars"); there is no "cross" state at all.
  */
 
 const MORE = /^\+\d+ more$/;
@@ -38,6 +41,29 @@ function PinIcon() {
   );
 }
 
+function CheckIcon() {
+  return (
+    <svg
+      className={styles.checkIcon}
+      viewBox="0 0 20 20"
+      width="18"
+      height="18"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.14" />
+      <path
+        d="m5.8 10.4 2.7 2.7 5.7-5.9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function Cell({
   value,
   variant,
@@ -46,6 +72,22 @@ function Cell({
   variant: CompareVariant;
 }) {
   if (value === null) return null;
+
+  if (variant === 'check') {
+    /* `true` = verified available; a string = verified, with a short detail. */
+    return (
+      <span className={styles.check}>
+        <CheckIcon />
+        {typeof value === 'string' ? (
+          <span className={styles.checkDetail}>{value}</span>
+        ) : (
+          <span className={styles.srOnly}>Available</span>
+        )}
+      </span>
+    );
+  }
+
+  if (value === true) return null;
 
   if (Array.isArray(value)) {
     if (variant === 'chips') {
@@ -210,21 +252,37 @@ export function CompareTable({
             </thead>
 
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.key}>
-                  <th scope="row" className={styles.rowHead}>
-                    {row.label}
-                  </th>
+              {rows.map((row, index) => (
+                <Fragment key={row.key}>
+                  {(index === 0 || rows[index - 1].group !== row.group) && (
+                    <tr className={styles.groupRow}>
+                      <th scope="colgroup" colSpan={venues.length + 1}>
+                        <span className={styles.groupLabel}>
+                          {COMPARE_GROUP_LABELS[row.group]}
+                        </span>
+                      </th>
+                    </tr>
+                  )}
 
-                  {row.cells.map((cell, index) => (
-                    <td
-                      key={venues[index].id}
-                      data-current={venues[index].isCurrent}
-                    >
-                      <Cell value={cell} variant={row.variant} />
-                    </td>
-                  ))}
-                </tr>
+                  <tr
+                    className={
+                      row.variant === 'check' ? styles.rowCompact : undefined
+                    }
+                  >
+                    <th scope="row" className={styles.rowHead}>
+                      {row.label}
+                    </th>
+
+                    {row.cells.map((cell, cellIndex) => (
+                      <td
+                        key={venues[cellIndex].id}
+                        data-current={venues[cellIndex].isCurrent}
+                      >
+                        <Cell value={cell} variant={row.variant} />
+                      </td>
+                    ))}
+                  </tr>
+                </Fragment>
               ))}
             </tbody>
           </table>
@@ -232,7 +290,8 @@ export function CompareTable({
       </div>
 
       <p className={styles.note}>
-        A blank cell means we haven&rsquo;t verified that detail yet.
+        Only verified venue information is shown. Blank fields indicate that
+        a verified detail was not available.
       </p>
     </div>
   );

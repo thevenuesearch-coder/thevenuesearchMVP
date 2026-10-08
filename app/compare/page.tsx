@@ -58,7 +58,7 @@ export async function generateMetadata({
   const base = pageMetadata({
     title: 'Compare Wedding Venues',
     description:
-      'Compare verified wedding venues side by side: guest capacity, room categories and event spaces. Choose up to four venues.',
+      'Compare wedding venues side by side: guest capacity, rooms, event spaces, amenities and services. Only verified details are shown. Choose up to four venues.',
     path: '/compare',
   });
 
@@ -132,8 +132,9 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
         <h1 className={styles.title}>Compare venues side by side</h1>
 
         <p className={styles.lead}>
-          Pick up to {MAX_VENUES} venues and see capacity, room categories and
-          event spaces together. Only verified details are shown.
+          Pick up to {MAX_VENUES} venues and compare guest capacity, rooms,
+          event spaces, amenities and services together. Only verified details
+          are shown.
         </p>
       </header>
 

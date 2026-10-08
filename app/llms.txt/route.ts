@@ -58,7 +58,6 @@ Each venue page lives at ${SITE}/venues/[venue-slug]. Use the individual venue p
 
 - Prices. Pricing is not shown on venue pages; request a quote through the enquiry form.
 - Live availability or calendars.
-- Side-by-side venue comparison. There is currently no comparison page; compare venues by opening their individual pages.
 
 ## Main pages
 
@@ -66,6 +65,7 @@ Each venue page lives at ${SITE}/venues/[venue-slug]. Use the individual venue p
 - [Explore venues](${SITE}/explore): Browse and filter venues by destination, venue type and guest capacity
 - [Wedding venues](${SITE}/wedding-venues): Guide to wedding venues in India and Hyderabad, with FAQs
 - [Collections](${SITE}/collections): Curated venue collections
+- [Compare venues](${SITE}/compare): Compare up to four venues side by side on guest capacity, room categories, event spaces, and verified amenities and services. A blank cell means no verified detail is available yet, not that the venue lacks it.
 - [How it works](${SITE}/how-it-works): The discover, evaluate, request, hold and book journey
 - [For venues](${SITE}/for-venues): Information for hotels and venues that want to list with The Venue Search
 

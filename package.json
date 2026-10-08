@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "migrate:venues": "node scripts/migrate-venues-to-supabase.mjs"
+    "migrate:venues": "node scripts/migrate-venues-to-supabase.mjs",
+    "seed:features": "node scripts/seed-venue-features.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
