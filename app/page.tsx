@@ -8,6 +8,7 @@ import {
 } from '../lib/venues';
 import { VenueCard } from '../components/VenueCard';
 import { HeroSearchBox } from '../components/HeroSearchBox';
+import { CompareGlance } from '../components/home/CompareGlance';
 import { imgProps, optimizedUrl } from '../lib/image';
 
 export const metadata: Metadata = pageMetadata({
@@ -85,40 +86,12 @@ export default async function Home() {
       </section>
 
       {/* =====================================================
-          STATEMENT
+          COMPARE VENUES AT A GLANCE
+          (replaces the former "Venue discovery shouldn't feel
+          like a negotiation" statistics section)
       ===================================================== */}
 
-      <section className="statement">
-        <span className="kicker">WHY VENUE SEARCH</span>
-
-        <h2>
-          Venue discovery shouldn't feel like a negotiation.
-        </h2>
-
-        <p>
-          Today, couples and planners face fragmented listings,
-          opaque quotes, unverified information and manual
-          coordination. We turn that chaos into a clear,
-          data-backed decision journey.
-        </p>
-
-        <div className="stats">
-          <div>
-            <strong>30–40%</strong>
-            <span>planning time saved</span>
-          </div>
-
-          <div>
-            <strong>100%</strong>
-            <span>verified-first approach</span>
-          </div>
-
-          <div>
-            <strong>0</strong>
-            <span>double-booking tolerance</span>
-          </div>
-        </div>
-      </section>
+      <CompareGlance />
 
       {/* =====================================================
           FEATURED VENUES
