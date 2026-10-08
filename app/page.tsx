@@ -91,7 +91,7 @@ export default async function Home() {
           like a negotiation" statistics section)
       ===================================================== */}
 
-      <CompareGlance venues={venues} />
+      <CompareGlance />
 
       {/* =====================================================
           FEATURED VENUES
