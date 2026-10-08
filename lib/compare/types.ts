@@ -4,7 +4,11 @@
  * renders as a blank cell. There is no "N/A" / "No" / "0" state.
  */
 
-export type CompareCell = string | string[] | null;
+/*
+ * `true` = a verified yes (rendered as a check). There is deliberately
+ * no `false`: an unverified or unavailable detail is `null` (blank).
+ */
+export type CompareCell = string | string[] | true | null;
 
 export type CompareVenue = {
   id: string; /* public slug, same as Venue.id */
@@ -16,11 +20,30 @@ export type CompareVenue = {
   isCurrent: boolean;
 };
 
-/* How a row's values are drawn: plain text, a big number, pills, or stacked lines. */
-export type CompareVariant = 'text' | 'stat' | 'chips' | 'lines';
+/* How a row's values are drawn: plain text, a big number, pills, stacked lines, or a check. */
+export type CompareVariant = 'text' | 'stat' | 'chips' | 'lines' | 'check';
+
+/* Table sections, in display order. */
+export type CompareGroup =
+  | 'overview'
+  | 'accommodation'
+  | 'spaces'
+  | 'amenities'
+  | 'wedding'
+  | 'services';
+
+export const COMPARE_GROUP_LABELS: Record<CompareGroup, string> = {
+  overview: 'Venue Overview',
+  accommodation: 'Accommodation',
+  spaces: 'Event Spaces',
+  amenities: 'Amenities',
+  wedding: 'Wedding & Event Services',
+  services: 'Hotel Services',
+};
 
 export type CompareRow = {
   key: string;
+  group: CompareGroup;
   label: string;
   variant: CompareVariant;
   cells: CompareCell[]; /* same order and length as venues */

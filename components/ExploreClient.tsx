@@ -444,7 +444,8 @@ export function ExploreClient({
       {!venuesError && filteredVenues.length > 1 && (
         <p className={compareStyles.hint}>
           Tick <b>Compare</b> on up to {MAX_COMPARE_VENUES} venues to see
-          their capacity, rooms and event spaces side by side.
+          their capacity, rooms, event spaces, amenities and services side by
+          side.
         </p>
       )}
 

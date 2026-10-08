@@ -2,6 +2,7 @@ import type { Venue } from '../data';
 import { supabase } from '../supabase';
 import { SHOW_PUBLIC_STARTING_PRICE } from '../../components/PublicVenueDetails';
 import { buildComparison, buildComparisonFor } from './build';
+import { isFeatureKey, type CompareFeature } from './features';
 import { pickSimilar, shortlistSimilar } from './similarity';
 import type { CompareModel, CompareRoom } from './types';
 
@@ -49,6 +50,67 @@ async function fetchPublishedRooms(
 }
 
 /*
+ * ONE query: verified amenities & services for a set of venues
+ * (venue_features, status = 'published'; public RLS read, same
+ * pattern as venue_rooms). Only rows that can be audited are used:
+ * a known feature key, an http(s) source URL, a valid source type
+ * and a verification date. Anything else is dropped. On error
+ * (including the table not existing yet) returns {} so the table is
+ * built without those rows rather than failing.
+ */
+const SOURCE_TYPES = new Set(['official', 'google', 'authoritative']);
+
+function isHttpUrl(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  try {
+    const { protocol } = new URL(value.trim());
+    return protocol === 'https:' || protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+async function fetchPublishedFeatures(
+  venueIds: string[]
+): Promise<Record<string, CompareFeature[]>> {
+  const features: Record<string, CompareFeature[]> = {};
+  const ids = venueIds.filter(Boolean);
+  if (ids.length === 0) return features;
+
+  const { data, error } = await supabase
+    .from('venue_features')
+    .select('venue_id, feature_key, detail, source_url, source_type, verified_at')
+    .in('venue_id', ids)
+    .eq('status', 'published');
+
+  if (error) {
+    console.error('compare features error:', error.message);
+    return features;
+  }
+
+  for (const row of data ?? []) {
+    if (
+      !isFeatureKey(row.feature_key) ||
+      !isHttpUrl(row.source_url) ||
+      !SOURCE_TYPES.has(row.source_type) ||
+      !row.verified_at
+    ) {
+      continue;
+    }
+
+    (features[row.venue_id] ??= []).push({
+      key: row.feature_key,
+      detail: row.detail ?? null,
+      sourceUrl: row.source_url,
+      sourceType: row.source_type,
+      verifiedAt: row.verified_at,
+    });
+  }
+
+  return features;
+}
+
+/*
  * Venue page: this venue + up to 3 comparable ones, chosen from the
  * venue list the page already loaded (no extra candidate query).
  */
@@ -68,6 +130,11 @@ export async function getComparison(
       sourceUrl: room.sourceUrl,
     }));
 
+    const featuresByVenue = await fetchPublishedFeatures([
+      current.dbId,
+      ...shortlist.map((v) => v.dbId),
+    ]);
+
     const similar = pickSimilar(
       current,
       shortlist,
@@ -75,7 +142,7 @@ export async function getComparison(
     );
     if (similar.length === 0) return null;
 
-    return buildComparison(current, similar, roomsByVenue, {
+    return buildComparison(current, similar, roomsByVenue, featuresByVenue, {
       showPrice: SHOW_PUBLIC_STARTING_PRICE,
     });
   } catch (error) {
@@ -100,7 +167,11 @@ export async function getSelectionComparison(
       selected.map((v) => v.dbId)
     );
 
-    return buildComparisonFor(selected, roomsByVenue, {
+    const featuresByVenue = await fetchPublishedFeatures(
+      selected.map((v) => v.dbId)
+    );
+
+    return buildComparisonFor(selected, roomsByVenue, featuresByVenue, {
       showPrice: SHOW_PUBLIC_STARTING_PRICE,
       highlightFirst: false,
       minFilledPerRow: 1,

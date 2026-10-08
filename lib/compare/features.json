@@ -1,0 +1,29 @@
+[
+  { "key": "swimming_pool", "label": "Swimming Pool", "group": "amenities" },
+  { "key": "spa", "label": "Spa", "group": "amenities" },
+  { "key": "fitness_centre", "label": "Fitness Centre", "group": "amenities" },
+  { "key": "wifi", "label": "Wi-Fi", "group": "amenities" },
+  { "key": "parking", "label": "Parking", "group": "amenities" },
+  { "key": "valet_parking", "label": "Valet Parking", "group": "amenities" },
+  { "key": "restaurant", "label": "Restaurant", "group": "amenities" },
+  { "key": "bar_lounge", "label": "Bar / Lounge", "group": "amenities" },
+  { "key": "business_centre", "label": "Business Centre", "group": "amenities" },
+  { "key": "kids_facilities", "label": "Kids Facilities", "group": "amenities" },
+  { "key": "accessibility", "label": "Accessibility", "group": "amenities" },
+
+  { "key": "wedding_planning", "label": "Wedding Planning", "group": "wedding" },
+  { "key": "event_coordination", "label": "Event Coordination", "group": "wedding" },
+  { "key": "catering", "label": "Catering", "group": "wedding" },
+  { "key": "decoration", "label": "Decoration", "group": "wedding" },
+  { "key": "banquet_services", "label": "Banquet Services", "group": "wedding" },
+  { "key": "vendor_support", "label": "Vendor Support", "group": "wedding" },
+  { "key": "wedding_packages", "label": "Wedding Packages", "group": "wedding" },
+  { "key": "accommodation_coordination", "label": "Guest Accommodation Coordination", "group": "wedding" },
+  { "key": "photography", "label": "Photography", "group": "wedding" },
+
+  { "key": "room_service", "label": "Room Service", "group": "services" },
+  { "key": "concierge", "label": "Concierge", "group": "services" },
+  { "key": "laundry", "label": "Laundry", "group": "services" },
+  { "key": "airport_transfer", "label": "Airport Transfer", "group": "services" },
+  { "key": "travel_desk", "label": "Travel Desk & Car Rental", "group": "services" }
+]
