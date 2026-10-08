@@ -42,9 +42,9 @@ export type CollectionRoom = {
   gallery: string[];
 };
 
-const MAX_PHOTOS = 8;
-const MAX_SPACE_PHOTOS = 3;
-const MAX_ROOM_PHOTOS = 3;
+const MAX_PHOTOS = 16;
+const MAX_SPACE_PHOTOS = 8;
+const MAX_ROOM_PHOTOS = 8;
 const MAX_HIGHLIGHTS = 6;
 
 /* Most useful for choosing a wedding venue first. */
@@ -126,27 +126,33 @@ function buildPhotos(venue: Venue, rooms: CollectionRoom[]): CollectionPhoto[] {
 
   add(venue.image, where, 'The venue');
 
+  /* Event & function spaces. A space tagged as a restaurant / dining room is
+     captioned "Dining"; everything else is an event space. Names are real. */
   venue.venueSpaces
     .filter((space) => space.image)
     .slice(0, MAX_SPACE_PHOTOS)
-    .forEach((space) =>
+    .forEach((space) => {
+      const dining = space.tags.some((tag) => /restaurant|dining/i.test(tag));
+
       add(
         space.image,
-        `${space.name}, an event space at ${where}`,
-        `Event space · ${space.name}`,
-      ),
-    );
+        dining
+          ? `${space.name}, a dining space at ${where}`
+          : `${space.name}, an event space at ${where}`,
+        `${dining ? 'Dining' : 'Event space'} · ${space.name}`,
+      );
+    });
 
-  rooms
-    .filter((room) => room.image || room.gallery.length > 0)
-    .slice(0, MAX_ROOM_PHOTOS)
-    .forEach((room) =>
-      add(
-        room.image || room.gallery[0],
-        `${room.name} at ${where}`,
-        `Room · ${room.name}`,
-      ),
-    );
+  /* Rooms: each category's main photo, then its first gallery photo. */
+  let roomPhotos = 0;
+  for (const room of rooms) {
+    for (const src of [room.image, ...room.gallery.slice(0, 2)]) {
+      if (roomPhotos >= MAX_ROOM_PHOTOS) break;
+      const before = photos.length;
+      add(src, `${room.name} at ${where}`, `Room · ${room.name}`);
+      if (photos.length > before) roomPhotos += 1;
+    }
+  }
 
   return photos;
 }

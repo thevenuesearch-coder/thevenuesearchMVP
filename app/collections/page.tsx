@@ -13,7 +13,7 @@ import {
 } from '../../lib/compare/get-comparison';
 import { MotionRoot } from '../../components/collections/MotionRoot';
 import { Reveal } from '../../components/collections/Reveal';
-import { CollectionCard } from '../../components/collections/CollectionCard';
+import { CollectionsBrowser } from '../../components/collections/CollectionsBrowser';
 import { VenueShowcase } from '../../components/collections/VenueShowcase';
 import styles from '../../components/collections/collections.module.css';
 
@@ -31,9 +31,8 @@ export const metadata: Metadata = pageMetadata({
  */
 export const dynamic = 'force-dynamic';
 
-/* The featured cards (unchanged selection) and the venues in the showcase. */
-const FEATURED_COUNT = 4;
-const SHOWCASE_COUNT = 6;
+/* Every published venue is in the collection, up to this many. */
+const MAX_VENUES = 24;
 
 /*
  * Server Component: venues, room photos and verified amenities are loaded
@@ -50,7 +49,7 @@ export default async function Collections() {
     console.error('Failed to load venues:', err);
   }
 
-  const shown = venues.slice(0, SHOWCASE_COUNT);
+  const shown = venues.slice(0, MAX_VENUES);
 
   const [roomsByVenue, featuresFromDb] = await Promise.all([
     fetchCollectionRooms(shown.map((v) => v.dbId)),
@@ -63,8 +62,7 @@ export default async function Collections() {
     withBundledFallback(shown, featuresFromDb),
   );
 
-  const featured = collection.slice(0, FEATURED_COUNT);
-  const maxCapacity = Math.max(0, ...featured.map((v) => v.capacity ?? 0));
+  const maxCapacity = Math.max(0, ...collection.map((v) => v.capacity ?? 0));
 
   return (
     /* The outer wrapper clips stray horizontal overflow (no sideways scroll on
@@ -90,32 +88,21 @@ export default async function Collections() {
             </div>
           </Reveal>
 
-          {featured.length === 0 ? (
+          {collection.length === 0 ? (
             <div className="emptyState">
               <p>No venues are published yet — check back soon.</p>
             </div>
           ) : (
             <>
-              <section aria-labelledby="featured-title">
-                <h2 id="featured-title" className={styles.sectionTitle}>
-                  Featured collections
+              <section aria-labelledby="collection-title">
+                <h2 id="collection-title" className={styles.sectionTitle}>
+                  Explore the collection
                 </h2>
 
-                <div className={styles.grid}>
-                  {featured.map((venue, i) => (
-                    <Reveal
-                      key={venue.id}
-                      className={styles.cardWrap}
-                      delay={(i % 2) * 0.1}
-                    >
-                      <CollectionCard
-                        venue={venue}
-                        maxCapacity={maxCapacity}
-                        priority={i < 2}
-                      />
-                    </Reveal>
-                  ))}
-                </div>
+                <CollectionsBrowser
+                  venues={collection}
+                  maxCapacity={maxCapacity}
+                />
               </section>
 
               <section className={styles.band} aria-labelledby="showcase-title">

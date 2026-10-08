@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { m, useReducedMotion } from 'framer-motion';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { imgProps } from '../../lib/image';
 import type { CollectionVenue } from '../../lib/collections';
 import { CountUp } from './CountUp';
@@ -10,10 +10,11 @@ import { BedIcon, ChevronIcon, GuestsIcon, PinIcon, SpacesIcon } from './icons';
 import styles from './collections.module.css';
 
 /*
- * One collection card: swipeable photo gallery (CSS scroll-snap, so it
- * works by touch and trackpad with no drag library), compact stat
- * infographic, verified highlights and a CTA. Stats that are missing for
- * a venue are not rendered.
+ * One collection card, photo first: a swipeable gallery (CSS scroll-snap,
+ * so touch and trackpad work with no drag library) with the venue name set
+ * over the image, a filmstrip of every photo underneath, then a compact
+ * stat infographic, verified highlights and a CTA. Stats a venue doesn't
+ * have are not rendered.
  */
 export function CollectionCard({
   venue,
@@ -26,11 +27,14 @@ export function CollectionCard({
 }) {
   const reduce = useReducedMotion();
   const track = useRef<HTMLUListElement>(null);
+  const strip = useRef<HTMLUListElement>(null);
+  const thumbs = useRef<Array<HTMLButtonElement | null>>([]);
   const frame = useRef(0);
   const [index, setIndex] = useState(0);
 
-  const photos = venue.photos.slice(0, 6);
+  const photos = venue.photos;
   const many = photos.length > 1;
+  const current = photos[Math.min(index, photos.length - 1)];
 
   const onScroll = useCallback(() => {
     cancelAnimationFrame(frame.current);
@@ -50,6 +54,18 @@ export function CollectionCard({
       behavior: reduce ? 'auto' : 'smooth',
     });
   };
+
+  /* Keep the active filmstrip thumbnail in view (scrolls the strip only). */
+  useEffect(() => {
+    const list = strip.current;
+    const thumb = thumbs.current[index];
+    if (!list || !thumb) return;
+
+    list.scrollTo({
+      left: thumb.offsetLeft - list.clientWidth / 2 + thumb.offsetWidth / 2,
+      behavior: reduce ? 'auto' : 'smooth',
+    });
+  }, [index, reduce]);
 
   const share =
     venue.capacity && maxCapacity > 0
@@ -91,13 +107,12 @@ export function CollectionCard({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   {...imgProps(photo.src, photo.alt, {
-                    width: 900,
-                    height: 560,
+                    width: 1000,
+                    height: 700,
                     sizes: '(max-width: 760px) 100vw, 50vw',
                     priority: priority && i === 0,
                   })}
                 />
-                <span className={styles.caption}>{photo.caption}</span>
               </li>
             ))}
           </ul>
@@ -105,8 +120,34 @@ export function CollectionCard({
           <div className={styles.noPhoto} aria-hidden="true" />
         )}
 
+        {/* Name, type and place sit over the photo (kept as real headings/links). */}
+        <div className={styles.overlay}>
+          {venue.type && <p className={styles.kicker}>{venue.type}</p>}
+
+          <h3 className={styles.cardTitle}>
+            <Link href={`/venues/${venue.id}`}>{venue.name}</Link>
+          </h3>
+
+          {venue.location && (
+            <p className={styles.location}>
+              <PinIcon />
+              {venue.location}
+            </p>
+          )}
+        </div>
+
+        {current && (
+          <span className={styles.caption} aria-hidden="true">
+            {current.caption}
+          </span>
+        )}
+
         {many && (
           <>
+            <span className={styles.counter} aria-hidden="true">
+              {index + 1} / {photos.length}
+            </span>
+
             <button
               type="button"
               className={`${styles.nav} ${styles.navPrev}`}
@@ -123,37 +164,45 @@ export function CollectionCard({
             >
               <ChevronIcon dir="right" />
             </button>
-
-            <div className={styles.dots}>
-              {photos.map((photo, i) => (
-                <button
-                  key={photo.src}
-                  type="button"
-                  className={i === index ? styles.dotActive : styles.dot}
-                  onClick={() => goTo(i)}
-                  aria-label={`Show photo ${i + 1}: ${photo.caption}`}
-                  aria-current={i === index}
-                />
-              ))}
-            </div>
           </>
         )}
       </div>
 
+      {many && (
+        <ul
+          ref={strip}
+          className={styles.film}
+          aria-label={`${venue.name} photo strip`}
+        >
+          {photos.map((photo, i) => (
+            <li key={photo.src}>
+              <button
+                ref={(el) => {
+                  thumbs.current[i] = el;
+                }}
+                type="button"
+                className={
+                  i === index ? styles.filmThumbActive : styles.filmThumb
+                }
+                onClick={() => goTo(i)}
+                aria-label={`Show photo ${i + 1}: ${photo.caption}`}
+                aria-current={i === index}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  {...imgProps(photo.src, '', {
+                    width: 136,
+                    height: 96,
+                    sizes: '68px',
+                  })}
+                />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
       <div className={styles.body}>
-        {venue.type && <p className={styles.kicker}>{venue.type}</p>}
-
-        <h3 className={styles.cardTitle}>
-          <Link href={`/venues/${venue.id}`}>{venue.name}</Link>
-        </h3>
-
-        {venue.location && (
-          <p className={styles.location}>
-            <PinIcon />
-            {venue.location}
-          </p>
-        )}
-
         {venue.description && (
           <p className={styles.desc}>{venue.description}</p>
         )}
