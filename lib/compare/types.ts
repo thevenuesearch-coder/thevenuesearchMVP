@@ -29,6 +29,7 @@ export type CompareGroup =
   | 'accommodation'
   | 'spaces'
   | 'amenities'
+  | 'dining'
   | 'wedding'
   | 'services';
 
@@ -37,6 +38,7 @@ export const COMPARE_GROUP_LABELS: Record<CompareGroup, string> = {
   accommodation: 'Accommodation',
   spaces: 'Event Spaces',
   amenities: 'Amenities',
+  dining: 'Dining',
   wedding: 'Wedding & Event Services',
   services: 'Hotel Services',
 };

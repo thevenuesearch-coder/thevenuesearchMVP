@@ -13,12 +13,15 @@ import registry from './features.json';
  * row for a key or it doesn't. There is no negative value anywhere.
  */
 
-export type FeatureGroup = 'amenities' | 'wedding' | 'services';
+export type FeatureGroup = 'amenities' | 'dining' | 'wedding' | 'services';
 
 export type FeatureDef = {
   key: string;
   label: string;
   group: FeatureGroup;
+  /* 'chips': the row shows the verified detail (items joined by ' · ') as
+     pills instead of a check, e.g. cuisines. Default is a check. */
+  display?: 'check' | 'chips';
 };
 
 export const FEATURE_DEFS = registry as FeatureDef[];

@@ -138,11 +138,20 @@ function spacesByKind(
 
 function featureCell(
   features: CompareFeature[] | undefined,
-  key: string
+  key: string,
+  display: 'check' | 'chips' = 'check'
 ): CompareCell {
   const found = features?.find((f) => f.key === key);
   if (!found) return null; /* not verified -> blank */
-  return cleanString(found.detail ?? '') ?? true;
+
+  const detail = cleanString(found.detail ?? '');
+
+  if (display === 'chips') {
+    /* A chips row exists to show its detail; with none there is nothing to show. */
+    return detail ? capList(unique(detail.split(' · '))) : null;
+  }
+
+  return detail ?? true;
 }
 
 function eventSpaces(venue: Venue): string[] | null {
@@ -257,10 +266,10 @@ export function buildComparisonFor(
       key: `feature:${def.key}`,
       group: def.group as CompareGroup,
       label: def.label,
-      variant: 'check' as CompareVariant,
+      variant: (def.display === 'chips' ? 'chips' : 'check') as CompareVariant,
       min: 1,
       get: (v: Venue): CompareCell =>
-        featureCell(featuresByVenue[v.dbId], def.key),
+        featureCell(featuresByVenue[v.dbId], def.key, def.display),
     })),
   ];
 
