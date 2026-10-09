@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { toCapacity } from '../lib/capacity';
 import { MAX_COMPARE_VENUES } from '../lib/compare/constants';
 import type { VenueSummary } from '../lib/data';
 
@@ -197,9 +198,20 @@ export function ExploreClient({
         const minimumGuests =
           Number(capacity);
 
+        /*
+         * A venue whose guest capacity has not been confirmed
+         * ("Capacity on request") must stay visible: hiding it
+         * would drop every unverified venue from any guest-count
+         * search. Only venues with a known capacity smaller than
+         * the requested guest count are filtered out.
+         */
+        const knownCapacity =
+          toCapacity(venue.capacity);
+
         matchesCapacity =
-          venue.capacity >=
-          minimumGuests;
+          knownCapacity === null ||
+          knownCapacity >=
+            minimumGuests;
       }
 
       return (
