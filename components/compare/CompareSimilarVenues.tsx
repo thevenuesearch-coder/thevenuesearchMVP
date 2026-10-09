@@ -43,7 +43,7 @@ export function CompareSimilarVenues({
 
       <div className={styles.actions}>
         <Link href={customiseHref} className={styles.customise}>
-          Choose your own venues to compare <span aria-hidden="true">→</span>
+          Choose the custom venues to compare <span aria-hidden="true">→</span>
         </Link>
       </div>
     </section>
