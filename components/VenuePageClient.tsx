@@ -436,18 +436,27 @@ export function VenuePageClient({
 
                 <div className="space-image">
 
-                  <img
-                    {...imgProps(
-                      currentSpace.image,
-                      `${currentSpace.name} at ${venue.name}`,
-                      {
-                        width: 900,
-                        height: 600,
-                        sizes:
-                          '(max-width: 900px) 100vw, 50vw',
-                      }
-                    )}
-                  />
+                  {/*
+                    * A space without its own photo falls back to the
+                    * property's main photo. Without this the <img> was
+                    * rendered with no src and showed as a broken image.
+                    */}
+                  {(currentSpace.image || venue.image) && (
+                    <img
+                      {...imgProps(
+                        currentSpace.image || venue.image,
+                        currentSpace.image
+                          ? `${currentSpace.name} at ${venue.name}`
+                          : venue.name,
+                        {
+                          width: 900,
+                          height: 600,
+                          sizes:
+                            '(max-width: 900px) 100vw, 50vw',
+                        }
+                      )}
+                    />
+                  )}
 
                 </div>
 
