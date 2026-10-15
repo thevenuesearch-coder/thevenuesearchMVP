@@ -39,6 +39,9 @@ export const dynamic = 'force-dynamic';
  */
 export default async function Home() {
   const venues = await fetchVenuesServer();
+  const preferredFeaturedNames = ['Wildflower Hall, An Oberoi Resort', 'JW Marriott Mussoorie Walnut Grove Resort & Spa', 'Taj Fateh Prakash Palace'];
+  const preferredFeatured = preferredFeaturedNames.map((name) => venues.find((venue) => venue.name === name)).filter((venue) => Boolean(venue));
+  const featuredVenues = preferredFeatured.length === 3 ? preferredFeatured : venues.filter((venue) => !['T-Hub', 'Ramoji Film City Hyderabad', 'Taj Rishikesh Resort & Spa'].includes(venue.name)).slice(0, 3);
 
   return (
     <main id="main-content">
@@ -112,7 +115,7 @@ export default async function Home() {
           </div>
         ) : (
           <div className="venueGrid">
-            {venues.slice(0, 3).map((v) => (
+            {featuredVenues.map((v) => (
               <VenueCard
                 key={v.id}
                 v={{
