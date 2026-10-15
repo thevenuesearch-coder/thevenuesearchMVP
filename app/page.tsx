@@ -55,11 +55,7 @@ export default async function Home() {
             muted
             loop
             playsInline
-            poster={
-              venues[0]?.image
-                ? optimizedUrl(venues[0].image, 1080)
-                : undefined
-            }
+            poster="https://raw.githubusercontent.com/thevenuesearch-coder/thevenuesearchMVP/main/public/images/venues/tajrishikesh.png"
             src={
               process.env.NEXT_PUBLIC_HERO_VIDEO_URL || undefined
             }
