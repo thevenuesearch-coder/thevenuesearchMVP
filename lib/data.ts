@@ -75,5 +75,5 @@ export type Venue = {
  */
 export type VenueSummary = Omit<
   Venue,
-  'dbId' | 'price' | 'hold' | 'venueSpaces' | 'rooms'
+  'price' | 'hold' | 'venueSpaces' | 'rooms'
 >;
