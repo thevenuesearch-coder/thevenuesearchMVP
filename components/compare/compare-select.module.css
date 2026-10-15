@@ -23,11 +23,6 @@
   transition: background-color 0.15s, color 0.15s;
 }
 
-.toggle:has(input:checked) {
-  background: #0b0b10;
-  color: #fff;
-}
-
 .toggle:has(input:disabled) {
   opacity: 0.7;
   cursor: not-allowed;
@@ -50,14 +45,21 @@
   border-radius: 4px;
   background: transparent;
   cursor: inherit;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+/* Ticked: only the small box turns blue; the "Compare" pill stays white. */
+.box:checked {
+  border-color: #2854b8;
+  background: #2854b8;
 }
 
 .box::after {
   content: '';
   width: 0.55rem;
   height: 0.3rem;
-  border-left: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
   transform: rotate(-45deg) translate(1px, -1px) scale(0);
   transition: transform 0.12s;
 }
