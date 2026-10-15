@@ -332,7 +332,7 @@ export default function ProfilePage() {
           data: wishlistData,
           error: wishlistError,
         } = await supabase
-          .from('wishlist')
+          .from('wishlists')
           .select(
             'id, venue_id, created_at'
           )
@@ -662,7 +662,7 @@ export default function ProfilePage() {
       const {
         error,
       } = await supabase
-        .from('wishlist')
+        .from('wishlists')
         .delete()
         .eq('id', wishlistId);
 

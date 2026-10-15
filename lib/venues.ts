@@ -385,7 +385,11 @@ async function queryVenueBySlug(
  */
 export function toVenueSummary(venue: Venue): VenueSummary {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { dbId, price, hold, venueSpaces, rooms, ...summary } =
+  /*
+   * dbId is kept: cards need the real database id (a uuid) to save a
+   * venue to the shortlist. The slug in `id` is not valid there.
+   */
+  const { price, hold, venueSpaces, rooms, ...summary } =
     venue;
 
   return summary;

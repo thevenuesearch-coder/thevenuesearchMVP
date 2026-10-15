@@ -13,6 +13,8 @@ import compareStyles from './compare/compare-select.module.css';
 
 type VenueCardData = {
   id: string;
+  /* Database id (uuid). The shortlist stores this, not the slug in `id`. */
+  dbId?: string;
   slug: string;
   name: string;
   city: string;
@@ -37,13 +39,36 @@ export type VenueCardCompare = {
   onToggle: () => void;
 };
 
+/*
+ * The shortlist table stores the venue's database id (uuid). Cards built
+ * from venue data carry it as `dbId`; if one does not, look it up by slug
+ * so saving still works.
+ */
+async function resolveVenueDbId(
+  supabase: ReturnType<typeof createClient>,
+  v: { dbId?: string; slug: string }
+): Promise<string | null> {
+  if (v.dbId) return v.dbId;
+
+  const { data } = await supabase
+    .from('venues')
+    .select('id')
+    .eq('slug', v.slug)
+    .maybeSingle();
+
+  return data?.id ?? null;
+}
+
 export function VenueCard({
   v,
   headingLevel = 3,
   compare,
+  onSavedChange,
 }: {
   v: VenueCardData;
   compare?: VenueCardCompare;
+  /* Called after the heart is toggled (used by the shortlist page). */
+  onSavedChange?: (saved: boolean) => void;
   /*
    * Heading level for the venue name. 3 suits cards under a section
    * heading (home page); pass 2 where the cards sit directly under
@@ -98,12 +123,25 @@ export function VenueCard({
           return;
         }
 
+        const venueDbId =
+          await resolveVenueDbId(
+            supabase,
+            v
+          );
+
+        if (!mounted) return;
+
+        if (!venueDbId) {
+          setSaved(false);
+          return;
+        }
+
         const {
           data,
           error,
         } =
           await supabase
-            .from('wishlist')
+            .from('wishlists')
             .select('id')
             .eq(
               'user_id',
@@ -111,7 +149,7 @@ export function VenueCard({
             )
             .eq(
               'venue_id',
-              v.id
+              venueDbId
             )
             .maybeSingle();
 
@@ -157,7 +195,7 @@ export function VenueCard({
     return () => {
       mounted = false;
     };
-  }, [v.id]);
+  }, [v.id, v.dbId, v.slug]);
 
 
   /*
@@ -212,6 +250,20 @@ export function VenueCard({
       const userId =
         session.user.id;
 
+      const venueDbId =
+        await resolveVenueDbId(
+          supabase,
+          v
+        );
+
+      if (!venueDbId) {
+        console.error(
+          'Wishlist error: venue id not found for',
+          v.slug
+        );
+        return;
+      }
+
       /*
        * ====================================================
        * REMOVE
@@ -223,7 +275,7 @@ export function VenueCard({
           error,
         } =
           await supabase
-            .from('wishlist')
+            .from('wishlists')
             .delete()
             .eq(
               'user_id',
@@ -231,7 +283,7 @@ export function VenueCard({
             )
             .eq(
               'venue_id',
-              v.id
+              venueDbId
             );
 
         if (error) {
@@ -253,6 +305,7 @@ export function VenueCard({
         }
 
         setSaved(false);
+        onSavedChange?.(false);
 
         return;
       }
@@ -267,12 +320,12 @@ export function VenueCard({
         error,
       } =
         await supabase
-          .from('wishlist')
+          .from('wishlists')
           .insert({
             user_id:
               userId,
             venue_id:
-              v.id,
+              venueDbId,
           });
 
       if (error) {
@@ -285,6 +338,7 @@ export function VenueCard({
           '23505'
         ) {
           setSaved(true);
+          onSavedChange?.(true);
           return;
         }
 
@@ -306,6 +360,7 @@ export function VenueCard({
       }
 
       setSaved(true);
+      onSavedChange?.(true);
     } catch (error) {
       console.error(
         'Wishlist toggle error:',
