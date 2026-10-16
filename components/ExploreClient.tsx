@@ -98,7 +98,7 @@ export function ExploreClient({
     return Array.from(
       new Set(
         venues
-          .map((v) => v.destination)
+          .map((v) => v.state || v.destination)
           .filter(Boolean)
       )
     );
@@ -136,6 +136,26 @@ export function ExploreClient({
         setDestination(
           matchedDestination
         );
+      } else {
+        /*
+         * Older links pass a city (for example
+         * /explore?destination=Hyderabad). Map the city to the
+         * state it belongs to so those links keep working.
+         */
+        const cityMatch = venues.find(
+          (v) =>
+            v.destination.toLowerCase() ===
+              destinationParam.toLowerCase() ||
+            v.city.toLowerCase() ===
+              destinationParam.toLowerCase()
+        );
+
+        const stateFromCity =
+          cityMatch?.state || cityMatch?.destination;
+
+        if (stateFromCity) {
+          setDestination(stateFromCity);
+        }
       }
     }
 
@@ -152,7 +172,7 @@ export function ExploreClient({
         );
       }
     }
-  }, [destinations]);
+  }, [destinations, venues]);
 
   const venueTypes = useMemo(() => {
     const types = venues
@@ -176,7 +196,7 @@ export function ExploreClient({
 
       const matchesDestination =
         !destination ||
-        venue.destination.toLowerCase() ===
+        (venue.state || venue.destination).toLowerCase() ===
           destination.toLowerCase();
 
       /* -----------------------------------------------

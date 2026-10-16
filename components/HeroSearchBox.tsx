@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 import type { Venue } from '../lib/data';
 
-type SearchVenue = Pick<Venue, 'id' | 'name' | 'destination'>;
+type SearchVenue = Pick<Venue, 'id' | 'name' | 'destination' | 'state'>;
 
 type HeroSearchBoxProps = {
   venues: SearchVenue[];
@@ -27,8 +27,14 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
    * the venues available on the platform.
    */
 
+  /*
+   * The dropdown lists states (not cities). A venue without a
+   * state falls back to its destination so it never disappears.
+   */
+  const stateOf = (v: SearchVenue) => v.state || v.destination;
+
   const destinations = Array.from(
-    new Set(venues.map((v) => v.destination).filter(Boolean))
+    new Set(venues.map(stateOf).filter(Boolean))
   );
 
   /*
@@ -41,7 +47,7 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
    */
 
   const destinationVenues = destination
-    ? venues.filter((v) => v.destination === destination)
+    ? venues.filter((v) => stateOf(v) === destination)
     : venues;
 
   /*

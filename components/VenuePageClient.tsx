@@ -359,10 +359,10 @@ export function VenuePageClient({
           <li>
             <Link
               href={`/explore?destination=${encodeURIComponent(
-                venue.destination || venue.city
+                venue.state || venue.destination || venue.city
               )}`}
             >
-              {venue.destination || venue.city}
+              {venue.state || venue.destination || venue.city}
             </Link>
           </li>
           <li aria-current="page">{venue.name}</li>

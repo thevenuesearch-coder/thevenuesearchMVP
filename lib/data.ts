@@ -49,6 +49,8 @@ export type Venue = {
   dbId: string;
   name: string;
   destination: string;
+  /* Indian state (or union territory) the venue is in. Shown in the destination filters. */
+  state: string;
   city: string;
   country: string;
   type: string;
