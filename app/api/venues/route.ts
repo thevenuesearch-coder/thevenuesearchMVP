@@ -10,6 +10,7 @@ export async function GET() {
         slug,
         name,
         destination,
+        state,
         city,
         country,
         type,

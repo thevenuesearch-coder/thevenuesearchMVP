@@ -72,10 +72,11 @@ export default async function Home() {
 
         <div className="heroContent">
           <HeroSearchBox
-            venues={venues.map(({ id, name, destination }) => ({
+            venues={venues.map(({ id, name, destination, state }) => ({
               id,
               name,
               destination,
+              state,
             }))}
           />
         </div>

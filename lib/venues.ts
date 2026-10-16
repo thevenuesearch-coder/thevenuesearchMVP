@@ -61,6 +61,7 @@ type DbVenue = {
   slug: string;
   name: string;
   destination: string | null;
+  state: string | null;
   city: string | null;
   country: string | null;
   type: string | null;
@@ -137,6 +138,7 @@ function normalizeVenue(row: DbVenue): Venue {
     dbId: row.id,
     name: row.name,
     destination: row.destination || row.city || '',
+    state: row.state || '',
     city: row.city || '',
     country: row.country || 'India',
     type: row.type || '',
@@ -195,6 +197,7 @@ export async function fetchVenuesServer(): Promise<Venue[]> {
         slug,
         name,
         destination,
+        state,
         city,
         country,
         type,
@@ -297,6 +300,7 @@ async function queryVenueBySlug(
         slug,
         name,
         destination,
+        state,
         city,
         country,
         type,
