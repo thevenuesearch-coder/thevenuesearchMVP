@@ -148,7 +148,17 @@ function normalizeVenue(row: DbVenue): Venue {
     hold: row.hold_fee ?? null,
     rating: row.rating ?? null,
     verified: row.verified ?? true,
-    image: row.hero_image || '',
+    /*
+     * A venue without its own hero image uses its first space photo,
+     * the same photo its venue page shows as the hero. This keeps the
+     * Explore and Home cards from falling back to the placeholder.
+     */
+    image:
+      row.hero_image ||
+      (row.venue_spaces || [])
+        .map((space) => space.image_url)
+        .find(Boolean) ||
+      '',
     tags: row.tags || [],
     desc: row.description || '',
     updatedAt: row.updated_at || undefined,
