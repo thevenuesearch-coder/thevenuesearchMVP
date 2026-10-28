@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { pageMetadata } from '../../lib/seo';
-
+ 
 const baseMetadata = pageMetadata({
   title: 'Wedding Venues in India & Hyderabad',
   description:
