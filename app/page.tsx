@@ -9,6 +9,7 @@ import {
 import { VenueCard } from '../components/VenueCard';
 import { HeroSearchBox } from '../components/HeroSearchBox';
 import { CompareGlance } from '../components/home/CompareGlance';
+import { JourneyShowcase } from '../components/home/JourneyShowcase';
 import { imgProps, optimizedUrl } from '../lib/image';
 
 export const metadata: Metadata = pageMetadata({
@@ -134,59 +135,10 @@ export default async function Home() {
       </section>
 
       {/* =====================================================
-          EXPERIENCE
+          EXPERIENCE -- the search-to-certainty journey
       ===================================================== */}
 
-      <section className="experience">
-        <div className="experienceText">
-          <span className="kicker">FROM SEARCH TO CERTAINTY</span>
-
-          <h2>Discover. Compare. Hold. Book.</h2>
-
-          <p>
-            One wedding view connects the main venue with
-            mehendi, sangeet and haldi spaces. Enquiries, Instant
-            Holds and Instant Books stay clearly separated so
-            every decision has a defined next step.
-          </p>
-
-          <Link
-            data-cursor="view"
-            className="outlineBtn"
-            href="/how-it-works"
-          >
-            See how it works
-          </Link>
-        </div>
-
-        <div className="orbit">
-          <div className="orbitCenter">TVS</div>
-
-          <span>
-            01
-            <br />
-            <b>Discover</b>
-          </span>
-
-          <span>
-            02
-            <br />
-            <b>Compare</b>
-          </span>
-
-          <span>
-            03
-            <br />
-            <b>Hold</b>
-          </span>
-
-          <span>
-            04
-            <br />
-            <b>Confirm</b>
-          </span>
-        </div>
-      </section>
+      <JourneyShowcase />
 
       {/* =====================================================
           COLLECTIONS

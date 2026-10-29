@@ -1,0 +1,792 @@
+/*
+ * "From search to certainty" -- editorial journey section.
+ * Palette: warm ivory, near-black ink, restrained champagne gold and a
+ * touch of the VenueSearch cyan. Type: the site's Playfair Display for the
+ * headline and DM Sans for everything else.
+ * Mobile-first; annotations appear around the visual from 900px up.
+ */
+
+.section {
+  --ivory: #f2eee5;
+  --ink: #14110e;
+  --muted: #6b6258;
+  --gold: #b08d57;
+  --gold-deep: #8c6d3c;
+  --cyan: #28b9d3;
+  --gutter: 22px;
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 92px var(--gutter) 76px;
+  background: var(--ivory);
+  color: var(--ink);
+}
+
+/* Faint drafting grid, faded toward the edges. */
+.section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(rgba(20, 17, 14, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 17, 14, 0.035) 1px, transparent 1px);
+  background-size: 112px 112px;
+  -webkit-mask-image: radial-gradient(ellipse at 62% 46%, #000 18%, transparent 74%);
+  mask-image: radial-gradient(ellipse at 62% 46%, #000 18%, transparent 74%);
+}
+
+/* Warm light behind the visual and paper grain over everything. */
+.section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 640px at 74% 44%, rgba(255, 255, 255, 0.72), transparent 62%),
+    radial-gradient(760px 520px at 6% 96%, rgba(176, 141, 87, 0.12), transparent 66%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .08 0 0 0 0 .07 0 0 0 0 .05 0 0 0 .55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/></svg>");
+  opacity: 1;
+}
+
+.corner {
+  position: absolute;
+  top: 30px;
+  left: var(--gutter);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.corner i {
+  width: 44px;
+  height: 1px;
+  background: var(--gold);
+}
+
+.grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+  margin: 0 auto;
+}
+
+/* ------------------------------------------------------------- copy */
+
+.copy {
+  position: relative;
+  z-index: 2;
+}
+
+.kicker {
+  display: inline-block;
+  margin-bottom: 26px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+}
+
+.headline {
+  margin: 0 0 30px;
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: clamp(60px, 17vw, 128px);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.line {
+  display: block;
+  padding: 0.02em 0.12em 0.16em 0;
+  margin-bottom: -0.14em;
+}
+
+.line > span {
+  display: inline-block;
+}
+
+.accent {
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  background: linear-gradient(100deg, #8c6d3c 0%, #c9a869 45%, #9a7742 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-right: 0.1em;
+}
+
+.lead {
+  max-width: 34em;
+  margin: 0 0 36px;
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px 30px;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  padding: 8px 30px 8px 8px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #f6f1e7;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  box-shadow: 0 18px 36px -18px rgba(20, 17, 14, 0.55);
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.4s ease;
+}
+
+.ctaArrow {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #dcc48f, #b08d57);
+  color: var(--ink);
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cta:hover,
+.cta:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 26px 44px -18px rgba(20, 17, 14, 0.6);
+}
+
+.cta:hover .ctaArrow,
+.cta:focus-visible .ctaArrow {
+  transform: translateX(3px) rotate(-45deg);
+}
+
+.cta:focus-visible,
+.ghost:focus-visible,
+.note a:focus-visible,
+.list a:focus-visible,
+.plate:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 4px;
+}
+
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: linear-gradient(var(--gold), var(--gold)) 0 100% / 100% 1px no-repeat;
+  transition: background-size 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 0.3s ease;
+}
+
+.ghost svg {
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ghost:hover {
+  color: var(--gold-deep);
+  background-size: 38% 1px;
+}
+
+.ghost:hover svg {
+  transform: translate(3px, -3px);
+}
+
+/* ----------------------------------------------------------- visual */
+
+.visual {
+  position: relative;
+  margin-top: 20px;
+}
+
+.frame {
+  --px: 0;
+  --py: 0;
+  position: relative;
+  width: 150%;
+  margin: -12% 0 -6% -25%;
+  aspect-ratio: 1200 / 1000;
+}
+
+.rings {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.ringsDrift {
+  transform: translate(calc(var(--px) * 6px), calc(var(--py) * 5px));
+  transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ringOuter {
+  fill: none;
+  stroke: rgba(20, 17, 14, 0.14);
+  stroke-width: 1;
+  stroke-dasharray: 1 7;
+  stroke-linecap: round;
+}
+
+.ringBezel {
+  fill: none;
+  stroke: rgba(176, 141, 87, 0.75);
+  stroke-width: 1.2;
+  stroke-dasharray: 1;
+}
+
+.ticks {
+  fill: none;
+  stroke: rgba(20, 17, 14, 0.32);
+  stroke-width: 1;
+}
+
+.ringOrbit {
+  fill: none;
+  stroke: rgba(20, 17, 14, 0.3);
+  stroke-width: 1;
+  stroke-dasharray: 2 10;
+  stroke-linecap: round;
+}
+
+.orbitSpin {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.star {
+  fill: var(--ink);
+}
+
+.cross {
+  fill: none;
+  stroke: var(--gold-deep);
+  stroke-width: 1.2;
+}
+
+/* Leader lines, markers and numbered dots. */
+.leader path {
+  fill: none;
+  stroke: rgba(20, 17, 14, 0.4);
+  stroke-width: 1;
+  stroke-dasharray: 3 6;
+  transition: stroke 0.3s ease, stroke-dasharray 0.3s ease;
+}
+
+.leaderEnd {
+  fill: var(--ivory);
+  stroke: rgba(20, 17, 14, 0.55);
+  stroke-width: 1;
+  transition: stroke 0.3s ease, fill 0.3s ease;
+}
+
+.dot {
+  fill: var(--ivory);
+  stroke: var(--gold);
+  stroke-width: 1.6;
+  transition: fill 0.3s ease, stroke 0.3s ease;
+}
+
+.dotNum {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--ink);
+  transition: fill 0.3s ease;
+}
+
+.halo {
+  fill: none;
+  stroke: var(--cyan);
+  stroke-width: 1.2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.leaderOn path {
+  stroke: var(--gold);
+  stroke-dasharray: none;
+}
+
+.leaderOn .leaderEnd {
+  fill: var(--gold);
+  stroke: var(--gold);
+}
+
+.leaderOn .dot {
+  fill: var(--ink);
+  stroke: var(--ink);
+}
+
+.leaderOn .dotNum {
+  fill: #f6f1e7;
+}
+
+.leaderOn .halo {
+  opacity: 0.75;
+}
+
+/* The photograph: a circle with a hairline gold bezel. */
+.disc {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%)
+    translate3d(calc(var(--px) * -12px), calc(var(--py) * -9px), 0);
+  transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.discInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #d9c7a6;
+  box-shadow:
+    0 0 0 6px var(--ivory),
+    0 0 0 7px rgba(176, 141, 87, 0.85),
+    0 50px 90px -34px rgba(60, 38, 12, 0.55);
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Keeps the framing on the lake, mountains and the palace. The slight
+     zoom from the left edge keeps the photo's own watermark out of the
+     circle, so the visual stays clean. */
+  object-position: 0% 50%;
+  transform: scale(1.18);
+  transform-origin: 0% 50%;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 42%, transparent 52%, rgba(20, 17, 14, 0.34) 100%),
+    linear-gradient(180deg, rgba(255, 233, 190, 0.1), transparent 40%);
+}
+
+.plate {
+  position: absolute;
+  left: 50%;
+  top: 93.6%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink);
+  transition: color 0.3s ease;
+}
+
+.plate span {
+  color: var(--gold-deep);
+}
+
+.plate::before {
+  content: '';
+  width: 26px;
+  height: 1px;
+  background: var(--gold);
+}
+
+.plate:hover {
+  color: var(--gold-deep);
+}
+
+/* Annotations around the visual are hidden on phones. */
+.notes {
+  display: none;
+}
+
+/* Phone list. */
+.list {
+  display: grid;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(20, 17, 14, 0.16);
+}
+
+.list li {
+  border-bottom: 1px solid rgba(20, 17, 14, 0.16);
+}
+
+.list a {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 2px;
+  transition: padding 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.3s ease;
+}
+
+.list a:hover {
+  padding-left: 10px;
+  color: var(--gold-deep);
+}
+
+.listNum {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--gold-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+.listBody {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+}
+
+.listBody strong {
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.listBody span {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.foot {
+  display: none;
+}
+
+/* ----------------------------------------------------- entrance motion */
+
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    transition: opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms),
+      transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms);
+  }
+
+  .line {
+    overflow: hidden;
+  }
+
+  .line > span {
+    transition: transform 1.05s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms);
+  }
+
+  .discInner {
+    transition: opacity 1.2s ease 0.25s, transform 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s;
+  }
+
+  .ringBezel {
+    transition: stroke-dashoffset 2s cubic-bezier(0.3, 0.6, 0.2, 1) 0.3s;
+  }
+
+  .ringOuter,
+  .ringOrbit,
+  .ticks,
+  .star,
+  .cross {
+    transition: opacity 1.2s ease 0.5s;
+  }
+
+  .leader {
+    transition: opacity 0.8s ease var(--d, 0ms);
+  }
+
+  .note,
+  .list li {
+    transition: opacity 0.8s ease var(--d, 0ms),
+      transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms);
+  }
+
+  .plate {
+    transition: opacity 1s ease 1s, color 0.3s ease;
+  }
+
+  .section[data-state='pre'] .rise {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  .section[data-state='pre'] .line > span {
+    transform: translateY(112%);
+  }
+
+  .section[data-state='pre'] .discInner {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  .section[data-state='pre'] .ringBezel {
+    stroke-dashoffset: 1;
+  }
+
+  .section[data-state='pre'] .ringOuter,
+  .section[data-state='pre'] .ringOrbit,
+  .section[data-state='pre'] .ticks,
+  .section[data-state='pre'] .star,
+  .section[data-state='pre'] .cross,
+  .section[data-state='pre'] .leader,
+  .section[data-state='pre'] .plate {
+    opacity: 0;
+  }
+
+  .section[data-state='pre'] .note,
+  .section[data-state='pre'] .list li {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  .section[data-state='in'] .ringBezel {
+    stroke-dashoffset: 0;
+  }
+
+  /* A slow, quiet drift on the dashed orbit. */
+  .orbitSpin {
+    animation: drift 160s linear infinite;
+  }
+
+  .leaderOn .halo {
+    animation: pulse 1.8s ease-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+}
+
+@keyframes drift {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* --------------------------------------------------------- tablet up */
+
+@media (min-width: 900px) {
+  .section {
+    --gutter: max(5vw, calc((100vw - 1480px) / 2));
+    padding: 132px var(--gutter) 128px;
+  }
+
+  .corner {
+    top: 38px;
+    left: var(--gutter);
+  }
+
+  .headline {
+    font-size: clamp(64px, 11vw, 118px);
+  }
+
+  .visual {
+    margin-top: 24px;
+  }
+
+  .frame {
+    width: 100%;
+    margin: 0 auto;
+    max-width: 880px;
+  }
+
+  .list {
+    display: none;
+  }
+
+  .notes {
+    display: block;
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    pointer-events: none;
+  }
+
+  .note {
+    position: absolute;
+    width: 16%;
+    pointer-events: auto;
+  }
+
+  .note a {
+    display: grid;
+    gap: 5px;
+    padding: 2px 0;
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .noteLeft {
+    text-align: right;
+  }
+
+  .noteLeft a:hover {
+    transform: translateX(-4px);
+  }
+
+  .noteRight a:hover {
+    transform: translateX(4px);
+  }
+
+  .noteNum {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--gold-deep);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .noteNum::after {
+    content: '';
+    width: 26px;
+    height: 1px;
+    background: var(--gold);
+    transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .noteLeft .noteNum {
+    flex-direction: row-reverse;
+  }
+
+  .note a:hover .noteNum::after,
+  .note a:focus-visible .noteNum::after {
+    width: 42px;
+  }
+
+  .note strong {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.15;
+  }
+
+  .noteText {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .plate {
+    top: 95%;
+  }
+
+  .foot {
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: 34px;
+    display: flex;
+    justify-content: space-between;
+    margin: 0;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+}
+
+/* ----------------------------------------------------------- desktop */
+
+@media (min-width: 1100px) {
+  .grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: center;
+    gap: 1vw;
+  }
+
+  .headline {
+    font-size: clamp(64px, 7.1vw, 118px);
+  }
+
+  .visual {
+    margin: 0 -1.5vw 0 0;
+  }
+
+  .frame {
+    max-width: none;
+  }
+}
+
+/* Very wide screens: keep the headline and visual in proportion. */
+@media (min-width: 1500px) {
+  .section {
+    --gutter: max(5vw, calc((100vw - 1640px) / 2));
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6.6fr);
+  }
+}
+
+/* Below 900px the labels move into a list, so the leader lines are dropped
+   (they would end in empty space) and only the dots remain. The numbers
+   inside the dots show only where they are large enough to read. */
+.leader path,
+.leaderEnd,
+.dotNum {
+  display: none;
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  .dotNum {
+    display: block;
+  }
+}
+
+@media (min-width: 900px) {
+  .leader path,
+  .leaderEnd {
+    display: initial;
+  }
+}
