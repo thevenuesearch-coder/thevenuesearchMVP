@@ -10,7 +10,15 @@ import { VenueCard } from '../components/VenueCard';
 import { HeroSearchBox } from '../components/HeroSearchBox';
 import { CompareGlance } from '../components/home/CompareGlance';
 import { JourneyShowcase } from '../components/home/JourneyShowcase';
-import { imgProps, optimizedUrl } from '../lib/image';
+import { HeroCollage } from '../components/home/HeroCollage';
+import { DestinationsSection } from '../components/home/DestinationsSection';
+import { CollectionsSection } from '../components/home/CollectionsSection';
+import { PartnerCta } from '../components/home/PartnerCta';
+import { Marquee } from '../components/home/Marquee';
+import { SectionHead } from '../components/home/SectionHead';
+import { MotionRoot } from '../components/collections/MotionRoot';
+import { Reveal } from '../components/collections/Reveal';
+import { imgProps, optimizedUrl, isOptimizable } from '../lib/image';
 
 export const metadata: Metadata = pageMetadata({
   title: 'Verified Destination Wedding Venues in Hyderabad & India',
@@ -49,29 +57,13 @@ export default async function Home() {
 
   return (
     <main id="main-content">
+      <MotionRoot>
       {/* =====================================================
           HERO
       ===================================================== */}
 
-      <section className="hero">
-        <div className="heroVideo">
-          <video
-            aria-hidden="true"
-            tabIndex={-1}
-            autoPlay
-            muted
-            loop
-            playsInline
-            poster="https://raw.githubusercontent.com/thevenuesearch-coder/thevenuesearchMVP/main/public/images/venues/tajrishikesh.png"
-            src={
-              process.env.NEXT_PUBLIC_HERO_VIDEO_URL || undefined
-            }
-          />
-        </div>
-
-        <div className="heroShade" />
-
-        <div className="heroContent">
+      <section className="heroV2">
+        <div className="heroV2Inner">
           <HeroSearchBox
             venues={venues.map(({ id, name, destination, state }) => ({
               id,
@@ -80,100 +72,81 @@ export default async function Home() {
               state,
             }))}
           />
-        </div>
 
-        <div className="heroNote">
-          A trusted infrastructure layer for weddings & events
-          <span>•</span>
-          Destination venues across India & beyond
+          <HeroCollage
+            venues={[
+              ...[
+                'Six Senses Fort Barwara',
+                'Wildflower Hall, An Oberoi Resort',
+                'Taj Fateh Prakash Palace',
+                'JW Marriott Mussoorie Walnut Grove Resort & Spa',
+              ].flatMap((name) => {
+                const v = venues.find((item) => item.name === name);
+                return v && isOptimizable(v.image) ? [{ id: v.id, name: v.name, image: v.image }] : [];
+              }),
+            ]}
+          />
         </div>
       </section>
 
-      {/* =====================================================
-          COMPARE VENUES AT A GLANCE
-          (replaces the former "Venue discovery shouldn't feel
-          like a negotiation" statistics section)
-      ===================================================== */}
+      <Marquee items={['Destination weddings','Luxury palaces','Heritage hotels','Beachfront venues','Hill resorts','Hold your date']} />
 
-      <CompareGlance />
+      <DestinationsSection
+        venues={venues.map(({ id, name, destination, state, image }) => ({ id, name, destination, state, image }))}
+      />
 
-      {/* =====================================================
-          FEATURED VENUES
-      ===================================================== */}
+      <CollectionsSection
+        venues={venues.map(({ id, name, type, tags, image }) => ({ id, name, type, tags: tags || [], image }))}
+      />
 
-      <section className="darkSection">
-        <div className="sectionHead">
-          <div>
-            <span className="kicker">
-              CURATED FOR THE DESTINATION WEDDING
-            </span>
+      {/* FEATURED VENUES — real VenueCard components */}
+      <section className="edSection edCream" aria-labelledby="explore-title">
+        <div className="edWrap">
+          <Reveal>
+            <SectionHead
+              id="explore-title"
+              index="03"
+              label="Explore"
+              title={<>Venues worth <em>the journey.</em></>}
+              blurb="Discover and filter verified venues across India."
+              href="/explore"
+              hrefLabel="All venues"
+            />
+          </Reveal>
 
-            <h2>Discover beautiful venues.</h2>
-          </div>
-
-          <Link href="/explore">View all venues →</Link>
+          {venues.length === 0 ? (
+            <div className="emptyState">
+              <p>No venues are published yet — check back soon.</p>
+            </div>
+          ) : (
+            <div className="venueGrid">
+              {featuredVenues.map((v) => (
+                <VenueCard
+                  key={v.id}
+                  v={{
+                    ...toVenueSummary(v),
+                    slug: v.id,
+                    description: v.desc,
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
-
-        {venues.length === 0 ? (
-          <div className="emptyState">
-            <p>No venues are published yet — check back soon.</p>
-          </div>
-        ) : (
-          <div className="venueGrid">
-            {featuredVenues.map((v) => (
-              <VenueCard
-                key={v.id}
-                v={{
-                  ...toVenueSummary(v),
-                  slug: v.id,
-                  description: v.desc,
-                }}
-              />
-            ))}
-          </div>
-        )}
       </section>
 
-      {/* =====================================================
-          EXPERIENCE -- the search-to-certainty journey
-      ===================================================== */}
+      <div className="vsWhiteWrap">
+        <CompareGlance />
+      </div>
 
+      {/* LOCKED: approved "Discover. Compare. Hold. Book." section — unchanged */}
       <JourneyShowcase />
 
-      {/* =====================================================
-          COLLECTIONS
-      ===================================================== */}
-
-      <section className="collections">
-        <span className="kicker">INSPIRE THE DECISION</span>
-
-        <h2>Start with a feeling.</h2>
-
-        <div className="collectionRow">
-          {venues.slice(0, 4).map((v, index) => (
-            <Link
-              href={`/venues/${v.id}`}
-              className="collection"
-              key={v.id}
-            >
-              {v.image && (
-                <img
-                  {...imgProps(v.image, v.name, {
-                    width: 300,
-                    height: 420,
-                    sizes: '300px',
-                  })}
-                />
-              )}
-
-              <div>
-                <small>0{index + 1}</small>
-                <h3>{v.name}</h3>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <PartnerCta
+        image={(venues.find((v) => v.name === 'Taj Lake Palace') || venues.find((v) => isOptimizable(v.image)))?.image}
+        imageAlt="Taj Lake Palace"
+      />
+      </MotionRoot>
     </main>
   );
 }

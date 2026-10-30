@@ -1,4 +1,5 @@
 import '../styles/globals.css';
+import '../styles/redesign.css';
 import type { Metadata } from 'next';
 import { DM_Sans, Playfair_Display } from 'next/font/google';
 import { Header } from '../components/Header';

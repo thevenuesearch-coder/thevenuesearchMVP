@@ -1,3 +1,56 @@
 import Link from 'next/link';
 import { imgProps } from '../lib/image';
-export function Footer(){return <footer><div className="footerTop"><div><img className="footerLogo" {...imgProps('/logo.png', 'The Venue Search', { width: 85, height: 51, sizes: '85px' })} /><h2>The infrastructure layer for weddings & events.</h2><p>Verified venues. Transparent decisions. Confident bookings.</p></div><nav aria-label="Discover"><b>Discover</b><Link href="/explore">Explore venues</Link><Link href="/wedding-venues">Wedding venues</Link><Link href="/collections">Collections</Link><Link href="/how-it-works">How it works</Link></nav><nav aria-label="Partners"><b>Partners</b><Link href="/for-venues">List your venue</Link><Link href="/planner" rel="nofollow">Planner workspace</Link></nav><div><b>Support</b><a href="mailto:thevenuesearch@gmail.com">thevenuesearch@gmail.com</a><span>India · Hyderabad launch</span></div></div><div className="footerBottom"><span>© 2026 The Venue Search</span><span>Built for the next generation of destination weddings.</span></div></footer>}
+
+/*
+ * Footer — UI v2. Only links/contact details that already existed on the
+ * site (plus the existing Compare route) are shown; no social or newsletter
+ * placeholders, because neither exists in the product yet.
+ */
+export function Footer() {
+  return (
+    <footer className="vsFooter">
+      <div className="footerTop">
+        <div className="footBrand">
+          <img
+            className="footerLogo"
+            {...imgProps('/logo.png', 'The Venue Search', { width: 85, height: 51, sizes: '85px' })}
+          />
+          <h2>The infrastructure layer for weddings &amp; events.</h2>
+          <p>Verified venues. Transparent decisions. Confident bookings.</p>
+        </div>
+
+        <nav aria-label="Discover">
+          <b>Explore</b>
+          <Link href="/explore">Explore venues</Link>
+          <Link href="/wedding-venues">Wedding venues</Link>
+          <Link href="/collections">Collections</Link>
+          <Link href="/compare">Compare Venues</Link>
+        </nav>
+
+        <nav aria-label="About">
+          <b>About</b>
+          <Link href="/how-it-works">How it works</Link>
+          <Link href="/for-venues">For venues</Link>
+        </nav>
+
+        <nav aria-label="Partners">
+          <b>Partners</b>
+          <Link href="/for-venues">List your venue</Link>
+          <Link href="/planner" rel="nofollow">Planner workspace</Link>
+        </nav>
+
+        <div>
+          <b>Support</b>
+          <a href="mailto:thevenuesearch@gmail.com">thevenuesearch@gmail.com</a>
+          <span>India · Hyderabad launch</span>
+        </div>
+      </div>
+
+      <div className="footerBottom">
+        <span>© {new Date().getFullYear()} The Venue Search</span>
+        <span>Built for the next generation of destination weddings.</span>
+        <a href="#main-content" className="backTop">Back to top ↑</a>
+      </div>
+    </footer>
+  );
+}

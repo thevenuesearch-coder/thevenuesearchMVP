@@ -10,7 +10,7 @@
   --text-2: #b9b6c0;
   --cyan: #28b9d3;
   --cyan-light: #6fd7e5;
-  --purple: #8e6bea;
+  --purple: #1769D2;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -52,10 +52,10 @@
   gap: 9px;
   min-height: 44px;
   padding: 0 18px;
-  border: 1px solid #09090d33;
+  border: 1px solid #071B3533;
   border-radius: 99px;
   background: transparent;
-  color: #09090d;
+  color: #071B35;
   font-size: 13px;
   font-weight: 600;
   transition: background 0.3s, color 0.3s, border-color 0.3s,
@@ -63,13 +63,13 @@
 }
 
 .pill:hover {
-  border-color: #09090d;
+  border-color: #071B35;
   transform: translateY(-2px);
 }
 
 .pillActive {
-  border-color: #09090d;
-  background: #09090d;
+  border-color: #071B35;
+  background: #071B35;
   color: #fff;
 }
 
@@ -221,7 +221,7 @@
   padding: 6px 12px;
   border: 1px solid #ffffff2b;
   border-radius: 99px;
-  background: #0b0b1085;
+  background: #071B3585;
   backdrop-filter: blur(12px);
   font-size: 11px;
   font-weight: 600;
@@ -243,7 +243,7 @@
   z-index: 3;
   padding: 6px 12px;
   border-radius: 99px;
-  background: #0b0b1085;
+  background: #071B3585;
   backdrop-filter: blur(12px);
   font-size: 11px;
   font-weight: 700;
@@ -267,7 +267,7 @@
   padding: 0;
   border: 1px solid #ffffff33;
   border-radius: 50%;
-  background: #0b0b1085;
+  background: #071B3585;
   backdrop-filter: blur(12px);
   color: #fff;
   transform: translateY(-50%);
@@ -285,7 +285,7 @@
 
 .nav:hover {
   background: #fff;
-  color: #09090d;
+  color: #071B35;
 }
 
 .nav:active {
@@ -310,7 +310,7 @@
   padding: 12px 16px;
   overflow-x: auto;
   list-style: none;
-  background: #0b0b10;
+  background: #071B35;
   scrollbar-width: none;
 }
 
@@ -563,7 +563,7 @@
 
 .cta:hover {
   background: #fff;
-  color: #09090d;
+  color: #071B35;
 }
 
 .ctaSolid {
@@ -596,7 +596,7 @@
 .band {
   margin: 90px -5vw 0;
   padding: 90px 5vw;
-  background: #0b0b10;
+  background: #071B35;
   color: #fff;
 }
 
@@ -663,7 +663,7 @@
 .tabActive {
   border-color: #fff;
   background: #fff;
-  color: #09090d;
+  color: #071B35;
 }
 
 .tab img,
