@@ -76,19 +76,42 @@
 .heroSearch .primaryBtn{background:linear-gradient(100deg,var(--vs-royal),var(--vs-cyan));border-radius:999px;padding:0 26px;white-space:nowrap;box-shadow:0 12px 26px rgba(23,105,210,.4)}
 
 /* floating photographs */
-.heroCollage{position:relative;height:clamp(420px,46vw,600px)}
-.heroCollage .shot{position:absolute;margin:0;border-radius:22px;overflow:hidden;border:1px solid rgba(32,196,232,.45);background:var(--vs-midnight);box-shadow:0 30px 70px rgba(2,10,28,.6),0 0 40px rgba(40,125,235,.28);animation:vsFloat 9s ease-in-out infinite}
-.heroCollage .shot img{width:100%;height:100%;object-fit:cover;display:block}
-.heroCollage .shot:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(7,27,53,.7));pointer-events:none}
-.heroCollage .shot figcaption{position:absolute;left:16px;right:16px;bottom:14px;z-index:2;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#fff}
-.heroCollage .s1{left:0;top:16%;width:30%;height:56%;transform:rotate(-7deg);animation-delay:-2s;opacity:.92}
-.heroCollage .s2{left:19%;top:3%;width:34%;height:70%;transform:rotate(-2deg);animation-delay:-4s}
-.heroCollage .s3{left:36%;top:0;width:36%;height:82%;z-index:3;animation-delay:0s;border-color:rgba(32,196,232,.8)}
-.heroCollage .s4{right:0;top:12%;width:32%;height:64%;transform:rotate(7deg);animation-delay:-6s;opacity:.95}
-.heroCollage .tagline{position:absolute;right:-6px;top:-26px;font-family:var(--serif);font-style:italic;font-size:clamp(15px,1.5vw,21px);line-height:1.35;text-align:right;color:#A7C6F4;transform:rotate(-6deg);z-index:4}
-@keyframes vsFloat{0%,100%{translate:0 0}50%{translate:0 -10px}}
-@media (prefers-reduced-motion:reduce){.heroCollage .shot{animation:none}}
-
+.heroCollage{position:relative;height:clamp(420px,46vw,600px);perspective:1400px}
+/* frame: position, size, static tilt, hover lift (independent `scale`/`translate` props) */
+.heroCollage .shot{position:absolute;margin:0;z-index:1;transition:scale .6s cubic-bezier(.2,.8,.2,1),translate .6s cubic-bezier(.2,.8,.2,1)}
+.heroCollage .s1{left:0;top:16%;width:30%;height:56%;transform:rotate(-7deg);opacity:.92}
+.heroCollage .s2{left:19%;top:3%;width:34%;height:70%;transform:rotate(-2deg);z-index:2}
+.heroCollage .s3{left:36%;top:0;width:36%;height:82%;z-index:3}
+.heroCollage .s4{right:0;top:12%;width:32%;height:64%;transform:rotate(7deg);opacity:.95;z-index:2}
+/* organic float — different path, duration and delay per card; amplitude scales with --amp */
+.heroCollage{--amp:1}
+.heroCollage .shotFloat{width:100%;height:100%;will-change:translate}
+.heroCollage .s1 .shotFloat{animation:vsFloatA 13s ease-in-out infinite -3s}
+.heroCollage .s2 .shotFloat{animation:vsFloatB 11s ease-in-out infinite -7s}
+.heroCollage .s3 .shotFloat{animation:vsFloatC 15s ease-in-out infinite -1s}
+.heroCollage .s4 .shotFloat{animation:vsFloatD 12s ease-in-out infinite -9s}
+@keyframes vsFloatA{0%,100%{translate:0 0}30%{translate:calc(4px*var(--amp)) calc(-9px*var(--amp))}65%{translate:calc(-3px*var(--amp)) calc(-5px*var(--amp))}}
+@keyframes vsFloatB{0%,100%{translate:0 0}35%{translate:calc(-5px*var(--amp)) calc(-8px*var(--amp))}70%{translate:calc(3px*var(--amp)) calc(-11px*var(--amp))}}
+@keyframes vsFloatC{0%,100%{translate:0 0}40%{translate:calc(3px*var(--amp)) calc(-7px*var(--amp))}75%{translate:calc(-4px*var(--amp)) calc(-10px*var(--amp))}}
+@keyframes vsFloatD{0%,100%{translate:0 0}25%{translate:calc(-4px*var(--amp)) calc(-6px*var(--amp))}60%{translate:calc(5px*var(--amp)) calc(-10px*var(--amp))}}
+/* visual card: border, glow, clipping, parallax target */
+.heroCollage .shotPar{position:relative;width:100%;height:100%;border-radius:22px;overflow:hidden;border:1px solid rgba(32,196,232,.45);background:var(--vs-midnight);box-shadow:0 30px 70px rgba(2,10,28,.6),0 0 40px rgba(40,125,235,.28);will-change:transform;transition:box-shadow .6s ease,border-color .6s ease}
+.heroCollage .s3 .shotPar{border-color:rgba(32,196,232,.8)}
+.heroCollage .shotPar img{width:100%;height:100%;object-fit:cover;display:block}
+.heroCollage .shotPar:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(7,27,53,.7));pointer-events:none}
+.heroCollage .shotPar figcaption{position:absolute;left:16px;right:16px;bottom:14px;z-index:2;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#fff}
+.heroCollage .tagline{position:absolute;right:-6px;top:-26px;font-family:var(--serif);font-style:italic;font-size:clamp(15px,1.5vw,21px);line-height:1.35;text-align:right;color:#A7C6F4;transform:rotate(-6deg);z-index:4;pointer-events:none}
+/* hover: bring forward, lift, scale, refined glow (mouse devices only) */
+@media (hover:hover) and (pointer:fine){
+  .heroCollage .shot:hover{z-index:10;scale:1.06;translate:0 -10px}
+  .heroCollage .shot:hover .shotPar{border-color:rgba(32,196,232,.95);box-shadow:0 38px 80px rgba(2,10,28,.65),0 0 56px rgba(32,196,232,.4)}
+}
+/* touch: no cursor tracking (JS), only a very gentle float */
+@media (pointer:coarse){.heroCollage{--amp:.4}}
+@media (prefers-reduced-motion:reduce){
+  .heroCollage .shotFloat{animation:none}
+  .heroCollage .shot,.heroCollage .shotPar{transition:none}
+}
 .heroV2 a:focus-visible,.heroV2 button:focus-visible,.heroV2 select:focus-visible{outline:2px solid var(--vs-cyan);outline-offset:3px}
 
 @media(max-width:1100px){
