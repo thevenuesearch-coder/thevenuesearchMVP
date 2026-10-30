@@ -6,11 +6,11 @@
 :root{--cursor-x:50vw;--cursor-y:50vh}
 @media (pointer:fine) and (prefers-reduced-motion:no-preference){
   html,body,a,button{cursor:none!important}
-  .cursor-glow{position:fixed;left:-90px;top:-90px;width:180px;height:180px;border-radius:50%;pointer-events:none;z-index:9997;transform:translate3d(50vw,50vh,0);background:radial-gradient(circle,rgba(40,185,211,.14) 0%,rgba(142,107,234,.07) 34%,transparent 70%);filter:blur(8px);transition:opacity .3s ease;mix-blend-mode:screen}
+  .cursor-glow{position:fixed;left:-90px;top:-90px;width:180px;height:180px;border-radius:50%;pointer-events:none;z-index:9997;transform:translate3d(50vw,50vh,0);background:radial-gradient(circle,rgba(40,185,211,.14) 0%,rgba(40,125,235,.07) 34%,transparent 70%);filter:blur(8px);transition:opacity .3s ease;mix-blend-mode:screen}
   .cursor-dot{position:fixed;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;pointer-events:none;z-index:10000;background:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.35),0 0 18px rgba(40,185,211,.85);transform:translate3d(50vw,50vh,0);transition:opacity .2s ease,transform .12s ease}
   .cursor-ring{position:fixed;left:-24px;top:-24px;width:48px;height:48px;border:1px solid rgba(255,255,255,.72);border-radius:50%;pointer-events:none;z-index:9999;transform:translate3d(50vw,50vh,0);display:grid;place-items:center;backdrop-filter:blur(1px);transition:width .28s cubic-bezier(.2,.8,.2,1),height .28s cubic-bezier(.2,.8,.2,1),left .28s cubic-bezier(.2,.8,.2,1),top .28s cubic-bezier(.2,.8,.2,1),border-color .28s ease,background .28s ease,box-shadow .28s ease}
   .cursor-ring:before,.cursor-ring:after{content:"";position:absolute;border-radius:50%;inset:-7px;border:1px solid rgba(40,185,211,.16);animation:cursorPulse 2.2s ease-in-out infinite}
-  .cursor-ring:after{inset:-13px;border-color:rgba(142,107,234,.1);animation-delay:.35s}
+  .cursor-ring:after{inset:-13px;border-color:rgba(40,125,235,.1);animation-delay:.35s}
   .cursor-ring.cursor-active{left:-34px;top:-34px;width:68px;height:68px;border-color:rgba(40,185,211,.9);background:rgba(255,255,255,.08);box-shadow:0 0 35px rgba(40,185,211,.16),inset 0 0 22px rgba(255,255,255,.04)}
   .cursor-ring.cursor-hero{border-color:rgba(255,255,255,.9);box-shadow:0 0 38px rgba(40,185,211,.2)}
   .cursor-label{font-size:7px;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:#fff;opacity:0;transform:scale(.7);transition:opacity .18s ease,transform .18s ease}
