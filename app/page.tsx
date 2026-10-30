@@ -10,6 +10,7 @@ import { VenueCard } from '../components/VenueCard';
 import { HeroSearchBox } from '../components/HeroSearchBox';
 import { CompareGlance } from '../components/home/CompareGlance';
 import { JourneyShowcase } from '../components/home/JourneyShowcase';
+import { HeroCollage } from '../components/home/HeroCollage';
 import { imgProps, optimizedUrl } from '../lib/image';
 
 export const metadata: Metadata = pageMetadata({
@@ -53,25 +54,8 @@ export default async function Home() {
           HERO
       ===================================================== */}
 
-      <section className="hero">
-        <div className="heroVideo">
-          <video
-            aria-hidden="true"
-            tabIndex={-1}
-            autoPlay
-            muted
-            loop
-            playsInline
-            poster="https://raw.githubusercontent.com/thevenuesearch-coder/thevenuesearchMVP/main/public/images/venues/tajrishikesh.png"
-            src={
-              process.env.NEXT_PUBLIC_HERO_VIDEO_URL || undefined
-            }
-          />
-        </div>
-
-        <div className="heroShade" />
-
-        <div className="heroContent">
+      <section className="heroV2">
+        <div className="heroV2Inner">
           <HeroSearchBox
             venues={venues.map(({ id, name, destination, state }) => ({
               id,
@@ -80,12 +64,20 @@ export default async function Home() {
               state,
             }))}
           />
-        </div>
 
-        <div className="heroNote">
-          A trusted infrastructure layer for weddings & events
-          <span>•</span>
-          Destination venues across India & beyond
+          <HeroCollage
+            venues={[
+              ...[
+                'Taj Rishikesh Resort & Spa',
+                'Wildflower Hall, An Oberoi Resort',
+                'Taj Fateh Prakash Palace',
+                'Six Senses Fort Barwara',
+              ].flatMap((name) => {
+                const v = venues.find((item) => item.name === name);
+                return v && v.image ? [{ id: v.id, name: v.name, image: v.image }] : [];
+              }),
+            ]}
+          />
         </div>
       </section>
 

@@ -1,0 +1,106 @@
+/* =====================================================================
+   VenueSearch UI v2 — design tokens + shared chrome (header, hero)
+   Additive: new --vs-* tokens only. Existing tokens (--paper, --purple,
+   --ink …) are untouched because the locked "How it works" section and
+   several modules still read them.
+   ===================================================================== */
+:root{
+  --vs-navy:#071B35;
+  --vs-midnight:#0B2545;
+  --vs-royal:#1769D2;
+  --vs-bright:#287DEB;
+  --vs-cyan:#20C4E8;
+  --vs-white:#FFFFFF;
+  --vs-ivory:#F7F5F0;
+  --vs-cream:#F1EEE7;
+  --vs-gold:#C6A66B;
+  --vs-ink:#0A1830;
+  --vs-muted:#5B6B83;
+  --vs-line:rgba(32,196,232,.22);
+  --vs-gutter:clamp(20px,5vw,72px);
+}
+
+/* ---------- Header ---------- */
+.nav{
+  background:linear-gradient(rgba(7,27,53,.94),rgba(7,27,53,0));
+  padding:16px var(--vs-gutter);
+  gap:24px;
+}
+.nav.scrolled{background:rgba(7,27,53,.95);backdrop-filter:blur(16px);box-shadow:0 1px 0 rgba(32,196,232,.18)}
+.nav .brand b{color:var(--vs-cyan)}
+.nav nav{gap:30px}
+.nav nav a{opacity:.88;position:relative;padding:6px 0}
+.nav nav a:after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--vs-cyan);transform:scaleX(0);transform-origin:left;transition:transform .3s ease}
+.nav nav a:hover,.nav nav a:focus-visible{opacity:1}
+.nav nav a:hover:after,.nav nav a:focus-visible:after{transform:scaleX(1)}
+.nav .primaryBtn{background:linear-gradient(100deg,var(--vs-royal),var(--vs-bright));box-shadow:0 10px 28px rgba(23,105,210,.38)}
+.nav .outlineBtn{border-color:rgba(255,255,255,.32)}
+
+.navToggle{display:none;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);color:#fff;align-items:center;justify-content:center;padding:0}
+.navToggle span,.navToggle span:before,.navToggle span:after{display:block;width:18px;height:2px;background:#fff;border-radius:2px;position:relative;transition:transform .25s ease,background .25s ease}
+.navToggle span:before,.navToggle span:after{content:"";position:absolute;left:0}
+.navToggle span:before{top:-6px}.navToggle span:after{top:6px}
+.navToggle[aria-expanded="true"] span{background:transparent}
+.navToggle[aria-expanded="true"] span:before{top:0;transform:rotate(45deg)}
+.navToggle[aria-expanded="true"] span:after{top:0;transform:rotate(-45deg)}
+.mobileNav{display:none}
+
+@media(max-width:900px){
+  .navToggle{display:inline-flex}
+  .mobileNav{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;z-index:49;padding:86px var(--vs-gutter) 28px;background:rgba(7,27,53,.98);backdrop-filter:blur(18px);box-shadow:0 24px 60px rgba(0,0,0,.4);transform:translateY(-102%);visibility:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),visibility 0s linear .35s}
+  .mobileNav.open{transform:none;visibility:visible;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+  .mobileNav a{color:#fff;font-size:18px;padding:15px 0;border-bottom:1px solid rgba(255,255,255,.1)}
+  .mobileNav .primaryBtn{margin-top:20px;border:0;font-size:15px}
+}
+
+/* ---------- Homepage hero ---------- */
+.heroV2{position:relative;color:#fff;overflow:hidden;min-height:min(900px,100svh);min-height:max(700px,min(900px,100svh));display:flex;align-items:center;
+  background:
+    radial-gradient(900px 520px at 78% 38%,rgba(40,125,235,.30),transparent 62%),
+    radial-gradient(700px 420px at 8% 100%,rgba(32,196,232,.14),transparent 60%),
+    linear-gradient(180deg,var(--vs-navy),var(--vs-midnight) 120%)}
+.heroV2Inner{position:relative;z-index:2;width:100%;max-width:1360px;margin:0 auto;padding:150px var(--vs-gutter) 70px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:40px;align-items:center}
+.heroV2 .kicker{color:var(--vs-cyan);font-size:11px;letter-spacing:.2em}
+.heroV2 h1{font-family:var(--serif);font-weight:600;font-size:clamp(46px,6.2vw,88px);line-height:1.02;letter-spacing:-.025em;margin:0 0 24px;max-width:none;color:#fff}
+.heroV2 h1 em{font-style:italic;font-weight:500;color:var(--vs-cyan)}
+.heroV2 p.heroLead{max-width:520px;font-size:18px;line-height:1.65;color:#C9D6EA;margin:0}
+
+.heroSearch{margin-top:38px;display:flex;align-items:stretch;gap:0;padding:8px;background:#fff;color:var(--vs-ink);border-radius:999px;max-width:760px;box-shadow:0 30px 80px rgba(2,10,28,.55),0 0 0 6px rgba(32,196,232,.16)}
+.heroSearch .field{display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:8px 20px;border-right:1px solid #E3E8F0}
+.heroSearch .field:nth-of-type(3){border-right:0}
+.heroSearch .field svg{flex:none;width:22px;height:22px;color:var(--vs-royal)}
+.heroSearch .fieldBody{min-width:0;flex:1}
+.heroSearch label{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7A889D;margin-bottom:3px}
+.heroSearch select{width:100%;border:0;background:transparent;font-weight:600;font-size:14px;color:var(--vs-ink);outline:0;padding:0;text-overflow:ellipsis}
+.heroSearch .field:focus-within{box-shadow:inset 0 0 0 2px rgba(23,105,210,.35);border-radius:999px}
+.heroSearch .primaryBtn{background:linear-gradient(100deg,var(--vs-royal),var(--vs-cyan));border-radius:999px;padding:0 26px;white-space:nowrap;box-shadow:0 12px 26px rgba(23,105,210,.4)}
+
+/* floating photographs */
+.heroCollage{position:relative;height:clamp(420px,46vw,600px)}
+.heroCollage .shot{position:absolute;margin:0;border-radius:22px;overflow:hidden;border:1px solid rgba(32,196,232,.45);background:var(--vs-midnight);box-shadow:0 30px 70px rgba(2,10,28,.6),0 0 40px rgba(40,125,235,.28);animation:vsFloat 9s ease-in-out infinite}
+.heroCollage .shot img{width:100%;height:100%;object-fit:cover;display:block}
+.heroCollage .shot:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(7,27,53,.7));pointer-events:none}
+.heroCollage .shot figcaption{position:absolute;left:16px;right:16px;bottom:14px;z-index:2;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#fff}
+.heroCollage .s1{left:0;top:16%;width:30%;height:56%;transform:rotate(-7deg);animation-delay:-2s;opacity:.92}
+.heroCollage .s2{left:19%;top:3%;width:34%;height:70%;transform:rotate(-2deg);animation-delay:-4s}
+.heroCollage .s3{left:36%;top:0;width:36%;height:82%;z-index:3;animation-delay:0s;border-color:rgba(32,196,232,.8)}
+.heroCollage .s4{right:0;top:12%;width:32%;height:64%;transform:rotate(7deg);animation-delay:-6s;opacity:.95}
+.heroCollage .tagline{position:absolute;right:-6px;top:-26px;font-family:var(--serif);font-style:italic;font-size:clamp(15px,1.5vw,21px);line-height:1.35;text-align:right;color:#A7C6F4;transform:rotate(-6deg);z-index:4}
+@keyframes vsFloat{0%,100%{translate:0 0}50%{translate:0 -10px}}
+@media (prefers-reduced-motion:reduce){.heroCollage .shot{animation:none}}
+
+.heroV2 a:focus-visible,.heroV2 button:focus-visible,.heroV2 select:focus-visible{outline:2px solid var(--vs-cyan);outline-offset:3px}
+
+@media(max-width:1100px){
+  .heroV2Inner{grid-template-columns:1fr;padding-top:130px;gap:26px}
+  .heroCollage{height:clamp(300px,58vw,460px);max-width:640px;width:100%;margin:0 auto}
+  .heroSearch{max-width:none}
+}
+@media(max-width:700px){
+  .heroSearch{flex-direction:column;border-radius:24px;padding:10px}
+  .heroSearch .field{border-right:0;border-bottom:1px solid #E3E8F0;padding:12px 14px}
+  .heroSearch .field:nth-of-type(3){border-bottom:0}
+  .heroSearch .primaryBtn{padding:15px 26px;margin-top:6px}
+  .heroV2 p.heroLead{font-size:16px}
+  .heroCollage .tagline{display:none}
+}

@@ -10,6 +10,7 @@ export function Header() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -107,6 +108,16 @@ export function Header() {
       document.removeEventListener('keydown', handleEscape);
     };
   }, [profileOpen]);
+
+  /* Close the mobile menu with Escape */
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
 
   /*
    * Close dropdown when clicking outside
@@ -236,6 +247,20 @@ export function Header() {
           For venues
         </Link>
       </nav>
+
+      {/* Mobile menu panel (visible < 900px) */}
+      <div
+        id="mobile-nav"
+        className={menuOpen ? 'mobileNav open' : 'mobileNav'}
+        onClick={() => setMenuOpen(false)}
+      >
+        <Link href="/explore">Explore</Link>
+        <Link href="/collections">Collections</Link>
+        <Link href="/compare">Compare Venues</Link>
+        <Link href="/how-it-works">How it works</Link>
+        <Link href="/for-venues">For venues</Link>
+        <Link className="primaryBtn" href="/explore">Find your venue</Link>
+      </div>
 
       {/* =========================================
           RIGHT SIDE ACTIONS
@@ -563,6 +588,16 @@ export function Header() {
           Find your venue
         </Link>
 
+        <button
+          type="button"
+          className="navToggle"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-nav"
+          onClick={() => setMenuOpen((v) => !v)}
+        >
+          <span />
+        </button>
       </div>
     </header>
   );
