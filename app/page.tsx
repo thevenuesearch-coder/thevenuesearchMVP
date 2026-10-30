@@ -14,6 +14,10 @@ import { HeroCollage } from '../components/home/HeroCollage';
 import { DestinationsSection } from '../components/home/DestinationsSection';
 import { CollectionsSection } from '../components/home/CollectionsSection';
 import { PartnerCta } from '../components/home/PartnerCta';
+import { Marquee } from '../components/home/Marquee';
+import { SectionHead } from '../components/home/SectionHead';
+import { MotionRoot } from '../components/collections/MotionRoot';
+import { Reveal } from '../components/collections/Reveal';
 import { imgProps, optimizedUrl, isOptimizable } from '../lib/image';
 
 export const metadata: Metadata = pageMetadata({
@@ -53,6 +57,7 @@ export default async function Home() {
 
   return (
     <main id="main-content">
+      <MotionRoot>
       {/* =====================================================
           HERO
       ===================================================== */}
@@ -84,6 +89,8 @@ export default async function Home() {
         </div>
       </section>
 
+      <Marquee items={['Destination weddings','Luxury palaces','Heritage hotels','Beachfront venues','Hill resorts','Hold your date']} />
+
       <DestinationsSection
         venues={venues.map(({ id, name, destination, state, image }) => ({ id, name, destination, state, image }))}
       />
@@ -93,16 +100,19 @@ export default async function Home() {
       />
 
       {/* FEATURED VENUES — real VenueCard components */}
-      <section className="vsSection vsCream" aria-labelledby="explore-title">
-        <div className="vsWrap">
-          <div className="vsHead">
-            <div>
-              <span className="vsKicker">FIND YOUR PERFECT VENUE</span>
-              <h2 id="explore-title">Explore Wedding Venues</h2>
-              <p>Discover and filter verified venues across India.</p>
-            </div>
-            <Link className="vsLink" href="/explore">View all venues →</Link>
-          </div>
+      <section className="edSection edCream" aria-labelledby="explore-title">
+        <div className="edWrap">
+          <Reveal>
+            <SectionHead
+              id="explore-title"
+              index="03"
+              label="Explore"
+              title={<>Venues worth <em>the journey.</em></>}
+              blurb="Discover and filter verified venues across India."
+              href="/explore"
+              hrefLabel="All venues"
+            />
+          </Reveal>
 
           {venues.length === 0 ? (
             <div className="emptyState">
@@ -136,6 +146,7 @@ export default async function Home() {
         image={(venues.find((v) => v.name === 'Taj Lake Palace') || venues.find((v) => isOptimizable(v.image)))?.image}
         imageAlt="Taj Lake Palace"
       />
+      </MotionRoot>
     </main>
   );
 }

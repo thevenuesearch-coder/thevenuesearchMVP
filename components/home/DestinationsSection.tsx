@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import { imgProps, isOptimizable } from '../../lib/image';
+import { Reveal } from '../collections/Reveal';
+import { SectionHead } from './SectionHead';
 
 type V = { id: string; name: string; destination: string; state: string; image: string };
 
 /*
- * "Popular Wedding Destinations" — built only from published venue records.
- * One card per destination (city); the photo is a real venue in that city.
- * The subtitle is the state, a factual label (no invented taglines or counts).
+ * Destinations — an asymmetric editorial mosaic. Built only from published
+ * venue records: one tile per city, photographed with a real venue there.
+ * No counts, no invented captions; the small label is the venue's state.
  */
 export function DestinationsSection({ venues }: { venues: V[] }) {
   const groups = new Map<string, { state: string; image: string; alt: string; n: number }>();
@@ -23,47 +25,55 @@ export function DestinationsSection({ venues }: { venues: V[] }) {
     }
   }
 
-  const cards = Array.from(groups.entries())
+  const tiles = Array.from(groups.entries())
     .sort((a, b) => b[1].n - a[1].n)
-    .slice(0, 8);
+    .slice(0, 5);
 
-  if (cards.length < 3) return null;
+  if (tiles.length < 3) return null;
 
   return (
-    <section className="vsSection vsIvory" aria-labelledby="dest-title">
-      <div className="vsWrap">
-        <div className="vsHead">
-          <div>
-            <span className="vsKicker">EXPLORE INDIA&apos;S MOST BEAUTIFUL DESTINATIONS</span>
-            <h2 id="dest-title">Popular Wedding Destinations</h2>
-            <p>From royal palaces to serene beaches, discover venues across India&apos;s most sought-after locations.</p>
-          </div>
-          <Link className="vsLink" href="/explore">View all destinations →</Link>
-        </div>
+    <section className="edSection edIvory" aria-labelledby="dest-title">
+      <div className="edWrap">
+        <Reveal>
+          <SectionHead
+            id="dest-title"
+            index="01"
+            label="Destinations"
+            title={<>Where the story <em>begins.</em></>}
+            blurb="From lake palaces to Himalayan terraces — the places couples travel for."
+            href="/explore"
+            hrefLabel="All destinations"
+          />
+        </Reveal>
 
-        <ul className="destRow">
-          {cards.map(([city, g]) => (
-            <li key={city}>
-              <Link
-                className="destCard"
-                data-cursor="view"
-                href={`/explore?destination=${encodeURIComponent(g.state || city)}`}
-              >
-                <img
-                  {...imgProps(g.image, g.alt, {
-                    width: 360,
-                    height: 520,
-                    sizes: '(max-width:700px) 62vw, 280px',
-                  })}
-                />
-                <span className="destText">
-                  <strong>{city}</strong>
-                  <small>{g.state}</small>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <Reveal delay={0.08}>
+          <ul className={`destMosaic n${tiles.length}`}>
+            {tiles.map(([city, g], i) => (
+              <li key={city} className={`dm dm${i + 1}`}>
+                <Link
+                  className="dmCard"
+                  data-cursor="view"
+                  href={`/explore?destination=${encodeURIComponent(g.state || city)}`}
+                >
+                  <img
+                    {...imgProps(g.image, g.alt, {
+                      width: 900,
+                      height: 1100,
+                      sizes: i === 0 ? '(max-width:800px) 92vw, 42vw' : '(max-width:800px) 92vw, 30vw',
+                    })}
+                  />
+                  <span className="dmShade" aria-hidden="true" />
+                  <span className="dmNum">0{i + 1}</span>
+                  <span className="dmText">
+                    <small>{g.state}</small>
+                    <strong>{city}</strong>
+                    <span className="dmGo">Explore venues <i aria-hidden="true">→</i></span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
       </div>
     </section>
   );
