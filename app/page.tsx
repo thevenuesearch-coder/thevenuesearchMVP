@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import {
   fetchVenuesServer,
-  toVenueSummary,
+  toVenueSummary, 
 } from '../lib/venues';
 import { VenueCard } from '../components/VenueCard';
 import { HeroSearchBox } from '../components/HeroSearchBox';
