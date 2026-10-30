@@ -11,7 +11,7 @@ import { HeroSearchBox } from '../components/HeroSearchBox';
 import { CompareGlance } from '../components/home/CompareGlance';
 import { JourneyShowcase } from '../components/home/JourneyShowcase';
 import { HeroCollage } from '../components/home/HeroCollage';
-import { imgProps, optimizedUrl } from '../lib/image';
+import { imgProps, optimizedUrl, isOptimizable } from '../lib/image';
 
 export const metadata: Metadata = pageMetadata({
   title: 'Verified Destination Wedding Venues in Hyderabad & India',
@@ -68,13 +68,13 @@ export default async function Home() {
           <HeroCollage
             venues={[
               ...[
-                'Taj Rishikesh Resort & Spa',
+                'Six Senses Fort Barwara',
                 'Wildflower Hall, An Oberoi Resort',
                 'Taj Fateh Prakash Palace',
-                'Six Senses Fort Barwara',
+                'JW Marriott Mussoorie Walnut Grove Resort & Spa',
               ].flatMap((name) => {
                 const v = venues.find((item) => item.name === name);
-                return v && v.image ? [{ id: v.id, name: v.name, image: v.image }] : [];
+                return v && isOptimizable(v.image) ? [{ id: v.id, name: v.name, image: v.image }] : [];
               }),
             ]}
           />
