@@ -445,3 +445,125 @@
     transform: none;
   }
 }
+
+
+/* ---------- UI v2 additions ---------- */
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.kicker {
+  color: var(--vs-royal, #1769d2);
+}
+
+.hero {
+  max-width: 860px;
+}
+
+.title {
+  font-size: clamp(42px, 6vw, 84px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.title em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--vs-royal, #1769d2);
+}
+
+.heroMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 26px;
+  align-items: center;
+  margin-top: 26px;
+  font-size: 13px;
+}
+
+.count {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #071b35;
+  color: #fff;
+  font-weight: 600;
+}
+
+.count strong {
+  color: #20c4e8;
+}
+
+.heroLink {
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: var(--vs-royal, #1769d2);
+  padding-bottom: 3px;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.heroLink:hover {
+  border-bottom-color: currentColor;
+}
+
+#compare-picker {
+  scroll-margin-top: 110px;
+}
+
+.panel {
+  border-radius: 10px;
+  margin-bottom: clamp(36px, 5vw, 64px);
+}
+
+.slot {
+  border-radius: 8px;
+}
+
+/* skeleton */
+.skel {
+  display: grid;
+  gap: 16px;
+}
+
+.skelLine,
+.skelCard {
+  display: block;
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #ebe7dd 25%, #f6f3ec 45%, #ebe7dd 65%);
+  background-size: 220% 100%;
+  animation: skelShine 1.4s ease-in-out infinite;
+}
+
+.skelCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.skelCard {
+  height: 380px;
+  border-radius: 8px;
+}
+
+@keyframes skelShine {
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skelLine,
+  .skelCard {
+    animation: none;
+  }
+}

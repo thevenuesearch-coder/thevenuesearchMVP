@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { CompareTable } from '../../components/compare/CompareTable';
+import { CompareExperience } from '../../components/compare/CompareExperience';
 import {
   VenuePicker,
   type PickerOption,
 } from '../../components/compare/VenuePicker';
 import styles from '../../components/compare/compare-page.module.css';
 import { MAX_COMPARE_VENUES } from '../../lib/compare/constants';
+import { buildExperience } from '../../lib/compare/experience';
 import { getSelectionComparison } from '../../lib/compare/get-comparison';
 import {
   shortlistSimilar,
@@ -129,16 +130,34 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
       <header className={styles.hero}>
         <span className={styles.kicker}>COMPARE</span>
 
-        <h1 className={styles.title}>Compare venues side by side</h1>
+        <h1 className={styles.title}>
+          Compare Your <em>Favourite</em> Venues
+        </h1>
 
         <p className={styles.lead}>
-          Pick up to {MAX_VENUES} venues and compare guest capacity, rooms,
-          event spaces, amenities and services together. Only verified details
-          are shown.
+          Place up to {MAX_VENUES} venues side by side and see how their event
+          spaces, guest capacity, rooms and amenities differ. Only verified
+          details are shown, and anything not listed is marked clearly.
         </p>
+
+        <div className={styles.heroMeta}>
+          <span className={styles.count} aria-live="polite">
+            <strong>{selected.length}</strong> of {MAX_VENUES} venues selected
+          </span>
+
+          {selected.length < MAX_VENUES && (
+            <a href="#compare-picker" className={styles.heroLink}>
+              + Add another venue
+            </a>
+          )}
+
+          <Link href="/explore" className={styles.heroLink}>
+            ← Back to Explore Venues
+          </Link>
+        </div>
       </header>
 
-      <section className={styles.panel} aria-label="Choose venues to compare">
+      <section id="compare-picker" className={styles.panel} aria-label="Choose venues to compare">
         <VenuePicker
           options={options}
           selectedIds={selectedIds}
@@ -225,15 +244,20 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
 
       {model ? (
         <section className={styles.results} aria-labelledby="compare-results">
-          <h2 id="compare-results" className={styles.resultsHeading}>
+          <h2 id="compare-results" className={styles.sr}>
             Your comparison
           </h2>
 
-          <CompareTable
-            model={model}
-            removeHref={(id) =>
-              hrefFor(selectedIds.filter((selectedId) => selectedId !== id))
-            }
+          <CompareExperience
+            experience={buildExperience(selected, model)}
+            removeHrefs={Object.fromEntries(
+              selectedIds.map((id) => [
+                id,
+                hrefFor(selectedIds.filter((selectedId) => selectedId !== id)),
+              ])
+            )}
+            addHref="#compare-picker"
+            max={MAX_VENUES}
           />
         </section>
       ) : (

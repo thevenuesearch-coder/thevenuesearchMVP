@@ -119,6 +119,20 @@ function roomCategories(rooms: CompareRoom[] | undefined): string[] | null {
 const OUTDOOR_TAGS = new Set(['outdoor', 'lawn', 'garden', 'poolside', 'deck']);
 const INDOOR_TAGS = new Set(['indoor', 'ballroom', 'banquet', 'convention']);
 
+export function spaceNamesByKind(venue: Venue, kind: 'indoor' | 'outdoor'): string[] {
+  const wanted = kind === 'indoor' ? INDOOR_TAGS : OUTDOOR_TAGS;
+  const other = kind === 'indoor' ? OUTDOOR_TAGS : INDOOR_TAGS;
+
+  return unique(
+    (venue.venueSpaces ?? [])
+      .filter((space) => {
+        const tags = (space.tags ?? []).map((t) => t.trim().toLowerCase());
+        return tags.some((t) => wanted.has(t)) && !tags.some((t) => other.has(t));
+      })
+      .map((space) => cleanString(space.name))
+  );
+}
+
 function spacesByKind(
   venue: Venue,
   kind: 'indoor' | 'outdoor'
