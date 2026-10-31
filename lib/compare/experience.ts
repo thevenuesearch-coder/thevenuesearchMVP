@@ -177,7 +177,11 @@ export function buildExperience(selected: Venue[], model: CompareModel): Experie
   }
 
   const groups: ExpGroup[] = GROUP_LABELS.flatMap(([key, label]) => {
-    const rows = (buckets.get(key) ?? []).map((r) => ({ ...r, status: statusOf(r.cells) }));
+    /* Free-text descriptions always differ, so they are never flagged or hidden as a "difference". */
+    const rows = (buckets.get(key) ?? []).map((r) => ({
+      ...r,
+      status: r.key === 'description' ? ('partial' as DiffStatus) : statusOf(r.cells),
+    }));
     return rows.length ? [{ key, label, rows }] : [];
   });
 
