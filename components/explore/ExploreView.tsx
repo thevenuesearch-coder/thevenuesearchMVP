@@ -444,6 +444,7 @@ export function ExploreView({
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const filtersBtnRef = useRef<HTMLButtonElement | null>(null);
   const scrollTarget = useRef<SectionId | null>(null);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
 
   /* ================================= READ FILTERS FROM THE URL
      /explore?destination=Rajasthan,Goa&guests=200
@@ -598,9 +599,15 @@ export function ExploreView({
     filtersBtnRef.current?.focus();
   }, []);
 
+  /* Back to the first venue whenever the result set changes. */
+  function scrollResultsToTop() {
+    resultsRef.current?.scrollTo({ top: 0 });
+  }
+
   function applyFilters() {
     setApplied(draft);
     syncUrl(draft);
+    scrollResultsToTop();
     if (drawerOpen) closeDrawer();
   }
 
@@ -610,6 +617,7 @@ export function ExploreView({
     setApplied(cleared);
     setDestinationQuery('');
     window.history.replaceState({}, '', '/explore');
+    scrollResultsToTop();
   }
 
   /* Remove one applied filter (chip) and keep the panel in step. */
@@ -618,6 +626,7 @@ export function ExploreView({
     setApplied(nextApplied);
     setDraft((current) => update(current));
     syncUrl(nextApplied);
+    scrollResultsToTop();
   }
 
   function toggleSection(id: SectionId) {
@@ -1030,6 +1039,7 @@ export function ExploreView({
 
         {/* ------------------------------------------- RESULTS */}
         <div
+          ref={resultsRef}
           className={styles.main}
           style={
             compareVenues.length > 0

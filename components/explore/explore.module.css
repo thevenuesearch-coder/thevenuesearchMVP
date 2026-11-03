@@ -1163,9 +1163,24 @@
 /* ----------------------------------------------------------- desktop */
 
 @media (min-width: 1024px) {
+  /*
+   * Fixed filters, scrolling results. The page itself cannot use
+   * position: sticky here (the site sets overflow-x: hidden on the
+   * body, which stops sticky from working), so the shell is exactly
+   * one screen tall and only the results column scrolls inside it.
+   */
+  .shell {
+    align-items: stretch;
+    height: calc(100vh - var(--hdr));
+    height: calc(100dvh - var(--hdr));
+    overflow: hidden;
+  }
+
+  .root[data-tray='true'] .shell {
+    height: calc(100dvh - var(--hdr) - 5.75rem);
+  }
+
   .rail {
-    position: sticky;
-    top: var(--hdr);
     z-index: 4;
     display: flex;
     flex: none;
@@ -1173,22 +1188,21 @@
     align-items: center;
     gap: 8px;
     width: var(--rail);
-    height: calc(100vh - var(--hdr));
+    height: 100%;
     padding: 20px 0;
     border-right: 1px solid var(--line);
     background: #fbfaf7;
   }
 
   .panel {
-    position: sticky;
-    top: var(--hdr);
+    position: relative;
     left: auto;
     right: auto;
     bottom: auto;
     z-index: 3;
     flex: none;
     width: var(--panel);
-    height: calc(100vh - var(--hdr));
+    height: 100%;
     max-height: none;
     border-radius: 0;
     background: #fbfaf7;
@@ -1213,13 +1227,6 @@
     min-width: var(--panel);
   }
 
-  /* The compare tray is fixed to the bottom; keep the rail and panel
-     (and its Apply button) clear of it while venues are picked. */
-  .root[data-tray='true'] .rail,
-  .root[data-tray='true'] .panel {
-    height: calc(100vh - var(--hdr) - 5.75rem);
-  }
-
   .backdrop {
     display: none;
   }
@@ -1233,7 +1240,12 @@
   }
 
   .main {
+    height: 100%;
+    overflow-y: auto;
     padding: 44px 40px 120px;
+    /* Scrolling past the last venue carries on to the page (footer). */
+    overscroll-behavior-y: auto;
+    scroll-behavior: smooth;
   }
 
   .grid {
