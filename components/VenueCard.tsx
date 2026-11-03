@@ -10,6 +10,14 @@ import { createClient } from '../lib/supabase-browser';
 import { imgProps } from '../lib/image';
 import { formatCapacityRange, CAPACITY_UNKNOWN_LABEL } from '../lib/capacity';
 import compareStyles from './compare/compare-select.module.css';
+import exploreStyles from './explore/explore.module.css';
+import {
+  ArrowRightIcon,
+  BedIcon,
+  HeartIcon,
+  MapPinIcon,
+  UsersIcon,
+} from './explore/icons';
 
 type VenueCardData = {
   id: string;
@@ -59,13 +67,31 @@ async function resolveVenueDbId(
   return data?.id ?? null;
 }
 
+/*
+ * Extra data for the Explore card (redesigned layout). Only the Explore
+ * page passes it, so every other card on the site is unchanged.
+ */
+export type VenueCardExplore = {
+  /* "City, State" line under the name. */
+  location: string;
+  /* Number of published room categories (not a room total). */
+  roomCategories: number;
+  layout: 'grid' | 'list';
+  /* Stagger for the entrance animation, in ms. */
+  delay?: number;
+  /* True for the first cards: their photo loads eagerly (above the fold). */
+  priority?: boolean;
+};
+
 export function VenueCard({
   v,
   headingLevel = 3,
   compare,
   onSavedChange,
+  explore,
 }: {
   v: VenueCardData;
+  explore?: VenueCardExplore;
   compare?: VenueCardCompare;
   /* Called after the heart is toggled (used by the shortlist page). */
   onSavedChange?: (saved: boolean) => void;
@@ -384,6 +410,155 @@ export function VenueCard({
    * CARD
    * ========================================================
    */
+
+  /*
+   * ========================================================
+   * EXPLORE CARD (redesigned layout)
+   * Same wishlist / compare behaviour as the default card;
+   * only the markup and styling differ.
+   * ========================================================
+   */
+
+  if (explore) {
+    const capacityText = formatCapacityRange(v.capacityMin, v.capacity);
+    const shownTags = v.tags
+      .filter((tag) => tag && tag.toLowerCase() !== v.type.toLowerCase())
+      .slice(0, 2);
+
+    return (
+      <article
+        className={`${exploreStyles.card} ${
+          explore.priority ? exploreStyles.cardAnimated : ''
+        }`}
+        style={
+          explore.delay
+            ? { animationDelay: `${explore.delay}ms` }
+            : undefined
+        }
+      >
+        <div className={exploreStyles.media}>
+          {v.image ? (
+            <img
+              {...imgProps(
+                v.image,
+                v.city ? `${v.name}, ${v.city}` : v.name,
+                {
+                  width: 800,
+                  height: 620,
+                  sizes:
+                    '(max-width: 640px) 100vw, (max-width: 1280px) 46vw, 410px',
+                  priority: explore.priority,
+                }
+              )}
+            />
+          ) : (
+            <div className={exploreStyles.mediaEmpty}>
+              The Venue Search
+            </div>
+          )}
+
+          {v.type && (
+            <span className={exploreStyles.badge}>{v.type}</span>
+          )}
+
+          <button
+            className={`${exploreStyles.heart} ${
+              saved ? exploreStyles.heartOn : ''
+            }`}
+            type="button"
+            aria-label={
+              saved
+                ? `Remove ${v.name} from shortlist`
+                : `Add ${v.name} to shortlist`
+            }
+            aria-pressed={saved}
+            disabled={loading || checkingWishlist}
+            onClick={toggleWishlist}
+          >
+            <HeartIcon size={22} filled={saved} />
+          </button>
+
+          {compare && (
+            <label
+              className={`${compareStyles.toggle} ${exploreStyles.compareTop}`}
+              title={
+                compare.disabled && !compare.selected
+                  ? 'You can compare up to 4 venues. Remove one to add another.'
+                  : undefined
+              }
+            >
+              <input
+                type="checkbox"
+                className={compareStyles.box}
+                checked={compare.selected}
+                disabled={compare.disabled && !compare.selected}
+                onChange={compare.onToggle}
+                aria-label={`Compare ${v.name}`}
+              />
+              Compare
+            </label>
+          )}
+        </div>
+
+        <div className={exploreStyles.body}>
+          <Link
+            className={exploreStyles.titleLink}
+            href={`/venues/${v.slug}`}
+          >
+            <Heading>{v.name}</Heading>
+          </Link>
+
+          {explore.location && (
+            <p className={exploreStyles.loc}>
+              <MapPinIcon size={18} />
+              {explore.location}
+            </p>
+          )}
+
+          {v.description && (
+            <p className={exploreStyles.desc}>{v.description}</p>
+          )}
+
+          {shownTags.length > 0 && (
+            <ul className={exploreStyles.tags}>
+              {shownTags.map((tag) => (
+                <li key={tag} className={exploreStyles.tag}>
+                  {tag}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className={exploreStyles.facts}>
+            <span className={exploreStyles.fact}>
+              <UsersIcon size={20} />
+              {capacityText ?? CAPACITY_UNKNOWN_LABEL}
+            </span>
+
+            {explore.roomCategories > 0 && (
+              <span className={exploreStyles.fact}>
+                <BedIcon size={20} />
+                {explore.roomCategories}{' '}
+                {explore.roomCategories === 1
+                  ? 'room type'
+                  : 'room types'}
+              </span>
+            )}
+          </div>
+
+          <Link
+            data-cursor="view"
+            className={exploreStyles.cta}
+            href={`/venues/${v.slug}`}
+            aria-label={`View details: ${v.name}`}
+          >
+            View details
+            <ArrowRightIcon size={20} />
+          </Link>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className="venueCard">

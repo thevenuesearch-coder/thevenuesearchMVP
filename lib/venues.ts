@@ -29,6 +29,7 @@ type DbVenueSpace = {
   image_url: string | null;
   description: string | null;
   tags: string[] | null;
+  space_type?: string | null;
 };
 
 type DbVenueRoom = {
@@ -77,6 +78,9 @@ type DbVenue = {
   updated_at?: string | null;
   venue_spaces: DbVenueSpace[] | null;
   venue_rooms: DbVenueRoom[] | null;
+  /* Light-weight rows loaded by the list query only (Explore filters). */
+  room_stub?: { id: string; status: string | null }[] | null;
+  feature_stub?: { feature_key: string; status: string | null }[] | null;
 };
 
 /*
@@ -132,6 +136,44 @@ function normalizeRoom(room: DbVenueRoom): RoomCategory {
   };
 }
 
+
+/*
+ * Explore "Event space type" categories. Spaces are tagged freely in
+ * the database ("Lawn", "Banquet", "Pool", ...); this folds the tags a
+ * venue's spaces carry into a small, stable set so the filter offers
+ * one clean option per kind of space.
+ */
+const SPACE_TYPE_ALIASES: Record<string, string[]> = {
+  Lawn: ['lawn', 'lawns'],
+  Garden: ['garden', 'garden room', 'garden temple'],
+  'Banquet Hall': ['banquet hall', 'banquet'],
+  Ballroom: ['ballroom', 'grand hall'],
+  Courtyard: ['courtyard', 'court', 'patio'],
+  Terrace: ['terrace', 'rooftop'],
+  Poolside: ['poolside', 'pool'],
+  Beachfront: ['beach', 'beachfront'],
+};
+
+export const SPACE_TYPE_OPTIONS = Object.keys(SPACE_TYPE_ALIASES);
+
+function deriveSpaceTypes(spaces: DbVenueSpace[] | null): string[] {
+  const found = new Set<string>();
+
+  for (const space of spaces || []) {
+    const labels = [...(space.tags || []), space.space_type || '']
+      .map((label) => label.trim().toLowerCase())
+      .filter(Boolean);
+
+    for (const [category, aliases] of Object.entries(SPACE_TYPE_ALIASES)) {
+      if (labels.some((label) => aliases.includes(label))) {
+        found.add(category);
+      }
+    }
+  }
+
+  return SPACE_TYPE_OPTIONS.filter((category) => found.has(category));
+}
+
 function normalizeVenue(row: DbVenue): Venue {
   return {
     id: row.slug,
@@ -162,6 +204,13 @@ function normalizeVenue(row: DbVenue): Venue {
     tags: row.tags || [],
     desc: row.description || '',
     updatedAt: row.updated_at || undefined,
+    spaceTypes: deriveSpaceTypes(row.venue_spaces),
+    amenities: (row.feature_stub || [])
+      .filter((feature) => feature.status === 'published')
+      .map((feature) => feature.feature_key),
+    roomCategoryCount: (row.room_stub || []).filter(
+      (room) => room.status === 'published'
+    ).length,
     venueSpaces: (row.venue_spaces || []).map(normalizeSpace),
     rooms: (row.venue_rooms || []).map(normalizeRoom),
   };
@@ -228,7 +277,16 @@ export async function fetchVenuesServer(): Promise<Venue[]> {
           capacity,
           image_url,
           description,
-          tags
+          tags,
+          space_type
+        ),
+        room_stub:venue_rooms (
+          id,
+          status
+        ),
+        feature_stub:venue_features (
+          feature_key,
+          status
         )
       `
     )

@@ -66,6 +66,14 @@ export type Venue = {
   tags: string[];
   desc: string;
   updatedAt?: string;
+  /*
+   * Facets for the Explore filters, derived from the venue's own spaces
+   * and verified features (see normalizeVenue). Optional because only
+   * the list query loads them.
+   */
+  spaceTypes?: string[];
+  amenities?: string[];
+  roomCategoryCount?: number;
   venueSpaces: VenueSpace[];
   rooms: RoomCategory[];
 };
