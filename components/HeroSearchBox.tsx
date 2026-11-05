@@ -61,6 +61,20 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
   );
 
   /*
+   * Text shown in the visible layer of each field. The real <select>
+   * sits on top (invisible) so keyboard, screen-reader and native-picker
+   * behaviour is unchanged; this layer exists only so long venue names
+   * can wrap instead of being cut with an ellipsis.
+   */
+  const destinationLabel = destination || 'All destinations';
+  const venueLabel = selectedVenue
+    ? selectedVenue.name
+    : destination
+      ? `All ${destination} venues`
+      : 'All venues';
+  const guestsLabel = guests || 'Guest count';
+
+  /*
    * =====================================================
    * EXPLORE URL
    * =====================================================
@@ -89,6 +103,7 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
   return (
     <LazyMotion features={domAnimation}>
     <m.div
+      className="heroCopy"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
@@ -116,6 +131,8 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M12 21s-7-5.6-7-11a7 7 0 1 1 14 0c0 5.4-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
           <div className="fieldBody">
             <label htmlFor="hero-search-destination">Destination</label>
+            <div className="selectWrap">
+              <span className="selectValue" aria-hidden="true">{destinationLabel}</span>
             <select
               id="hero-search-destination"
               value={destination}
@@ -128,6 +145,7 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
                 </option>
               ))}
             </select>
+            </div>
           </div>
         </div>
 
@@ -135,8 +153,11 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>
           <div className="fieldBody">
             <label htmlFor="hero-search-venue">Venue</label>
+            <div className="selectWrap">
+              <span className="selectValue" aria-hidden="true">{venueLabel}</span>
             <select
               id="hero-search-venue"
+              title={selectedVenue?.name}
               value={venue}
               onChange={(e) => setVenue(e.target.value)}
             >
@@ -149,6 +170,7 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
                 </option>
               ))}
             </select>
+            </div>
           </div>
         </div>
 
@@ -156,6 +178,8 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.4 2.7-6 6-6s6 2.6 6 6M16 11a3 3 0 1 0 0-6M17.5 14.3c2 .6 3.5 2.6 3.5 5.7"/></svg>
           <div className="fieldBody">
             <label htmlFor="hero-search-guests">Guests</label>
+            <div className="selectWrap">
+              <span className="selectValue" aria-hidden="true">{guestsLabel}</span>
             <select
               id="hero-search-guests"
               value={guests}
@@ -168,6 +192,7 @@ export function HeroSearchBox({ venues }: HeroSearchBoxProps) {
               <option value="400–600">400–600</option>
               <option value="600+">600+</option>
             </select>
+            </div>
           </div>
         </div>
 
