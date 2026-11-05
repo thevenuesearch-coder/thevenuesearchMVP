@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getSessionUser } from '../../../../lib/server-auth';
 import Razorpay from 'razorpay';
 import { createClient } from '@supabase/supabase-js';
 import { parseGuestCount } from '../../../../lib/parse-guest-count';
@@ -61,6 +62,15 @@ type IncomingNightlySelection = {
 };
 
 export async function POST(request: Request) {
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser) {
+    return NextResponse.json(
+      { success: false, error: 'Authentication required.' },
+      { status: 401 }
+    );
+  }
+
   try {
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -80,13 +90,18 @@ export async function POST(request: Request) {
       );
     }
 
+    /*
+     * SECURITY: the user id comes from the verified session,
+     * never from the request body.
+     */
+    const userId = sessionUser.id;
+
     const body = await request.json();
 
     const {
       venueId,
       venueName,
       venueCity,
-      userId,
       fullName,
       email,
       mobile,
@@ -243,6 +258,46 @@ export async function POST(request: Request) {
         },
       }
     );
+
+    /*
+     * ==========================================================
+     * ABUSE CAP
+     *
+     * Every payment_pending row locks its venue date for up to 45
+     * minutes (see expire_stale_payment_pending). Without a cap, one
+     * signed-in account could keep many dates locked. Three open
+     * checkouts per user is more than a real customer needs.
+     * ==========================================================
+     */
+    const { count: openCheckouts, error: openCheckoutsError } =
+      await admin
+        .from('booking_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('status', 'payment_pending');
+
+    if (openCheckoutsError) {
+      console.error('Open checkout count failed:', openCheckoutsError);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unable to start checkout. Please try again.',
+        },
+        { status: 500 }
+      );
+    }
+
+    if ((openCheckouts ?? 0) >= 3) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'You already have checkouts in progress. Please complete or wait for them to expire before starting another.',
+        },
+        { status: 429 }
+      );
+    }
 
     /*
      * ==========================================================

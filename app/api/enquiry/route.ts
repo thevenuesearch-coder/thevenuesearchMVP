@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getSessionUser } from '../../../lib/server-auth';
 import { createClient } from '@supabase/supabase-js';
 import { parseGuestCount } from '../../../lib/parse-guest-count';
 
@@ -44,6 +45,13 @@ export async function POST(
   request: Request
 ) {
   try {
+    /*
+     * SECURITY: attribute the enquiry to the verified session user
+     * (or to nobody for an anonymous enquiry). A userId sent in the
+     * request body is never trusted.
+     */
+    const sessionUser = await getSessionUser();
+
     /*
      * ==========================================
      * READ REQUEST
@@ -466,7 +474,7 @@ export async function POST(
             resolvedVenueId,
 
           user_id:
-            clean(body.userId) || null,
+            sessionUser?.id ?? null,
 
           full_name:
             fullName,
