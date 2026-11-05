@@ -59,21 +59,41 @@
     radial-gradient(900px 520px at 78% 38%,rgba(40,125,235,.30),transparent 62%),
     radial-gradient(700px 420px at 8% 100%,rgba(32,196,232,.14),transparent 60%),
     linear-gradient(180deg,var(--vs-navy),var(--vs-midnight) 120%)}
-.heroV2Inner{position:relative;z-index:2;width:100%;max-width:1360px;margin:0 auto;padding:150px var(--vs-gutter) 70px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:40px;align-items:center}
+.heroV2Inner{container-type:inline-size;position:relative;z-index:2;width:100%;max-width:1360px;margin:0 auto;padding:150px var(--vs-gutter) 70px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:40px;align-items:center}
 .heroV2 .kicker{color:var(--vs-cyan);font-size:11px;letter-spacing:.2em}
 .heroV2 h1{font-family:var(--serif);font-weight:600;font-size:clamp(46px,6.2vw,88px);line-height:1.02;letter-spacing:-.025em;margin:0 0 24px;max-width:none;color:#fff}
 .heroV2 h1 em{font-style:italic;font-weight:500;color:var(--vs-cyan)}
 .heroV2 p.heroLead{max-width:520px;font-size:18px;line-height:1.65;color:#C9D6EA;margin:0}
 
-.heroSearch{margin-top:38px;display:flex;align-items:stretch;gap:0;padding:8px;background:#fff;color:var(--vs-ink);border-radius:999px;max-width:760px;box-shadow:0 30px 80px rgba(2,10,28,.55),0 0 0 6px rgba(32,196,232,.16)}
-.heroSearch .field{display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:8px 20px;border-right:1px solid #E3E8F0}
+/* Spans the full hero width (both columns). 100cqw = content width of .heroV2Inner;
+   browsers without container units keep the 100% fallback (the left column). */
+.heroCopy{position:relative;z-index:3}
+/* desktop: the bar is a full-width "dock" under the copy. The copy column is at least as tall as
+   the lowest collage card (centre card ends at 82% of the collage) + the bar + a gap, so the wider
+   bar can never touch a card at any width. */
+@media(min-width:1101px){
+  .heroCopy{display:flex;flex-direction:column;min-height:calc(clamp(420px,46vw,600px)*.82 + 101px)}
+  .heroV2 .heroCopy p.heroLead{margin-bottom:44px}
+  .heroCopy .heroSearch{margin-top:auto}
+}
+/* narrower desktops: a long venue name can wrap to 3 lines, so keep ~36px more room above the bar */
+@media(min-width:1101px) and (max-width:1279px){
+  .heroCopy{min-height:calc(clamp(420px,46vw,600px)*.82 + 147px)}
+}
+.heroSearch{margin-top:44px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr) auto;align-items:stretch;gap:0;padding:8px;background:#fff;color:var(--vs-ink);border-radius:999px;width:100%;width:100cqw;max-width:none;box-shadow:0 30px 80px rgba(2,10,28,.55),0 0 0 6px rgba(32,196,232,.16)}
+.heroSearch .field{display:flex;align-items:center;gap:12px;min-width:0;padding:10px 22px;border-right:1px solid #E3E8F0}
 .heroSearch .field:nth-of-type(3){border-right:0}
 .heroSearch .field svg{flex:none;width:22px;height:22px;color:var(--vs-royal)}
 .heroSearch .fieldBody{min-width:0;flex:1}
-.heroSearch label{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7A889D;margin-bottom:3px}
-.heroSearch select{width:100%;border:0;background:transparent;font-weight:600;font-size:14px;color:var(--vs-ink);outline:0;padding:0;text-overflow:ellipsis}
+.heroSearch label{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#7A889D;margin-bottom:3px}
+.heroSearch select{width:100%;border:0;background:transparent;font-weight:600;font-size:15px;color:var(--vs-ink);outline:0;padding:0;text-overflow:ellipsis}
+/* visible text layer (wraps up to 3 lines) + invisible native <select> on top */
+.heroSearch .selectWrap{position:relative;display:flex;align-items:center;gap:10px;min-height:1.25em}
+.heroSearch .selectValue{flex:1;min-width:0;font-weight:600;font-size:15px;line-height:1.25;color:var(--vs-ink);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;overflow-wrap:anywhere;pointer-events:none}
+.heroSearch .selectWrap::after{content:"";flex:none;width:7px;height:7px;margin:0 3px 3px 0;border-right:2px solid var(--vs-ink);border-bottom:2px solid var(--vs-ink);transform:rotate(45deg);opacity:.7;pointer-events:none}
+.heroSearch .selectWrap select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
 .heroSearch .field:focus-within{box-shadow:inset 0 0 0 2px rgba(23,105,210,.35);border-radius:999px}
-.heroSearch .primaryBtn{background:linear-gradient(100deg,var(--vs-royal),var(--vs-cyan));border-radius:999px;padding:0 26px;white-space:nowrap;box-shadow:0 12px 26px rgba(23,105,210,.4)}
+.heroSearch .primaryBtn{background:linear-gradient(100deg,var(--vs-royal),var(--vs-cyan));border-radius:999px;padding:0 38px;white-space:nowrap;box-shadow:0 12px 26px rgba(23,105,210,.4)}
 
 /* floating photographs */
 .heroCollage{position:relative;height:clamp(420px,46vw,600px);perspective:1400px}
@@ -117,13 +137,23 @@
 @media(max-width:1100px){
   .heroV2Inner{grid-template-columns:1fr;padding-top:130px;gap:26px}
   .heroCollage{height:clamp(300px,58vw,460px);max-width:640px;width:100%;margin:0 auto}
-  .heroSearch{max-width:none}
+  .heroSearch{width:100%;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) auto}
+  .heroSearch .field{padding:10px 16px;gap:10px}
+  .heroSearch .primaryBtn{padding:0 28px}
+}
+/* tablet: 2 x 2 grid so every field keeps enough room for its text */
+@media(max-width:1020px){
+  .heroSearch{grid-template-columns:repeat(2,minmax(0,1fr));border-radius:34px;padding:10px}
+  .heroSearch .field{border-right:0;border-bottom:1px solid #E3E8F0}
+  .heroSearch .field:nth-of-type(odd){border-right:1px solid #E3E8F0}
+  .heroSearch .field:nth-of-type(3){border-right:1px solid #E3E8F0;border-bottom:0}
+  .heroSearch .primaryBtn{padding:16px 26px;margin:6px 0 0 8px;justify-content:center}
 }
 @media(max-width:700px){
-  .heroSearch{flex-direction:column;border-radius:24px;padding:10px}
-  .heroSearch .field{border-right:0;border-bottom:1px solid #E3E8F0;padding:12px 14px}
+  .heroSearch{grid-template-columns:1fr;border-radius:24px;padding:10px}
+  .heroSearch .field,.heroSearch .field:nth-of-type(odd),.heroSearch .field:nth-of-type(3){border-right:0;border-bottom:1px solid #E3E8F0;padding:12px 14px;gap:12px}
   .heroSearch .field:nth-of-type(3){border-bottom:0}
-  .heroSearch .primaryBtn{padding:15px 26px;margin-top:6px}
+  .heroSearch .primaryBtn{padding:15px 26px;margin:6px 0 0}
   .heroV2 p.heroLead{font-size:16px}
   .heroCollage .tagline{display:none}
 }
