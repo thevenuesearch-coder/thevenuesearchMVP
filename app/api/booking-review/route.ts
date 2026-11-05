@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server';
+import { getSessionUser } from '../../../lib/server-auth';
 import nodemailer from 'nodemailer';
 
 const NOTIFICATION_EMAIL = 'thevenuesearch@gmail.com';
 
 export async function POST(request: Request) {
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser) {
+    return NextResponse.json(
+      { success: false, error: 'Authentication required.' },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await request.json();
 

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getSessionUser } from '../../../../lib/server-auth';
 import { createClient } from '@supabase/supabase-js';
 
 /*
@@ -8,6 +9,15 @@ import { createClient } from '@supabase/supabase-js';
  * choosing not to pay, not a payment attempt that broke.
  */
 export async function POST(request: Request) {
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser) {
+    return NextResponse.json(
+      { success: false, error: 'Authentication required.' },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { orderId, bookingIds } = body;
@@ -54,6 +64,7 @@ export async function POST(request: Request) {
       .update({ status: 'cancelled' })
       .in('id', bookingIds)
       .eq('payment_order_id', orderId)
+      .eq('user_id', sessionUser.id)
       .eq('status', 'payment_pending');
 
     return NextResponse.json({ success: true });

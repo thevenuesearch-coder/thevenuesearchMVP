@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getSessionUser } from '../../../lib/server-auth';
 import { Resend } from 'resend';
 
 const ADMIN_EMAIL = 'thevenuesearch@gmail.com';
@@ -133,6 +134,15 @@ function eventRows(events: any[]): string {
 }
 
 export async function POST(request: Request) {
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser) {
+    return NextResponse.json(
+      { success: false, error: 'Authentication required.' },
+      { status: 401 }
+    );
+  }
+
   try {
     const apiKey = process.env.RESEND_API_KEY;
 
