@@ -521,7 +521,6 @@ export function CompareExperience({ model, removeHrefs }: Props) {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     {...imgProps(venue.image, '', { width: 96, height: 96, sizes: '40px' })}
-                    tabIndex={-1}
                   />
                 )}
                 <span>{venue.name}</span>

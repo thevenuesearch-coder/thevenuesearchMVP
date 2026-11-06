@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { MAX_COMPARE_VENUES, compareHref } from '../../lib/compare/constants';
@@ -8,15 +8,42 @@ import styles from './add-to-compare.module.css';
 
 const STORAGE_KEY = 'vs-compare-venues';
 
-function readIds(): string[] {
+const CHANGE_EVENT = 'vs-compare-change';
+
+function parseIds(raw: string): string[] {
   try {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
-    const saved: unknown = raw ? JSON.parse(raw) : [];
+    const saved: unknown = JSON.parse(raw);
     return Array.isArray(saved)
       ? saved.filter((id): id is string => typeof id === 'string')
       : [];
   } catch {
     return [];
+  }
+}
+
+function readIds(): string[] {
+  try {
+    return parseIds(window.sessionStorage.getItem(STORAGE_KEY) ?? '[]');
+  } catch {
+    return [];
+  }
+}
+
+/* The remembered selection, read without a setState-in-effect. */
+function subscribe(onChange: () => void) {
+  window.addEventListener('storage', onChange);
+  window.addEventListener(CHANGE_EVENT, onChange);
+  return () => {
+    window.removeEventListener('storage', onChange);
+    window.removeEventListener(CHANGE_EVENT, onChange);
+  };
+}
+
+function snapshot(): string {
+  try {
+    return window.sessionStorage.getItem(STORAGE_KEY) ?? '[]';
+  } catch {
+    return '[]';
   }
 }
 
@@ -27,12 +54,9 @@ function readIds(): string[] {
  */
 export function AddToCompareButton({ venueId }: { venueId: string }) {
   const router = useRouter();
-  const [ids, setIds] = useState<string[]>([]);
+  const raw = useSyncExternalStore(subscribe, snapshot, () => '[]');
+  const ids = useMemo(() => parseIds(raw), [raw]);
   const [note, setNote] = useState('');
-
-  useEffect(() => {
-    setIds(readIds());
-  }, []);
 
   const inList = ids.includes(venueId);
   const full = !inList && ids.length >= MAX_COMPARE_VENUES;
@@ -60,7 +84,7 @@ export function AddToCompareButton({ venueId }: { venueId: string }) {
       /* The URL still carries the selection. */
     }
 
-    setIds(next);
+    window.dispatchEvent(new Event(CHANGE_EVENT));
     router.push(compareHref(next));
   }
 
