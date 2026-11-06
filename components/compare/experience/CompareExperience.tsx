@@ -532,7 +532,12 @@ export function CompareExperience({ model, removeHrefs }: Props) {
       </div>
 
       {/* ----------------------------------------- venues */}
-      <div className={styles.scroller}>
+      <div
+        className={styles.scroller}
+        tabIndex={0}
+        role="region"
+        aria-label="Venue comparison. On small screens this area scrolls sideways."
+      >
         <div className={styles.sheet} style={{ ['--n' as string]: venues.length }}>
           <div className={styles.heads} ref={headRef}>
             <div className={styles.headsSpacer} aria-hidden="true" />

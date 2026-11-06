@@ -684,6 +684,11 @@
   scroll-snap-type: x proximity;
 }
 
+.scroller:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: -2px;
+}
+
 .sheet {
   min-width: calc(var(--n) * 232px);
 }
