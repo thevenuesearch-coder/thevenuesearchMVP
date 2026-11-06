@@ -584,13 +584,13 @@
   margin: 0 0 8px;
   padding: 0;
   list-style: none;
-  overflow-x: auto;
-  scrollbar-width: none;
+  overflow: hidden;
 }
 
 .floatVenues li {
   display: flex;
-  flex: none;
+  flex: 1 1 0;
+  min-width: 0;
   align-items: center;
   gap: 10px;
   padding: 4px 14px 4px 4px;
@@ -602,7 +602,14 @@
   white-space: nowrap;
 }
 
+.floatVenues li span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .floatVenues img {
+  flex: none;
   width: 34px;
   height: 34px;
   border-radius: 50%;
