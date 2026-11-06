@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import type { Venue, RoomCategory } from '../lib/data';
 import { RoomCard } from './RoomCard';
+import { AddToCompareButton } from './compare/AddToCompareButton';
 import { RoomDetailsModal } from './RoomDetailsModal';
 import {
   VenueFacts,
@@ -689,6 +690,8 @@ export function VenuePageClient({
               </Link>
 
             </div>
+
+            <AddToCompareButton venueId={venue.id} />
 
 
             <div className="action-note">

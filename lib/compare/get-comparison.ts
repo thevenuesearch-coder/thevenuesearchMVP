@@ -21,7 +21,7 @@ import type { CompareModel, CompareRoom } from './types';
  * (venue_rooms, status = 'published'). On error returns {} so the
  * table is built without the rooms row rather than failing.
  */
-async function fetchPublishedRooms(
+export async function fetchPublishedRooms(
   venueIds: string[]
 ): Promise<Record<string, CompareRoom[]>> {
   const rooms: Record<string, CompareRoom[]> = {};
