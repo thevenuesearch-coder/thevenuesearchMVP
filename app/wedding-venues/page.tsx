@@ -1,17 +1,19 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { pageMetadata } from '../../lib/seo';
+import { MIN_VENUES_TO_INDEX, buildDestinations } from '../../lib/destinations';
+import { fetchVenuesResultServer } from '../../lib/venues';
  
 const baseMetadata = pageMetadata({
   title: 'Wedding Venues in India & Hyderabad',
   description:
-    'Find and book verified wedding venues, banquet halls, luxury hotels and destination wedding venues across India and Hyderabad. Transparent pricing, instant holds, and a booking journey built around certainty.',
+    'Browse verified wedding venues, hotels, resorts and palaces across India and Hyderabad. Compare spaces and capacity, then enquire or hold a date.',
   path: '/wedding-venues',
 });
 
 /* Keeps this page's original, shorter social-share description. */
 const ogDescription =
-  'Discover verified wedding venues, banquet halls and destination wedding venues across India. Compare, hold, and book with transparent pricing.';
+  'Discover verified wedding venues, hotels, resorts and palaces across India. Compare event spaces and capacity, then enquire or hold a date.';
 
 export const metadata: Metadata = {
   ...baseMetadata,
@@ -25,10 +27,13 @@ export const metadata: Metadata = {
   },
 };
 
+/* Destination links come from the venue list, so render per request. */
+export const dynamic = 'force-dynamic';
+
 const faqs: [string, string][] = [
   [
     'How do I find the right wedding venue on The Venue Search?',
-    'Use the destination, venue and guest-count filters on the explore page to narrow down verified wedding venues by city, capacity and budget. Every listed venue includes verified pricing, capacity and amenity details so you can compare without back-and-forth calls.',
+    'Use the destination, venue type and guest-count filters on the explore page to narrow down verified wedding venues by place and capacity. Every venue page lists its event spaces, capacity and amenities so you can compare without back-and-forth calls.',
   ],
   [
     'Does The Venue Search cover destination wedding venues outside Hyderabad?',
@@ -36,7 +41,7 @@ const faqs: [string, string][] = [
   ],
   [
     "What does a 'verified' venue listing mean?",
-    'A verified listing has been checked for accurate capacity, authentic images, transparent pricing structures, and clear policies such as blackout dates and cancellation terms — removing the guesswork that comes from unverified broker listings.',
+    'A verified listing has been checked for accurate capacity and authentic images, so you can compare venues without the guesswork that comes from unverified broker listings.',
   ],
   [
     'Can I book accommodation for wedding guests along with the venue?',
@@ -62,14 +67,20 @@ const faqJsonLd = {
   })),
 };
 
-const hyderabadVenues: [string, string, string][] = [
-  ['Park Hyatt Hyderabad', 'Banjara Hills', '/venues/park-hyatt-hyderabad'],
-  ['Hyderabad Marriott Hotel & Convention Centre', 'Tank Bund', '/venues/hyderabad-marriott-hotel-convention-centre'],
-  ['Taj Krishna', 'Banjara Hills', '/venues/taj-krishna-hyderabad'],
-  ['The Westin Hyderabad Mindspace', 'Hitec City', '/venues/westin-hyderabad-mindspace'],
-];
+export default async function WeddingVenuesPage() {
+  /*
+   * Destinations and the Hyderabad venue links come from the
+   * published venue records, so they can never point at a venue
+   * that no longer exists.
+   */
+  const { venues } = await fetchVenuesResultServer();
+  /* Only destinations with enough venues to have an indexable page. */
+  const destinations = buildDestinations(venues).filter(
+    (d) => d.venues.length >= MIN_VENUES_TO_INDEX
+  );
+  const hyderabad = destinations.find((d) => d.slug === 'hyderabad');
+  const hyderabadVenues = (hyderabad?.venues ?? []).slice(0, 4);
 
-export default function WeddingVenuesPage() {
   return (
     <main id="main-content" className="page narrow">
       <script
@@ -103,28 +114,70 @@ export default function WeddingVenuesPage() {
         <Link href="/explore">Browse all wedding venues in India →</Link>
       </section>
 
+      {destinations.length > 0 && (
+        <section style={{ padding: '60px 0' }} aria-labelledby="by-destination">
+          <h2 id="by-destination">Wedding venues by destination</h2>
+          <p>
+            Browse the wedding venues listed in each destination, from lake
+            palaces and desert forts to hill resorts and city hotels.
+          </p>
+          <ul
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 10,
+              padding: 0,
+              listStyle: 'none',
+            }}
+          >
+            {destinations.map((destination) => (
+              <li key={destination.slug}>
+                <Link
+                  className="outlineBtn"
+                  href={`/wedding-venues/${destination.slug}`}
+                >
+                  {destination.name} ({destination.venues.length})
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section style={{ padding: '60px 0' }}>
         <h2>Wedding venues in Hyderabad</h2>
         <p>
           Hyderabad is home to some of India&rsquo;s most sought-after wedding venues, from the
-          landmark ballrooms of Banjara Hills and Tank Bund to convention-scale properties built
-          for large, multi-day celebrations. Our verified Hyderabad network includes properties
-          such as Park Hyatt Hyderabad, Hyderabad Marriott Hotel &amp; Convention Centre, Taj
-          Krishna and The Westin Hyderabad Mindspace — each with verified capacity, pricing and
-          amenity details.
+          landmark hotel ballrooms to convention-scale properties built for large, multi-day
+          celebrations. {hyderabadVenues.length > 0 ? (
+            <>
+              Our Hyderabad network includes{' '}
+              {hyderabadVenues.map((v) => v.name).join(', ')}
+              {hyderabad && hyderabad.venues.length > hyderabadVenues.length
+                ? ` and ${hyderabad.venues.length - hyderabadVenues.length} more`
+                : ''}
+              . Each venue page lists its event spaces, capacity and amenities.
+            </>
+          ) : (
+            <>Each venue page lists its event spaces, capacity and amenities.</>
+          )}
         </p>
-        <div className="featureList">
-          {hyderabadVenues.map(([name, area, href]) => (
-            <div key={name}>
-              <Link href={href}>
-                <b>{name}</b>
-                <br />
-                <small>{area}, Hyderabad</small>
-              </Link>
-            </div>
-          ))}
-        </div>
-        <Link href="/explore?destination=Hyderabad">View all wedding venues in Hyderabad →</Link>
+        {hyderabadVenues.length > 0 && (
+          <div className="featureList">
+            {hyderabadVenues.map((venue) => (
+              <div key={venue.id}>
+                <Link href={`/venues/${venue.id}`}>
+                  <b>{venue.name}</b>
+                  <br />
+                  <small>{[venue.city, venue.type].filter(Boolean).join(' · ')}</small>
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+        <Link href={hyderabad ? '/wedding-venues/hyderabad' : '/explore?destination=Hyderabad'}>
+          View all wedding venues in Hyderabad →
+        </Link>
       </section>
 
       <section style={{ padding: '60px 0' }}>
@@ -177,8 +230,8 @@ export default function WeddingVenuesPage() {
         <h2>How The Venue Search works</h2>
         <div className="steps">
           {[
-            ['01', 'Discover', 'Filter verified wedding venues by destination, guest count and budget.'],
-            ['02', 'Compare', 'Review standardised pricing, capacity and amenity details side by side.'],
+            ['01', 'Discover', 'Filter verified wedding venues by destination, venue type and guest count.'],
+            ['02', 'Compare', 'Review capacity, event spaces and amenity details side by side.'],
             ['03', 'Hold', 'Place an Instant Hold on your primary venue date while you decide.'],
             ['04', 'Confirm', 'Move from hold to confirmed booking with support at every step.'],
           ].map((s) => (
@@ -220,7 +273,7 @@ export default function WeddingVenuesPage() {
         <h2>Ready to find your wedding venue?</h2>
         <p>
           Search verified wedding venues, banquet halls and destination wedding venues across
-          India — with transparent pricing and a clear path from discovery to confirmed booking.
+          India, with a clear path from discovery to a confirmed booking.
         </p>
         <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap', marginTop: 20 }}>
           <Link data-cursor="open" className="primaryBtn" href="/explore">Find Your Venue</Link>

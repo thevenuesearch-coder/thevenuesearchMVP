@@ -1,12 +1,15 @@
 import type { MetadataRoute } from 'next';
 
-import { fetchVenuesServer } from '../lib/venues';
+import { fetchVenuesResultServer } from '../lib/venues';
+import { MIN_VENUES_TO_INDEX, buildDestinations } from '../lib/destinations';
 
 /*
- * Regenerate hourly so newly published / unpublished venues reach
- * the sitemap without a redeploy (it was frozen at build time).
+ * Generated per request (from the cached venue list, so this is cheap)
+ * rather than at build time: a deploy must never depend on the
+ * database being reachable, and new venues should appear in the
+ * sitemap without a redeploy.
  */
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 const BASE_URL = 'https://venuesearch.in';
  
@@ -87,36 +90,49 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
    * in the sitemap.
    */
 
-  let venueEntries: MetadataRoute.Sitemap = [];
+  const { venues, failed } = await fetchVenuesResultServer();
 
-  try {
-    const venues = await fetchVenuesServer();
-
-    venueEntries = venues
-      .filter((venue) => Boolean(venue.id))
-      .map((venue) => ({
-        url: `${BASE_URL}/venues/${encodeURIComponent(venue.id)}`,
-        lastModified: venue.updatedAt
-          ? new Date(venue.updatedAt)
-          : undefined,
-        changeFrequency: 'weekly' as const,
-        priority: 0.8,
-      }));
-  } catch (error) {
-    /*
-     * If Supabase is temporarily unavailable, keep the sitemap
-     * working with the public static pages instead of failing
-     * the entire sitemap request.
-     */
-
-    console.error(
-      'Sitemap: failed to load venues from Supabase:',
-      error
-    );
+  /*
+   * If the venue list could not be loaded, fail the request (search
+   * engines retry a 5xx) instead of publishing a sitemap with every
+   * venue missing, which looks like a mass removal.
+   */
+  if (failed) {
+    throw new Error('Sitemap: venue data is temporarily unavailable.');
   }
+
+  const venueEntries: MetadataRoute.Sitemap = venues
+    .filter((venue) => Boolean(venue.id))
+    .map((venue) => ({
+      url: `${BASE_URL}/venues/${encodeURIComponent(venue.id)}`,
+      lastModified: venue.updatedAt ? new Date(venue.updatedAt) : undefined,
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }));
+
+  /*
+   * Destination landing pages, only where there are enough venues
+   * for the page to be worth indexing (the pages themselves are
+   * marked noindex below that threshold).
+   */
+  const destinationEntries: MetadataRoute.Sitemap = buildDestinations(venues)
+    .filter((destination) => destination.venues.length >= MIN_VENUES_TO_INDEX)
+    .map((destination) => {
+      const dates = destination.venues
+        .map((venue) => (venue.updatedAt ? Date.parse(venue.updatedAt) : NaN))
+        .filter((time) => Number.isFinite(time));
+
+      return {
+        url: `${BASE_URL}/wedding-venues/${destination.slug}`,
+        lastModified: dates.length ? new Date(Math.max(...dates)) : undefined,
+        changeFrequency: 'weekly' as const,
+        priority: destination.slug === 'hyderabad' ? 0.9 : 0.8,
+      };
+    });
 
   return [
     ...staticEntries,
+    ...destinationEntries,
     ...venueEntries,
   ];
 }

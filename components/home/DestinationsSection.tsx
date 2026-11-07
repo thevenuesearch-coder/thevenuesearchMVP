@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { imgProps, isOptimizable } from '../../lib/image';
+import { MIN_VENUES_TO_INDEX, slugify } from '../../lib/destinations';
 import { Reveal } from '../collections/Reveal';
 import { SectionHead } from './SectionHead';
 
@@ -21,7 +22,7 @@ export function DestinationsSection({ venues }: { venues: V[] }) {
       continue;
     }
     if (isOptimizable(v.image)) {
-      groups.set(v.destination, { state: v.state, image: v.image, alt: v.name, n: 1 });
+      groups.set(v.destination, { state: v.state, image: v.image, alt: `${v.name}, ${v.destination}`, n: 1 });
     }
   }
 
@@ -41,7 +42,7 @@ export function DestinationsSection({ venues }: { venues: V[] }) {
             label="Destinations"
             title={<>Where the story <em>begins.</em></>}
             blurb="From lake palaces to Himalayan terraces — the places couples travel for."
-            href="/explore"
+            href="/wedding-venues"
             hrefLabel="All destinations"
           />
         </Reveal>
@@ -53,7 +54,11 @@ export function DestinationsSection({ venues }: { venues: V[] }) {
                 <Link
                   className="dmCard"
                   data-cursor="view"
-                  href={`/explore?destination=${encodeURIComponent(g.state || city)}`}
+                  href={
+                    g.n >= MIN_VENUES_TO_INDEX
+                      ? `/wedding-venues/${slugify(city)}`
+                      : `/explore?destination=${encodeURIComponent(g.state || city)}`
+                  }
                 >
                   <img
                     {...imgProps(g.image, g.alt, {

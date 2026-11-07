@@ -352,3 +352,7 @@
   .panelText small{max-height:none;opacity:1}
   .panelGo,.dmGo{max-height:24px;opacity:1;margin-top:8px}
 }
+
+/* Accessibility: secondary text at 4.5:1 contrast on the ivory page and white cards (was 4.1 and 3.1). */
+.formIntro p,.centerIntro p{color:#5f5a55}
+.verifiedLabel{color:#5d6b7e}

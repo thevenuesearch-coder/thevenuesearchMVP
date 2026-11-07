@@ -22,6 +22,8 @@ type RelatedVenue = {
 
 type VenuePageClientProps = {
   initialVenue: Venue | null;
+  /* Link to the venue's destination landing page, when one exists. */
+  destinationLink?: { href: string; label: string };
   relatedVenues?: RelatedVenue[];
   /* Server-rendered "Compare Similar Venues" section. */
   comparison?: ReactNode;
@@ -30,6 +32,7 @@ type VenuePageClientProps = {
 export function VenuePageClient({
   initialVenue,
   relatedVenues = [],
+  destinationLink,
   comparison = null,
 }: VenuePageClientProps) {
   /*
@@ -760,6 +763,16 @@ export function VenuePageClient({
               </li>
             ))}
           </ul>
+
+          {destinationLink && (
+            <Link
+              className="related-venues-all"
+              href={destinationLink.href}
+              style={{ marginRight: 18 }}
+            >
+              {destinationLink.label} →
+            </Link>
+          )}
 
           <Link
             className="related-venues-all"

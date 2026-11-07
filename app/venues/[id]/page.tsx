@@ -6,10 +6,15 @@ import {
   fetchVenuesServer,
 } from '../../../lib/venues';
 import {
+  buildBreadcrumbJsonLd,
   buildVenueJsonLd,
   fetchVenueLocationServer,
   serializeJsonLd,
 } from '../../../lib/structured-data';
+import {
+  MIN_VENUES_TO_INDEX,
+  buildDestinations,
+} from '../../../lib/destinations';
 import {
   clip,
   pageMetadata,
@@ -117,6 +122,20 @@ export default async function VenuePage({
     : [];
 
   /*
+   * Link to this venue's destination page when it has one (and the
+   * page is indexable), so venue pages and destination pages support
+   * each other in internal linking.
+   */
+  const destination =
+    venue && venue.destination
+      ? buildDestinations(allVenues).find(
+          (d) =>
+            d.name === venue.destination &&
+            d.venues.length >= MIN_VENUES_TO_INDEX
+        )
+      : undefined;
+
+  /*
    * "Compare Similar Venues": this venue + up to 3 comparable ones,
    * chosen from the venue list already loaded above. Resolves to
    * null (section omitted) if anything fails -- never breaks the page.
@@ -138,9 +157,43 @@ export default async function VenuePage({
         />
       )}
 
+      {venue && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeJsonLd(
+              buildBreadcrumbJsonLd([
+                { name: 'Home', path: '/' },
+                { name: 'Wedding venues', path: '/wedding-venues' },
+                ...(destination
+                  ? [
+                      {
+                        name: destination.name,
+                        path: `/wedding-venues/${destination.slug}`,
+                      },
+                    ]
+                  : []),
+                {
+                  name: venue.name,
+                  path: `/venues/${encodeURIComponent(venue.id)}`,
+                },
+              ])
+            ),
+          }}
+        />
+      )}
+
       <VenuePageClient
         initialVenue={venue}
         relatedVenues={related}
+        destinationLink={
+          destination
+            ? {
+                href: `/wedding-venues/${destination.slug}`,
+                label: `All wedding venues in ${destination.name}`,
+              }
+            : undefined
+        }
         comparison={<CompareSimilarVenues model={comparison} />}
       />
     </>
