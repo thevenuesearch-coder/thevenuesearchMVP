@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { pageMetadata } from '../../lib/seo';
 
 import {
-  fetchVenuesServer,
+  fetchVenuesResultServer,
   toVenueSummary,
 } from '../../lib/venues';
 import { ExploreClient } from '../../components/ExploreClient';
@@ -33,16 +33,18 @@ export const dynamic = 'force-dynamic';
  * only where the data comes from changed.
  */
 export default async function ExplorePage() {
-  let venues: Awaited<ReturnType<typeof fetchVenuesServer>> = [];
-  let error = '';
+  const { venues, failed } = await fetchVenuesResultServer();
 
-  try {
-    venues = await fetchVenuesServer();
-  } catch (err) {
-    console.error('Failed to load venues:', err);
-    error =
-      'We could not load venues right now. Please refresh the page.';
+  /*
+   * Could not reach the database: answer with a server error (search
+   * engines retry those) instead of a 200 page that says "0 venues",
+   * which would be indexed as an empty page.
+   */
+  if (failed) {
+    throw new Error('Venue data is temporarily unavailable.');
   }
+
+  const error = '';
 
   const listJsonLd = buildVenueListJsonLd(venues);
 

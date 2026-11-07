@@ -399,3 +399,57 @@ export async function fetchVenueLocationServer(
     return null;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/*  Breadcrumbs and destination pages                                  */
+/* ------------------------------------------------------------------ */
+
+export type BreadcrumbItem = { name: string; path: string };
+
+/*
+ * BreadcrumbList for pages that show a breadcrumb trail. The last
+ * item is the current page.
+ */
+export function buildBreadcrumbJsonLd(items: BreadcrumbItem[]): JsonObject {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: `${SITE_URL}${item.path}`,
+    })),
+  };
+}
+
+/*
+ * /wedding-venues/[destination] -> a CollectionPage whose main entity
+ * is the list of venues shown on the page. Only real venue records.
+ */
+export function buildDestinationJsonLd(input: {
+  name: string;
+  path: string;
+  description: string;
+  venues: Pick<Venue, 'id' | 'name'>[];
+}): JsonObject {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `Wedding venues in ${input.name}`,
+    url: `${SITE_URL}${input.path}`,
+    description: input.description,
+    about: { '@type': 'Place', name: input.name },
+    isPartOf: { '@type': 'WebSite', name: 'The Venue Search', url: SITE_URL },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: input.venues.length,
+      itemListElement: input.venues.map((venue, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: `${SITE_URL}/venues/${venue.id}`,
+        name: venue.name,
+      })),
+    },
+  };
+}

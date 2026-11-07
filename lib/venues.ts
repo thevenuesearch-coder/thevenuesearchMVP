@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { cache } from 'react';
 
 import { resolveVenueSlug } from './venue-slugs';
@@ -245,7 +246,7 @@ export async function fetchVenues(): Promise<Venue[]> {
  * rather than only appearing after a client-side useEffect runs.
  * Mirrors the exact query in app/api/venues/route.ts.
  */
-export async function fetchVenuesServer(): Promise<Venue[]> {
+async function loadPublishedVenues(): Promise<Venue[]> {
   const { supabase } = await import('./supabase');
 
   const { data, error } = await supabase
@@ -294,11 +295,62 @@ export async function fetchVenuesServer(): Promise<Venue[]> {
     .order('featured', { ascending: false });
 
   if (error) {
-    console.error('fetchVenuesServer error:', error.message);
-    return [];
+    /*
+     * Throw (do not return []): a thrown error is never stored in the
+     * cache below, so a Supabase outage can't freeze an empty list in
+     * for the next few minutes.
+     */
+    throw new Error(error.message);
   }
 
   return ((data || []) as DbVenue[]).map(normalizeVenue);
+}
+
+/*
+ * The published-venue list, cached for 5 minutes.
+ *
+ * Why: the home, Explore, venue, destination and sitemap routes all
+ * need this same list. Fetching it from Supabase on every request
+ * (about 0.3 MB each time) used up the project's monthly egress, and
+ * while Supabase was unavailable every page rendered with no venues.
+ * With the cache, one request per few minutes refreshes it, and if a
+ * refresh fails the last good copy keeps being served (stale-while-
+ * revalidate) instead of an empty list.
+ *
+ * New or edited venues show up within 5 minutes. Call
+ * revalidateTag('venues') to refresh sooner.
+ */
+export const VENUES_CACHE_SECONDS = 300;
+
+const loadPublishedVenuesCached = unstable_cache(
+  loadPublishedVenues,
+  ['published-venues-v1'],
+  { revalidate: VENUES_CACHE_SECONDS, tags: ['venues'] }
+);
+
+/*
+ * Venues plus whether the load failed, so pages can tell "there are
+ * no venues" apart from "we could not reach the database" (the second
+ * must never be served to Google as a normal empty page).
+ */
+export async function fetchVenuesResultServer(): Promise<{
+  venues: Venue[];
+  failed: boolean;
+}> {
+  try {
+    return { venues: await loadPublishedVenuesCached(), failed: false };
+  } catch (error) {
+    console.error(
+      'fetchVenuesServer error:',
+      error instanceof Error ? error.message : error
+    );
+    return { venues: [], failed: true };
+  }
+}
+
+/* Same list, for callers that only need the venues (never throws). */
+export async function fetchVenuesServer(): Promise<Venue[]> {
+  return (await fetchVenuesResultServer()).venues;
 }
 
 export async function fetchVenueBySlug(

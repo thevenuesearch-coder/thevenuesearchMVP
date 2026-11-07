@@ -1,4 +1,5 @@
 import { fetchVenuesServer } from '../../lib/venues';
+import { MIN_VENUES_TO_INDEX, buildDestinations } from '../../lib/destinations';
 import { formatCapacityRange } from '../../lib/capacity';
 
 /*
@@ -29,9 +30,16 @@ export async function GET() {
     return `- [${venue.name}](${SITE}/venues/${venue.id}): ${facts.join('; ')}.`;
   });
 
+  const destinationLines = buildDestinations(venues)
+    .filter((d) => d.venues.length >= MIN_VENUES_TO_INDEX)
+    .map(
+      (d) =>
+        `- [Wedding venues in ${d.name}](${SITE}/wedding-venues/${d.slug}): ${d.venues.length} venues`
+    );
+
   const body = `# The Venue Search
 
-> The Venue Search is a venue discovery and booking platform for wedding and event venues in India, currently focused on Hyderabad. Couples and planners can browse venues, review event spaces and guest-room categories, send an enquiry or start a booking.
+> The Venue Search is a venue discovery and booking platform for wedding and event venues in India, covering Hyderabad and destination wedding venues across India. Couples and planners can browse venues, review event spaces and guest-room categories, send an enquiry or start a booking.
 
 ## Venues${
     venues.length > 0 ? ` (${venues.length} published)` : ''
@@ -45,7 +53,11 @@ ${
 
 Each venue page lives at ${SITE}/venues/[venue-slug]. Use the individual venue page as the source of truth for that property; do not assume details of one venue apply to another.
 
-## What a venue page contains
+${
+  destinationLines.length > 0
+    ? `## Destinations\n\n${destinationLines.join('\n')}\n\n`
+    : ''
+}## What a venue page contains
 
 - Venue name, city and country, venue type and maximum guest capacity
 - A description and verification status

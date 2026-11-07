@@ -1,12 +1,27 @@
 import Link from 'next/link';
 import { imgProps } from '../lib/image';
+import { MIN_VENUES_TO_INDEX, buildDestinations } from '../lib/destinations';
+import { fetchVenuesServer } from '../lib/venues';
 
 /*
  * Footer — UI v2. Only links/contact details that already existed on the
  * site (plus the existing Compare route) are shown; no social or newsletter
  * placeholders, because neither exists in the product yet.
  */
-export function Footer() {
+export async function Footer() {
+  /*
+   * Sitewide links to the destination landing pages (Hyderabad first),
+   * built from the cached venue list.
+   */
+  const destinations = buildDestinations(await fetchVenuesServer())
+    .filter((d) => d.venues.length >= MIN_VENUES_TO_INDEX)
+    .sort(
+      (a, b) =>
+        Number(b.slug === 'hyderabad') - Number(a.slug === 'hyderabad') ||
+        b.venues.length - a.venues.length
+    )
+    .slice(0, 5);
+
   return (
     <footer className="vsFooter">
       <div className="footerTop">
@@ -23,6 +38,11 @@ export function Footer() {
           <b>Explore</b>
           <Link href="/explore">Explore venues</Link>
           <Link href="/wedding-venues">Wedding venues</Link>
+          {destinations.map((destination) => (
+            <Link key={destination.slug} href={`/wedding-venues/${destination.slug}`}>
+              {destination.name} wedding venues
+            </Link>
+          ))}
           <Link href="/collections">Collections</Link>
           <Link href="/compare">Compare Venues</Link>
         </nav>

@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     template: '%s | The Venue Search',
   },
   description:
-    'Discover and book verified destination wedding venues in Hyderabad and across India. Transparent pricing, real availability, and a booking journey built for couples and planners.',
+    'Discover verified destination wedding venues in Hyderabad and across India. Compare event spaces and guest capacity, then enquire or place an Instant Hold.',
   openGraph: {
     siteName: 'The Venue Search',
     type: 'website',
@@ -62,6 +62,13 @@ const organizationJsonLd = {
   logo: 'https://venuesearch.in/logo.png',
   description:
     'A verified venue discovery and booking platform for wedding and event venues across India.',
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer support',
+    email: 'thevenuesearch@gmail.com',
+    areaServed: 'IN',
+    availableLanguage: 'English',
+  },
 };
 
 const websiteJsonLd = {
